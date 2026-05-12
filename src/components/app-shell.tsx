@@ -24,6 +24,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { to: "/admin/reports", label: "Reports", icon: FileBarChart },
     { to: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
     { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
+    { to: "/admin/emails", label: "Email Delivery", icon: ScrollText },
     { to: "/admin/settings", label: "Settings", icon: Settings },
   ],
   sam: [
