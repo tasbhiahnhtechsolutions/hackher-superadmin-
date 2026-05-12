@@ -72,7 +72,7 @@ function PromoPage() {
   };
 
   const toggle = async (id: string, active: boolean) => {
-    await supabase.from("promo_codes").update({ status: active ? "disabled" : "active" }).eq("id", id);
+    await supabase.from("promo_codes").update({ status: active ? "inactive" : "active" }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["promos"] });
   };
 
