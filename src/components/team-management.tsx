@@ -75,7 +75,7 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
       <PageHeader
         title={title}
         subtitle={subtitle}
-        action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New {labelMap[childRole]}</Button>}
+        action={readOnly ? undefined : <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New {labelMap[childRole]}</Button>}
       />
       <PageBody>
         <div className="rounded-xl border border-border/60 bg-card">
