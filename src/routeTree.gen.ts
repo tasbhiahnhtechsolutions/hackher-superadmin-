@@ -29,6 +29,7 @@ import { Route as ApiV1PlansRouteImport } from './routes/api/v1/plans'
 import { Route as ApiCustomerPlansRouteImport } from './routes/api/customer/plans'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedSamReportsRouteImport } from './routes/_authenticated/sam/reports'
+import { Route as AuthenticatedSamPromoCodesRouteImport } from './routes/_authenticated/sam/promo-codes'
 import { Route as AuthenticatedSamPayoutsRouteImport } from './routes/_authenticated/sam/payouts'
 import { Route as AuthenticatedSamManagersRouteImport } from './routes/_authenticated/sam/managers'
 import { Route as AuthenticatedSamAffiliatesRouteImport } from './routes/_authenticated/sam/affiliates'
@@ -161,6 +162,12 @@ const AuthenticatedSamReportsRoute = AuthenticatedSamReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedSamRoute,
 } as any)
+const AuthenticatedSamPromoCodesRoute =
+  AuthenticatedSamPromoCodesRouteImport.update({
+    id: '/promo-codes',
+    path: '/promo-codes',
+    getParentRoute: () => AuthenticatedSamRoute,
+  } as any)
 const AuthenticatedSamPayoutsRoute = AuthenticatedSamPayoutsRouteImport.update({
   id: '/payouts',
   path: '/payouts',
@@ -356,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
   '/sam/managers': typeof AuthenticatedSamManagersRoute
   '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
+  '/sam/promo-codes': typeof AuthenticatedSamPromoCodesRoute
   '/sam/reports': typeof AuthenticatedSamReportsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/customer/plans': typeof ApiCustomerPlansRoute
@@ -401,6 +409,7 @@ export interface FileRoutesByTo {
   '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
   '/sam/managers': typeof AuthenticatedSamManagersRoute
   '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
+  '/sam/promo-codes': typeof AuthenticatedSamPromoCodesRoute
   '/sam/reports': typeof AuthenticatedSamReportsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/customer/plans': typeof ApiCustomerPlansRoute
@@ -452,6 +461,7 @@ export interface FileRoutesById {
   '/_authenticated/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
   '/_authenticated/sam/managers': typeof AuthenticatedSamManagersRoute
   '/_authenticated/sam/payouts': typeof AuthenticatedSamPayoutsRoute
+  '/_authenticated/sam/promo-codes': typeof AuthenticatedSamPromoCodesRoute
   '/_authenticated/sam/reports': typeof AuthenticatedSamReportsRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/customer/plans': typeof ApiCustomerPlansRoute
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/sam/affiliates'
     | '/sam/managers'
     | '/sam/payouts'
+    | '/sam/promo-codes'
     | '/sam/reports'
     | '/settings/notifications'
     | '/api/customer/plans'
@@ -548,6 +559,7 @@ export interface FileRouteTypes {
     | '/sam/affiliates'
     | '/sam/managers'
     | '/sam/payouts'
+    | '/sam/promo-codes'
     | '/sam/reports'
     | '/settings/notifications'
     | '/api/customer/plans'
@@ -598,6 +610,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sam/affiliates'
     | '/_authenticated/sam/managers'
     | '/_authenticated/sam/payouts'
+    | '/_authenticated/sam/promo-codes'
     | '/_authenticated/sam/reports'
     | '/_authenticated/settings/notifications'
     | '/api/customer/plans'
@@ -774,6 +787,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/sam/reports'
       preLoaderRoute: typeof AuthenticatedSamReportsRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/sam/promo-codes': {
+      id: '/_authenticated/sam/promo-codes'
+      path: '/promo-codes'
+      fullPath: '/sam/promo-codes'
+      preLoaderRoute: typeof AuthenticatedSamPromoCodesRouteImport
       parentRoute: typeof AuthenticatedSamRoute
     }
     '/_authenticated/sam/payouts': {
@@ -1052,6 +1072,7 @@ interface AuthenticatedSamRouteChildren {
   AuthenticatedSamAffiliatesRoute: typeof AuthenticatedSamAffiliatesRoute
   AuthenticatedSamManagersRoute: typeof AuthenticatedSamManagersRoute
   AuthenticatedSamPayoutsRoute: typeof AuthenticatedSamPayoutsRoute
+  AuthenticatedSamPromoCodesRoute: typeof AuthenticatedSamPromoCodesRoute
   AuthenticatedSamReportsRoute: typeof AuthenticatedSamReportsRoute
   AuthenticatedSamIndexRoute: typeof AuthenticatedSamIndexRoute
 }
@@ -1060,6 +1081,7 @@ const AuthenticatedSamRouteChildren: AuthenticatedSamRouteChildren = {
   AuthenticatedSamAffiliatesRoute: AuthenticatedSamAffiliatesRoute,
   AuthenticatedSamManagersRoute: AuthenticatedSamManagersRoute,
   AuthenticatedSamPayoutsRoute: AuthenticatedSamPayoutsRoute,
+  AuthenticatedSamPromoCodesRoute: AuthenticatedSamPromoCodesRoute,
   AuthenticatedSamReportsRoute: AuthenticatedSamReportsRoute,
   AuthenticatedSamIndexRoute: AuthenticatedSamIndexRoute,
 }
