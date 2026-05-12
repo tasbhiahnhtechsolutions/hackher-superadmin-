@@ -34,32 +34,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadedFor = useRef<string | null>(null);
+  const loadedRole = useRef<AppRole | null>(null);
+
+  const resetUserState = useCallback(() => {
+    loadedFor.current = null;
+    loadedRole.current = null;
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setRole(null);
+  }, []);
+
+  const clearLocalSession = useCallback(async () => {
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch (error) {
+      console.warn("Failed to clear local auth session", error);
+    } finally {
+      resetUserState();
+      setLoading(false);
+    }
+  }, [resetUserState]);
 
   const loadUserData = useCallback(async (uid: string, force = false) => {
-    if (!force && loadedFor.current === uid) return role;
+    if (!force && loadedFor.current === uid) return loadedRole.current;
     setLoading(true);
     try {
-      const [{ data: profileData }, { data: roleRows }] = await Promise.all([
+      const [{ data: profileData, error: profileError }, { data: roleRows, error: roleError }] = await Promise.all([
         supabase.from("profiles").select("id,email,full_name,avatar_url,status").eq("id", uid).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", uid),
       ]);
+      if (profileError) throw profileError;
+      if (roleError) throw roleError;
       const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
       const rolePriority: AppRole[] = ["super_admin", "sam", "manager", "affiliate", "customer"];
       const resolvedRole = rolePriority.find((candidate) => roles.includes(candidate)) ?? null;
       setProfile(profileData as Profile | null);
       setRole(resolvedRole);
       loadedFor.current = uid;
+      loadedRole.current = resolvedRole;
       return resolvedRole;
     } catch (error) {
       console.error("Failed to load signed-in user data", error);
       loadedFor.current = null;
+      loadedRole.current = null;
       setProfile(null);
       setRole(null);
       return null;
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, []);
 
   useEffect(() => {
     // CRITICAL: set listener BEFORE getSession
@@ -70,41 +95,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // defer to avoid deadlock; dedup via loadedFor ref
         setTimeout(() => loadUserData(sess.user.id), 0);
       } else {
-        loadedFor.current = null;
-        setProfile(null);
-        setRole(null);
+        resetUserState();
         setLoading(false);
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      const sess = data.session;
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) {
-        void loadUserData(sess.user.id);
-      } else {
-        setLoading(false);
+    supabase.auth.getUser().then(async ({ data, error }) => {
+      if (error || !data.user) {
+        await clearLocalSession();
+        return;
       }
+      const { data: sessionData } = await supabase.auth.getSession();
+      setSession(sessionData.session);
+      setUser(data.user);
+      void loadUserData(data.user.id);
     });
 
     return () => sub.subscription.unsubscribe();
-  }, [loadUserData]);
+  }, [clearLocalSession, loadUserData, resetUserState]);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setLoading(false);
+      await clearLocalSession();
       return { error: error.message };
     }
     if (data.user) {
       setSession(data.session);
       setUser(data.user);
       const loadedRole = await loadUserData(data.user.id, true);
+      if (!loadedRole) {
+        await clearLocalSession();
+        return { error: "This account is missing a dashboard role. Ask the Super Admin to recreate or reassign the user." };
+      }
       return { role: loadedRole };
     } else {
-      setLoading(false);
+      await clearLocalSession();
     }
     return {};
   };
@@ -122,12 +149,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Remote sign out failed; clearing local session", error);
+    } finally {
+      resetUserState();
+      setLoading(false);
+    }
   };
 
   const refresh = async () => {
     if (user) {
       loadedFor.current = null;
+      loadedRole.current = null;
       await loadUserData(user.id);
     }
   };
