@@ -56,8 +56,8 @@ function LoginPage() {
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account? <Link to="/signup" className="text-primary hover:underline">Create one</Link>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Accounts are issued by your Manager or Admin. Contact them if you don't have one.
           </p>
         </div>
       </div>
