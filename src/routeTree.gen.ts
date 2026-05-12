@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSamRouteImport } from './routes/_authenticated/sam'
+import { Route as AuthenticatedManagerRouteImport } from './routes/_authenticated/manager'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
 const SignupRoute = SignupRouteImport.update({
@@ -40,6 +41,11 @@ const AuthenticatedSamRoute = AuthenticatedSamRouteImport.update({
   path: '/sam',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedManagerRoute = AuthenticatedManagerRouteImport.update({
+  id: '/manager',
+  path: '/manager',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/manager': typeof AuthenticatedManagerRoute
   '/sam': typeof AuthenticatedSamRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AuthenticatedAdminRoute
+  '/manager': typeof AuthenticatedManagerRoute
   '/sam': typeof AuthenticatedSamRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,14 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/manager': typeof AuthenticatedManagerRoute
   '/_authenticated/sam': typeof AuthenticatedSamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup' | '/admin' | '/sam'
+  fullPaths: '/' | '/login' | '/signup' | '/admin' | '/manager' | '/sam'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/admin' | '/sam'
+  to: '/' | '/login' | '/signup' | '/admin' | '/manager' | '/sam'
   id:
     | '__root__'
     | '/'
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/admin'
+    | '/_authenticated/manager'
     | '/_authenticated/sam'
   fileRoutesById: FileRoutesById
 }
@@ -128,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSamRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/manager': {
+      id: '/_authenticated/manager'
+      path: '/manager'
+      fullPath: '/manager'
+      preLoaderRoute: typeof AuthenticatedManagerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -140,11 +157,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedManagerRoute: typeof AuthenticatedManagerRoute
   AuthenticatedSamRoute: typeof AuthenticatedSamRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedManagerRoute: AuthenticatedManagerRoute,
   AuthenticatedSamRoute: AuthenticatedSamRoute,
 }
 
