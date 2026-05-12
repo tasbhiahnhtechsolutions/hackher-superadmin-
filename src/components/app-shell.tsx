@@ -28,7 +28,6 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { to: "/admin/fraud", label: "Fraud Review", icon: ShieldAlert },
     { to: "/admin/system", label: "System Health", icon: Activity },
     { to: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
-    { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
     { to: "/admin/emails", label: "Email Delivery", icon: ScrollText },
     { to: "/admin/settings", label: "Settings", icon: Settings },
   ],
@@ -47,7 +46,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
   ],
   affiliate: [
     { to: "/affiliate", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/affiliate/promo-codes", label: "Promo Codes", icon: Tag },
+    { to: "/affiliate/my-code", label: "My Promo Code", icon: Tag },
     { to: "/affiliate/earnings", label: "Earnings", icon: Wallet },
     { to: "/affiliate/subscribers", label: "Subscribers", icon: Users },
   ],

@@ -36,6 +36,7 @@ import { Route as AuthenticatedManagerSubscribersRouteImport } from './routes/_a
 import { Route as AuthenticatedManagerReportsRouteImport } from './routes/_authenticated/manager/reports'
 import { Route as AuthenticatedManagerAffiliatesRouteImport } from './routes/_authenticated/manager/affiliates'
 import { Route as AuthenticatedAffiliateSubscribersRouteImport } from './routes/_authenticated/affiliate/subscribers'
+import { Route as AuthenticatedAffiliateMyCodeRouteImport } from './routes/_authenticated/affiliate/my-code'
 import { Route as AuthenticatedAffiliateEarningsRouteImport } from './routes/_authenticated/affiliate/earnings'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin/system'
@@ -198,6 +199,12 @@ const AuthenticatedAffiliateSubscribersRoute =
     path: '/subscribers',
     getParentRoute: () => AuthenticatedAffiliateRoute,
   } as any)
+const AuthenticatedAffiliateMyCodeRoute =
+  AuthenticatedAffiliateMyCodeRouteImport.update({
+    id: '/my-code',
+    path: '/my-code',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
 const AuthenticatedAffiliateEarningsRoute =
   AuthenticatedAffiliateEarningsRouteImport.update({
     id: '/earnings',
@@ -321,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
+  '/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -362,6 +370,7 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
+  '/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -409,6 +418,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
+  '/_authenticated/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/_authenticated/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/_authenticated/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/_authenticated/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/affiliate/earnings'
+    | '/affiliate/my-code'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
     | '/manager/reports'
@@ -497,6 +508,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/affiliate/earnings'
+    | '/affiliate/my-code'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
     | '/manager/reports'
@@ -543,6 +555,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/system'
     | '/_authenticated/admin/users'
     | '/_authenticated/affiliate/earnings'
+    | '/_authenticated/affiliate/my-code'
     | '/_authenticated/affiliate/subscribers'
     | '/_authenticated/manager/affiliates'
     | '/_authenticated/manager/reports'
@@ -772,6 +785,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAffiliateSubscribersRouteImport
       parentRoute: typeof AuthenticatedAffiliateRoute
     }
+    '/_authenticated/affiliate/my-code': {
+      id: '/_authenticated/affiliate/my-code'
+      path: '/my-code'
+      fullPath: '/affiliate/my-code'
+      preLoaderRoute: typeof AuthenticatedAffiliateMyCodeRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
+    }
     '/_authenticated/affiliate/earnings': {
       id: '/_authenticated/affiliate/earnings'
       path: '/earnings'
@@ -929,6 +949,7 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedAffiliateRouteChildren {
   AuthenticatedAffiliateEarningsRoute: typeof AuthenticatedAffiliateEarningsRoute
+  AuthenticatedAffiliateMyCodeRoute: typeof AuthenticatedAffiliateMyCodeRoute
   AuthenticatedAffiliateSubscribersRoute: typeof AuthenticatedAffiliateSubscribersRoute
   AuthenticatedAffiliateIndexRoute: typeof AuthenticatedAffiliateIndexRoute
 }
@@ -936,6 +957,7 @@ interface AuthenticatedAffiliateRouteChildren {
 const AuthenticatedAffiliateRouteChildren: AuthenticatedAffiliateRouteChildren =
   {
     AuthenticatedAffiliateEarningsRoute: AuthenticatedAffiliateEarningsRoute,
+    AuthenticatedAffiliateMyCodeRoute: AuthenticatedAffiliateMyCodeRoute,
     AuthenticatedAffiliateSubscribersRoute:
       AuthenticatedAffiliateSubscribersRoute,
     AuthenticatedAffiliateIndexRoute: AuthenticatedAffiliateIndexRoute,
@@ -1024,13 +1046,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
