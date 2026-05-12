@@ -26,11 +26,14 @@ interface PersonOpt { id: string; full_name: string | null; email: string; paren
 
 export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: Props) {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const create = useServerFn(createPromoCode);
   const update = useServerFn(updatePromoCode);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "" });
+  const [editing, setEditing] = useState<null | { id: string; code: string; discount: number; usageLimit: string; usageCount: number; status: "active" | "inactive" }>(null);
+  const canEdit = role === "super_admin" || role === "sam";
+  const canEditAll = role === "super_admin";
 
   const showHierarchy = affiliatePicker !== "self";
 
