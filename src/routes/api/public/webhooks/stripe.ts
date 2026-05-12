@@ -99,6 +99,9 @@ async function attributeCommissions(opts: {
 
   if (inserts.length) {
     await supabaseAdmin.from("commissions").insert(inserts as never);
+    for (const ins of inserts) {
+      void notifyAffiliateChainOfCommission(ins.beneficiary_id, ins.amount_cents, "usd");
+    }
   }
 }
 
@@ -147,7 +150,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               if (subscriptionId && customerId && planId) {
                 const fullSub = await stripe.subscriptions.retrieve(subscriptionId);
                 const periodEnd = (fullSub as unknown as { current_period_end?: number }).current_period_end;
-                const { data: plan } = await supabaseAdmin.from("plans").select("price_cents").eq("id", planId).maybeSingle();
+                const { data: plan } = await supabaseAdmin.from("plans").select("price_cents,name,currency").eq("id", planId).maybeSingle();
                 await supabaseAdmin.from("subscriptions").upsert({
                   customer_id: customerId,
                   plan_id: planId,
@@ -156,6 +159,16 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
                   amount_paid_cents: plan?.price_cents ?? 0,
                 }, { onConflict: "stripe_subscription_id" } as never);
+
+                // Email customer + notify
+                const { data: cust } = await supabaseAdmin.from("customers").select("email,full_name").eq("id", customerId).maybeSingle();
+                if (cust?.email && plan) {
+                  await sendAppEmail({
+                    to: cust.email, template: "subscription_created",
+                    data: { planName: plan.name, amountCents: plan.price_cents, currency: plan.currency, appUrl: APP_URL },
+                    category: "subscription", idempotencyKey: `subcreated-${subscriptionId}`,
+                  });
+                }
               }
 
               // If used a promo, increment usage
