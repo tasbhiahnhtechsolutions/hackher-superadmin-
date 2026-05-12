@@ -39,15 +39,28 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
       // Get user_ids for this role (RLS now allows ancestors to see descendant roles)
       const { data: rolesRows } = await supabase.from("user_roles").select("user_id").eq("role", childRole);
       const ids = (rolesRows ?? []).map((r) => r.user_id);
-      if (!ids.length) return [];
+      if (!ids.length) return { rows: [], parents: new Map<string, { full_name: string | null; email: string }>() };
       let q = supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
-      // For non-recursive lists (Manager → affiliates, SAM → managers, SuperAdmin → SAMs)
-      // restrict to DIRECT children of the current user.
       if (!recursive && user) q = q.eq("parent_user_id", user.id);
       const { data: profiles } = await q;
-      return profiles ?? [];
+      const rows = profiles ?? [];
+
+      // For affiliate view, also fetch their manager (parent) profiles to show a "Manager" column
+      const parents = new Map<string, { full_name: string | null; email: string }>();
+      if (childRole === "affiliate" && rows.length) {
+        const parentIds = Array.from(new Set(rows.map((r) => r.parent_user_id).filter(Boolean))) as string[];
+        if (parentIds.length) {
+          const { data: parentProfiles } = await supabase
+            .from("profiles").select("id,full_name,email").in("id", parentIds);
+          (parentProfiles ?? []).forEach((p) => parents.set(p.id, { full_name: p.full_name, email: p.email }));
+        }
+      }
+      return { rows, parents };
     },
   });
+  const rows = data?.rows ?? [];
+  const parents = data?.parents ?? new Map<string, { full_name: string | null; email: string }>();
+  const showManagerCol = childRole === "affiliate";
 
   const createMut = useMutation({
     mutationFn: async () => {
