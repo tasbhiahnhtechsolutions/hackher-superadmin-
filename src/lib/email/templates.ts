@@ -143,9 +143,30 @@ export const TEMPLATES = {
     return { subject, html, text: stripHtml(body) };
   },
 
-  affiliate_welcome: (d: { name?: string; dashboardUrl: string }): EmailContent => {
+  affiliate_welcome: (d: {
+    name?: string;
+    email: string;
+    tempPassword?: string;
+    promoCode: string;
+    discountPercent: number;
+    commissionPercent: number;
+    dashboardUrl: string;
+  }): EmailContent => {
     const subject = `Welcome to the ${BRAND.name} affiliate program`;
-    const body = `<p>Hi ${d.name || "there"},</p><p>Your affiliate account is live. Generate promo codes, share your link, and earn on every paid signup.</p>`;
+    const credRows: Array<[string, string]> = [
+      ["Login email", d.email],
+      ...(d.tempPassword ? [["Temporary password", d.tempPassword] as [string, string]] : []),
+      ["Your promo code", d.promoCode],
+      ["Customer discount", `${d.discountPercent}%`],
+      ["Your commission", `${d.commissionPercent}%`],
+    ];
+    const body =
+      `<p>Hi ${d.name || "there"},</p>` +
+      `<p>Your affiliate account is live. We've assigned you a unique promo code — share it with your audience to earn on every paid signup.</p>` +
+      summaryTable(credRows) +
+      (d.tempPassword
+        ? `<p style="font-size:13px;color:${BRAND.muted};">Please sign in and change your password from your account settings.</p>`
+        : "");
     const html = layout({ heading: subject, body, cta: { label: "Open affiliate dashboard", href: d.dashboardUrl } });
     return { subject, html, text: stripHtml(body) };
   },
