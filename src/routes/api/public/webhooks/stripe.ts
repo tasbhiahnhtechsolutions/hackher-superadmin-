@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             case "checkout.session.completed":
             case "customer.subscription.created":
             case "customer.subscription.updated": {
-              const sub = (event.data.object as Stripe.Subscription | Stripe.Checkout.Session) as Record<string, unknown>;
+              const sub = event.data.object as unknown as Record<string, unknown>;
               const stripeSubId = (sub.subscription as string | undefined) ?? (sub.id as string | undefined);
               const customerStripeId = sub.customer as string | undefined;
               if (!stripeSubId || !customerStripeId) break;
