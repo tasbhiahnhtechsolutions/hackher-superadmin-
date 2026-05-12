@@ -247,8 +247,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 stripe_event_id: event.id, type: "refund",
                 amount_cents: -(charge.amount_refunded ?? 0), currency: charge.currency, raw: charge as never,
               });
-              const subId = (charge as unknown as { subscription?: string | null }).subscription
-                || ((charge.invoice as unknown) as { subscription?: string } | undefined)?.subscription;
+              const subId = (charge as unknown as { subscription?: string | null }).subscription;
               if (subId) await detectRapidRefund(subId, charge.amount_refunded ?? 0);
               await notifyAdmins("admin_alerts", "Refund issued", `Refund of ${((charge.amount_refunded ?? 0) / 100).toFixed(2)} ${charge.currency.toUpperCase()} on charge ${charge.id}`, "warning");
               break;
