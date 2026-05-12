@@ -25,11 +25,13 @@ const CreateSchema = z.object({
 
 const UpdateSchema = z.object({
   id: z.string().uuid(),
+  code: z.string().regex(/^[A-Za-z0-9]{3,30}$/).optional(),
   discountPercent: z.number().min(1).max(MAX_DISCOUNT_PCT).optional(),
   status: z.enum(["active", "inactive"]).optional(),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
   usageLimit: z.number().int().positive().nullable().optional(),
+  usageCount: z.number().int().min(0).optional(),
 });
 
 async function callerRole(userId: string) {
@@ -139,17 +141,24 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     if (role === "manager" || role === "customer") throw new Error("Forbidden");
 
     const patch: {
+      code?: string;
       discount_percent?: number;
       status?: "active" | "inactive";
       starts_at?: string | null;
       ends_at?: string | null;
       usage_limit?: number | null;
+      usage_count?: number;
     } = {};
     if (data.discountPercent !== undefined) patch.discount_percent = data.discountPercent;
     if (data.status !== undefined) patch.status = data.status;
     if (data.startsAt !== undefined) patch.starts_at = data.startsAt;
     if (data.endsAt !== undefined) patch.ends_at = data.endsAt;
     if (data.usageLimit !== undefined) patch.usage_limit = data.usageLimit;
+    // Only super_admin can rewrite the code or override usage_count
+    if (role === "super_admin") {
+      if (data.code !== undefined) patch.code = data.code.toUpperCase();
+      if (data.usageCount !== undefined) patch.usage_count = data.usageCount;
+    }
 
     const { error } = await supabaseAdmin.from("promo_codes").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);

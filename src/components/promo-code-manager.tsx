@@ -26,11 +26,14 @@ interface PersonOpt { id: string; full_name: string | null; email: string; paren
 
 export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: Props) {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const create = useServerFn(createPromoCode);
   const update = useServerFn(updatePromoCode);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "" });
+  const [editing, setEditing] = useState<null | { id: string; code: string; discount: number; usageLimit: string; usageCount: number; status: "active" | "inactive" }>(null);
+  const canEdit = role === "super_admin" || role === "sam";
+  const canEditAll = role === "super_admin";
 
   const showHierarchy = affiliatePicker !== "self";
 
@@ -118,6 +121,26 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const editMut = useMutation({
+    mutationFn: async () => {
+      if (!editing) throw new Error("No promo selected");
+      return update({ data: {
+        id: editing.id,
+        ...(canEditAll && editing.code ? { code: editing.code.toUpperCase() } : {}),
+        discountPercent: editing.discount,
+        status: editing.status,
+        usageLimit: editing.usageLimit === "" ? null : Number(editing.usageLimit),
+        ...(canEditAll ? { usageCount: editing.usageCount } : {}),
+      }});
+    },
+    onSuccess: () => {
+      toast.success("Promo code updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["promo-codes"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const labelFor = (p?: PersonOpt | null) => p ? (p.full_name ?? p.email) : "—";
 
   return (
@@ -158,7 +181,20 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                     <TableCell>{c.usage_count} / {c.usage_limit ?? "∞"}</TableCell>
                     <TableCell>{c.stripe_promo_id ? <Badge variant="outline">Synced</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
                     <TableCell><Badge variant={c.status === "active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-2">
+                      {canEdit && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => setEditing({
+                            id: c.id,
+                            code: c.code,
+                            discount: Number(c.discount_percent),
+                            usageLimit: c.usage_limit?.toString() ?? "",
+                            usageCount: c.usage_count,
+                            status: c.status as "active" | "inactive",
+                          })}>
+                          Edit
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline"
                         onClick={() => toggleStatus.mutate({ id: c.id, status: c.status === "active" ? "inactive" : "active" })}>
                         {c.status === "active" ? "Disable" : "Enable"}
@@ -234,6 +270,56 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
               disabled={createMut.isPending || (showHierarchy && !form.affiliateId) || !form.code}
             >
               {createMut.isPending ? "Creating…" : "Create & sync"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit promo code</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div>
+                <Label>Code</Label>
+                <Input value={editing.code} disabled={!canEditAll}
+                  onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })} />
+                {!canEditAll && <p className="mt-1 text-xs text-muted-foreground">Only super admin can rename a code.</p>}
+              </div>
+              <div>
+                <Label>Discount %</Label>
+                <Input type="number" min={1} max={15} value={editing.discount}
+                  onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Usage limit</Label>
+                  <Input type="number" min={1} placeholder="∞" value={editing.usageLimit}
+                    onChange={(e) => setEditing({ ...editing, usageLimit: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Usage count</Label>
+                  <Input type="number" min={0} value={editing.usageCount} disabled={!canEditAll}
+                    onChange={(e) => setEditing({ ...editing, usageCount: Number(e.target.value) })} />
+                  {!canEditAll && <p className="mt-1 text-xs text-muted-foreground">Super admin only.</p>}
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v as "active" | "inactive" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => editMut.mutate()} disabled={editMut.isPending}>
+              {editMut.isPending ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
