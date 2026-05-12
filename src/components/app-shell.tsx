@@ -1,15 +1,17 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth, ROLE_LABELS, type AppRole } from "@/lib/auth";
 import {
   LayoutDashboard, Users, UserCog, Tag, CreditCard, Wallet,
   FileBarChart, KeyRound, ScrollText, Settings, LogOut, ChevronDown,
+  ShieldAlert, Activity, TrendingUp, Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NotificationBell } from "@/components/notification-bell";
 
 interface NavItem { to: string; label: string; icon: typeof Users; }
