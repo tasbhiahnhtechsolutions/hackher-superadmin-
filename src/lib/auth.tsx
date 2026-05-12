@@ -95,41 +95,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // defer to avoid deadlock; dedup via loadedFor ref
         setTimeout(() => loadUserData(sess.user.id), 0);
       } else {
-        loadedFor.current = null;
-        setProfile(null);
-        setRole(null);
+        resetUserState();
         setLoading(false);
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      const sess = data.session;
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) {
-        void loadUserData(sess.user.id);
-      } else {
-        setLoading(false);
+    supabase.auth.getUser().then(async ({ data, error }) => {
+      if (error || !data.user) {
+        await clearLocalSession();
+        return;
       }
+      const { data: sessionData } = await supabase.auth.getSession();
+      setSession(sessionData.session);
+      setUser(data.user);
+      void loadUserData(data.user.id);
     });
 
     return () => sub.subscription.unsubscribe();
-  }, [loadUserData]);
+  }, [clearLocalSession, loadUserData, resetUserState]);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setLoading(false);
+      await clearLocalSession();
       return { error: error.message };
     }
     if (data.user) {
       setSession(data.session);
       setUser(data.user);
       const loadedRole = await loadUserData(data.user.id, true);
+      if (!loadedRole) {
+        await clearLocalSession();
+        return { error: "This account is missing a dashboard role. Ask the Super Admin to recreate or reassign the user." };
+      }
       return { role: loadedRole };
     } else {
-      setLoading(false);
+      await clearLocalSession();
     }
     return {};
   };
@@ -147,12 +149,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Remote sign out failed; clearing local session", error);
+    } finally {
+      resetUserState();
+      setLoading(false);
+    }
   };
 
   const refresh = async () => {
     if (user) {
       loadedFor.current = null;
+      loadedRole.current = null;
       await loadUserData(user.id);
     }
   };
