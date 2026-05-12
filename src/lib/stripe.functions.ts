@@ -76,12 +76,12 @@ export const syncPromoToStripe = createServerFn({ method: "POST" })
     let promoId = promo.stripe_promo_id;
     if (!promoId) {
       const sp = await stripe.promotionCodes.create({
-        coupon: couponId,
+        promotion: { coupon: couponId, type: "coupon" },
         code: promo.code,
         max_redemptions: promo.usage_limit ?? undefined,
         expires_at: promo.ends_at ? Math.floor(new Date(promo.ends_at).getTime() / 1000) : undefined,
         metadata: { promo_id: promo.id },
-      });
+      } as never);
       promoId = sp.id;
     } else {
       await stripe.promotionCodes.update(promoId, { active: promo.status === "active" });
