@@ -86,6 +86,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    import("@/integrations/supabase/server-fn-fetch.client").then((m) =>
+      m.installServerFnAuthFetch(),
+    );
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
