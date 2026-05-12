@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
 import { Route as CheckoutCancelRouteImport } from './routes/checkout.cancel'
 import { Route as AuthenticatedSamRouteImport } from './routes/_authenticated/sam'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedManagerRouteImport } from './routes/_authenticated/manager'
 import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedManagerIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAffiliateIndexRouteImport } from './routes/_authenticated/affiliate/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as ApiV1PlansRouteImport } from './routes/api/v1/plans'
+import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedSamReportsRouteImport } from './routes/_authenticated/sam/reports'
 import { Route as AuthenticatedSamPayoutsRouteImport } from './routes/_authenticated/sam/payouts'
 import { Route as AuthenticatedSamManagersRouteImport } from './routes/_authenticated/sam/managers'
@@ -42,6 +44,7 @@ import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminPromoCodesRouteImport } from './routes/_authenticated/admin/promo-codes'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
+import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin/audit-logs'
 import { Route as AuthenticatedAdminApiKeysRouteImport } from './routes/_authenticated/admin/api-keys'
 import { Route as ApiV1SubscriptionsCreateRouteImport } from './routes/api/v1/subscriptions/create'
@@ -94,6 +97,12 @@ const AuthenticatedSamRoute = AuthenticatedSamRouteImport.update({
   path: '/sam',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedManagerRoute = AuthenticatedManagerRouteImport.update({
   id: '/manager',
   path: '/manager',
@@ -136,6 +145,12 @@ const ApiV1PlansRoute = ApiV1PlansRouteImport.update({
   path: '/api/v1/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSettingsNotificationsRoute =
+  AuthenticatedSettingsNotificationsRouteImport.update({
+    id: '/settings/notifications',
+    path: '/settings/notifications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSamReportsRoute = AuthenticatedSamReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -228,6 +243,12 @@ const AuthenticatedAdminPayoutsRoute =
     path: '/payouts',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminEmailsRoute =
+  AuthenticatedAdminEmailsRouteImport.update({
+    id: '/emails',
+    path: '/emails',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAuditLogsRoute =
   AuthenticatedAdminAuditLogsRouteImport.update({
     id: '/audit-logs',
@@ -278,11 +299,13 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
   '/manager': typeof AuthenticatedManagerRouteWithChildren
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/sam': typeof AuthenticatedSamRouteWithChildren
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
@@ -299,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/sam/managers': typeof AuthenticatedSamManagersRoute
   '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
   '/sam/reports': typeof AuthenticatedSamReportsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/v1/plans': typeof ApiV1PlansRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/affiliate/': typeof AuthenticatedAffiliateIndexRoute
@@ -316,10 +340,12 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
@@ -336,6 +362,7 @@ export interface FileRoutesByTo {
   '/sam/managers': typeof AuthenticatedSamManagersRoute
   '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
   '/sam/reports': typeof AuthenticatedSamReportsRoute
+  '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/v1/plans': typeof ApiV1PlansRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/affiliate': typeof AuthenticatedAffiliateIndexRoute
@@ -358,11 +385,13 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
   '/_authenticated/manager': typeof AuthenticatedManagerRouteWithChildren
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/sam': typeof AuthenticatedSamRouteWithChildren
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
@@ -379,6 +408,7 @@ export interface FileRoutesById {
   '/_authenticated/sam/managers': typeof AuthenticatedSamManagersRoute
   '/_authenticated/sam/payouts': typeof AuthenticatedSamPayoutsRoute
   '/_authenticated/sam/reports': typeof AuthenticatedSamReportsRoute
+  '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
   '/api/v1/plans': typeof ApiV1PlansRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/affiliate/': typeof AuthenticatedAffiliateIndexRoute
@@ -401,11 +431,13 @@ export interface FileRouteTypes {
     | '/admin'
     | '/affiliate'
     | '/manager'
+    | '/notifications'
     | '/sam'
     | '/checkout/cancel'
     | '/checkout/success'
     | '/admin/api-keys'
     | '/admin/audit-logs'
+    | '/admin/emails'
     | '/admin/payouts'
     | '/admin/plans'
     | '/admin/promo-codes'
@@ -422,6 +454,7 @@ export interface FileRouteTypes {
     | '/sam/managers'
     | '/sam/payouts'
     | '/sam/reports'
+    | '/settings/notifications'
     | '/api/v1/plans'
     | '/admin/'
     | '/affiliate/'
@@ -439,10 +472,12 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/signup'
     | '/sitemap.xml'
+    | '/notifications'
     | '/checkout/cancel'
     | '/checkout/success'
     | '/admin/api-keys'
     | '/admin/audit-logs'
+    | '/admin/emails'
     | '/admin/payouts'
     | '/admin/plans'
     | '/admin/promo-codes'
@@ -459,6 +494,7 @@ export interface FileRouteTypes {
     | '/sam/managers'
     | '/sam/payouts'
     | '/sam/reports'
+    | '/settings/notifications'
     | '/api/v1/plans'
     | '/admin'
     | '/affiliate'
@@ -480,11 +516,13 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/affiliate'
     | '/_authenticated/manager'
+    | '/_authenticated/notifications'
     | '/_authenticated/sam'
     | '/checkout/cancel'
     | '/checkout/success'
     | '/_authenticated/admin/api-keys'
     | '/_authenticated/admin/audit-logs'
+    | '/_authenticated/admin/emails'
     | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/promo-codes'
@@ -501,6 +539,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sam/managers'
     | '/_authenticated/sam/payouts'
     | '/_authenticated/sam/reports'
+    | '/_authenticated/settings/notifications'
     | '/api/v1/plans'
     | '/_authenticated/admin/'
     | '/_authenticated/affiliate/'
@@ -595,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSamRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/manager': {
       id: '/_authenticated/manager'
       path: '/manager'
@@ -650,6 +696,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/plans'
       preLoaderRoute: typeof ApiV1PlansRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/settings/notifications': {
+      id: '/_authenticated/settings/notifications'
+      path: '/settings/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AuthenticatedSettingsNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/sam/reports': {
       id: '/_authenticated/sam/reports'
@@ -763,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPayoutsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/emails': {
+      id: '/_authenticated/admin/emails'
+      path: '/emails'
+      fullPath: '/admin/emails'
+      preLoaderRoute: typeof AuthenticatedAdminEmailsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/audit-logs': {
       id: '/_authenticated/admin/audit-logs'
       path: '/audit-logs'
@@ -818,6 +878,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminApiKeysRoute: typeof AuthenticatedAdminApiKeysRoute
   AuthenticatedAdminAuditLogsRoute: typeof AuthenticatedAdminAuditLogsRoute
+  AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
   AuthenticatedAdminPromoCodesRoute: typeof AuthenticatedAdminPromoCodesRoute
@@ -830,6 +891,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminApiKeysRoute: AuthenticatedAdminApiKeysRoute,
   AuthenticatedAdminAuditLogsRoute: AuthenticatedAdminAuditLogsRoute,
+  AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
   AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
   AuthenticatedAdminPromoCodesRoute: AuthenticatedAdminPromoCodesRoute,
@@ -904,14 +966,19 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRouteWithChildren
   AuthenticatedManagerRoute: typeof AuthenticatedManagerRouteWithChildren
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedSamRoute: typeof AuthenticatedSamRouteWithChildren
+  AuthenticatedSettingsNotificationsRoute: typeof AuthenticatedSettingsNotificationsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAffiliateRoute: AuthenticatedAffiliateRouteWithChildren,
   AuthenticatedManagerRoute: AuthenticatedManagerRouteWithChildren,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedSamRoute: AuthenticatedSamRouteWithChildren,
+  AuthenticatedSettingsNotificationsRoute:
+    AuthenticatedSettingsNotificationsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

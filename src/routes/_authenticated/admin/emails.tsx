@@ -77,7 +77,7 @@ function EmailsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Email delivery" description="Audit log of every transactional email." action={
+      <PageHeader title="Email delivery" subtitle="Audit log of every transactional email." action={
         <Button onClick={onWorker} variant="outline" size="sm"><RefreshCw className="mr-2 h-4 w-4" /> Run retry worker</Button>
       } />
 

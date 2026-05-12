@@ -46,7 +46,7 @@ function NotificationsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Notifications" description="All your alerts and updates in one place." action={
+      <PageHeader title="Notifications" subtitle="All your alerts and updates in one place." action={
         <Button onClick={markAll} variant="outline" size="sm"><CheckCheck className="mr-2 h-4 w-4" /> Mark all read</Button>
       } />
       {loading ? (

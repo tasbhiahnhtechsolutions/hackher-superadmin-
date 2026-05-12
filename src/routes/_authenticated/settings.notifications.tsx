@@ -58,7 +58,7 @@ function PrefsPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
-      <PageHeader title="Notification preferences" description="Choose what we send you and where." />
+      <PageHeader title="Notification preferences" subtitle="Choose what we send you and where." />
       {FIELDS.map((s) => (
         <Card key={s.section}>
           <CardHeader><CardTitle className="text-base">{s.section}</CardTitle></CardHeader>
