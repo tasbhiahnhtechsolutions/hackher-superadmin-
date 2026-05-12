@@ -46,6 +46,17 @@ function SettingsPage() {
 
   if (!form) return <PageBody><div className="text-muted-foreground">Loading…</div></PageBody>;
 
+  const pctInput = (val: number, set: (n: number) => void) => (
+    <Input
+      type="number"
+      step="0.5"
+      min={0}
+      max={50}
+      value={Number((val * 100).toFixed(2))}
+      onChange={(e) => set(Number(e.target.value) / 100)}
+    />
+  );
+
   return <>
     <PageHeader title="Platform Settings" subtitle="Defaults applied across the platform" />
     <PageBody>
@@ -60,11 +71,11 @@ function SettingsPage() {
           <p className="mt-1 text-xs text-muted-foreground">Time after a sale before commissions clear and become payable.</p>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><Label>Default affiliate %</Label><Input type="number" step="0.01" min={0} max={0.5} value={form.default_affiliate_rate} onChange={(e) => setForm({ ...form, default_affiliate_rate: Number(e.target.value) })} /></div>
-          <div><Label>Default manager %</Label><Input type="number" step="0.01" min={0} max={0.5} value={form.default_manager_rate} onChange={(e) => setForm({ ...form, default_manager_rate: Number(e.target.value) })} /></div>
-          <div><Label>Default SAM %</Label><Input type="number" step="0.01" min={0} max={0.5} value={form.default_sam_rate} onChange={(e) => setForm({ ...form, default_sam_rate: Number(e.target.value) })} /></div>
+          <div><Label>Default affiliate %</Label>{pctInput(form.default_affiliate_rate, (n) => setForm({ ...form, default_affiliate_rate: n }))}</div>
+          <div><Label>Default manager %</Label>{pctInput(form.default_manager_rate, (n) => setForm({ ...form, default_manager_rate: n }))}</div>
+          <div><Label>Default SAM %</Label>{pctInput(form.default_sam_rate, (n) => setForm({ ...form, default_sam_rate: n }))}</div>
         </div>
-        <p className="text-xs text-muted-foreground">Rates are decimals (0.20 = 20%). Per-user rates on profiles override these defaults.</p>
+        <p className="text-xs text-muted-foreground">Enter values as percentages (e.g. 20 = 20%). Per-user rates on profiles override these defaults.</p>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>{save.isPending ? "Saving…" : "Save settings"}</Button>
       </div>
     </PageBody>
