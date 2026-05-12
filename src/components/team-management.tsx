@@ -35,11 +35,15 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
     queryKey,
     enabled: !!user,
     queryFn: async () => {
-      // Fetch all roles for this role type, then filter by parent (or descendants)
+      // Get user_ids for this role (RLS now allows ancestors to see descendant roles)
       const { data: rolesRows } = await supabase.from("user_roles").select("user_id").eq("role", childRole);
       const ids = (rolesRows ?? []).map((r) => r.user_id);
       if (!ids.length) return [];
-      const { data: profiles } = await supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
+      let q = supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
+      // For non-recursive lists (Manager → affiliates, SAM → managers, SuperAdmin → SAMs)
+      // restrict to DIRECT children of the current user.
+      if (!recursive && user) q = q.eq("parent_user_id", user.id);
+      const { data: profiles } = await q;
       return profiles ?? [];
     },
   });
