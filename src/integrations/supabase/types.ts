@@ -55,6 +55,39 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          commission_hold_days: number
+          default_affiliate_rate: number
+          default_manager_rate: number
+          default_sam_rate: number
+          id: number
+          platform_name: string
+          support_email: string
+          updated_at: string
+        }
+        Insert: {
+          commission_hold_days?: number
+          default_affiliate_rate?: number
+          default_manager_rate?: number
+          default_sam_rate?: number
+          id?: number
+          platform_name?: string
+          support_email?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_hold_days?: number
+          default_affiliate_rate?: number
+          default_manager_rate?: number
+          default_sam_rate?: number
+          id?: number
+          platform_name?: string
+          support_email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -556,6 +589,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clear_due_commissions: { Args: never; Returns: number }
+      get_ancestor_chain: {
+        Args: { _user_id: string }
+        Returns: {
+          commission_rate: number
+          depth: number
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

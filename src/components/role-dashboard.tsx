@@ -47,13 +47,6 @@ export function RoleDashboard({ title, subtitle, kpis }: Props) {
         ))}
       </div>
 
-      <div className="rounded-xl border border-dashed border-border/60 bg-card/40 p-12 text-center">
-        <h3 className="text-lg font-semibold">Foundation ready</h3>
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Database, RBAC, auth, and role-based routing are wired up. In the next iteration we'll build out
-          subscription plans, promo codes, Stripe integration, and the public APIs.
-        </p>
-      </div>
     </div>
   );
 }

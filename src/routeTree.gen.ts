@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
+import { Route as CheckoutCancelRouteImport } from './routes/checkout.cancel'
 import { Route as AuthenticatedSamRouteImport } from './routes/_authenticated/sam'
 import { Route as AuthenticatedManagerRouteImport } from './routes/_authenticated/manager'
 import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
@@ -44,6 +47,7 @@ import { Route as AuthenticatedAdminApiKeysRouteImport } from './routes/_authent
 import { Route as ApiV1SubscriptionsCreateRouteImport } from './routes/api/v1/subscriptions/create'
 import { Route as ApiV1CouponsValidateRouteImport } from './routes/api/v1/coupons/validate'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
+import { Route as ApiPublicHooksClearCommissionsRouteImport } from './routes/api/public/hooks/clear-commissions'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -53,6 +57,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -67,6 +76,16 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
+  id: '/checkout/success',
+  path: '/checkout/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutCancelRoute = CheckoutCancelRouteImport.update({
+  id: '/checkout/cancel',
+  path: '/checkout/cancel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSamRoute = AuthenticatedSamRouteImport.update({
@@ -236,16 +255,25 @@ const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   path: '/api/public/webhooks/stripe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksClearCommissionsRoute =
+  ApiPublicHooksClearCommissionsRouteImport.update({
+    id: '/api/public/hooks/clear-commissions',
+    path: '/api/public/hooks/clear-commissions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
   '/manager': typeof AuthenticatedManagerRouteWithChildren
   '/sam': typeof AuthenticatedSamRouteWithChildren
+  '/checkout/cancel': typeof CheckoutCancelRoute
+  '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
@@ -269,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/affiliate/': typeof AuthenticatedAffiliateIndexRoute
   '/manager/': typeof AuthenticatedManagerIndexRoute
   '/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
   '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
@@ -276,8 +305,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/checkout/cancel': typeof CheckoutCancelRoute
+  '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
@@ -301,6 +333,7 @@ export interface FileRoutesByTo {
   '/affiliate': typeof AuthenticatedAffiliateIndexRoute
   '/manager': typeof AuthenticatedManagerIndexRoute
   '/sam': typeof AuthenticatedSamIndexRoute
+  '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
   '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
@@ -310,12 +343,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
   '/_authenticated/manager': typeof AuthenticatedManagerRouteWithChildren
   '/_authenticated/sam': typeof AuthenticatedSamRouteWithChildren
+  '/checkout/cancel': typeof CheckoutCancelRoute
+  '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
@@ -339,6 +375,7 @@ export interface FileRoutesById {
   '/_authenticated/affiliate/': typeof AuthenticatedAffiliateIndexRoute
   '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
   '/_authenticated/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
   '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
@@ -348,12 +385,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/pricing'
     | '/signup'
     | '/sitemap.xml'
     | '/admin'
     | '/affiliate'
     | '/manager'
     | '/sam'
+    | '/checkout/cancel'
+    | '/checkout/success'
     | '/admin/api-keys'
     | '/admin/audit-logs'
     | '/admin/payouts'
@@ -377,6 +417,7 @@ export interface FileRouteTypes {
     | '/affiliate/'
     | '/manager/'
     | '/sam/'
+    | '/api/public/hooks/clear-commissions'
     | '/api/public/webhooks/stripe'
     | '/api/v1/coupons/validate'
     | '/api/v1/subscriptions/create'
@@ -384,8 +425,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/pricing'
     | '/signup'
     | '/sitemap.xml'
+    | '/checkout/cancel'
+    | '/checkout/success'
     | '/admin/api-keys'
     | '/admin/audit-logs'
     | '/admin/payouts'
@@ -409,6 +453,7 @@ export interface FileRouteTypes {
     | '/affiliate'
     | '/manager'
     | '/sam'
+    | '/api/public/hooks/clear-commissions'
     | '/api/public/webhooks/stripe'
     | '/api/v1/coupons/validate'
     | '/api/v1/subscriptions/create'
@@ -417,12 +462,15 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/pricing'
     | '/signup'
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/affiliate'
     | '/_authenticated/manager'
     | '/_authenticated/sam'
+    | '/checkout/cancel'
+    | '/checkout/success'
     | '/_authenticated/admin/api-keys'
     | '/_authenticated/admin/audit-logs'
     | '/_authenticated/admin/payouts'
@@ -446,6 +494,7 @@ export interface FileRouteTypes {
     | '/_authenticated/affiliate/'
     | '/_authenticated/manager/'
     | '/_authenticated/sam/'
+    | '/api/public/hooks/clear-commissions'
     | '/api/public/webhooks/stripe'
     | '/api/v1/coupons/validate'
     | '/api/v1/subscriptions/create'
@@ -455,9 +504,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PricingRoute: typeof PricingRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CheckoutCancelRoute: typeof CheckoutCancelRoute
+  CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   ApiV1PlansRoute: typeof ApiV1PlansRoute
+  ApiPublicHooksClearCommissionsRoute: typeof ApiPublicHooksClearCommissionsRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
   ApiV1CouponsValidateRoute: typeof ApiV1CouponsValidateRoute
   ApiV1SubscriptionsCreateRoute: typeof ApiV1SubscriptionsCreateRoute
@@ -479,6 +532,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -498,6 +558,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/success': {
+      id: '/checkout/success'
+      path: '/checkout/success'
+      fullPath: '/checkout/success'
+      preLoaderRoute: typeof CheckoutSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/cancel': {
+      id: '/checkout/cancel'
+      path: '/checkout/cancel'
+      fullPath: '/checkout/cancel'
+      preLoaderRoute: typeof CheckoutCancelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/sam': {
@@ -710,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/clear-commissions': {
+      id: '/api/public/hooks/clear-commissions'
+      path: '/api/public/hooks/clear-commissions'
+      fullPath: '/api/public/hooks/clear-commissions'
+      preLoaderRoute: typeof ApiPublicHooksClearCommissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -820,9 +901,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  PricingRoute: PricingRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CheckoutCancelRoute: CheckoutCancelRoute,
+  CheckoutSuccessRoute: CheckoutSuccessRoute,
   ApiV1PlansRoute: ApiV1PlansRoute,
+  ApiPublicHooksClearCommissionsRoute: ApiPublicHooksClearCommissionsRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
   ApiV1CouponsValidateRoute: ApiV1CouponsValidateRoute,
   ApiV1SubscriptionsCreateRoute: ApiV1SubscriptionsCreateRoute,
@@ -830,13 +915,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
