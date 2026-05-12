@@ -25,10 +25,11 @@ interface Props {
 
 export function TeamManagement({ title, subtitle, childRole, recursive = false, readOnly = false }: Props) {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const create = useServerFn(createSubordinate);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", fullName: "", password: "", commission: 10 });
+  const isSuperAdmin = role === "super_admin";
 
   const queryKey = ["team", childRole, user?.id, recursive];
   const { data, isLoading } = useQuery({
