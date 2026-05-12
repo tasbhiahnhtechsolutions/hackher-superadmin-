@@ -1,0 +1,110 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth, type AppRole } from "@/lib/auth";
+import { createSubordinate } from "@/lib/users.functions";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { PageHeader, PageBody } from "@/components/page-header";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+
+interface Props {
+  title: string;
+  subtitle: string;
+  childRole: "sam" | "manager" | "affiliate";
+  // when true, show all descendants (recursive); else only direct
+  recursive?: boolean;
+}
+
+export function TeamManagement({ title, subtitle, childRole, recursive = false }: Props) {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const create = useServerFn(createSubordinate);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ email: "", fullName: "", password: "", commission: 10 });
+
+  const queryKey = ["team", childRole, user?.id, recursive];
+  const { data, isLoading } = useQuery({
+    queryKey,
+    enabled: !!user,
+    queryFn: async () => {
+      // Fetch all roles for this role type, then filter by parent (or descendants)
+      const { data: rolesRows } = await supabase.from("user_roles").select("user_id").eq("role", childRole);
+      const ids = (rolesRows ?? []).map((r) => r.user_id);
+      if (!ids.length) return [];
+      const { data: profiles } = await supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
+      return profiles ?? [];
+    },
+  });
+
+  const createMut = useMutation({
+    mutationFn: async () => {
+      return create({ data: { email: form.email, fullName: form.fullName, password: form.password, role: childRole, commissionRate: form.commission / 100 } });
+    },
+    onSuccess: () => {
+      toast.success("Account created");
+      setOpen(false);
+      setForm({ email: "", fullName: "", password: "", commission: 10 });
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const labelMap: Record<AppRole, string> = { super_admin: "Super Admin", sam: "SAM", manager: "Manager", affiliate: "Affiliate", customer: "Customer" };
+
+  return (
+    <>
+      <PageHeader
+        title={title}
+        subtitle={subtitle}
+        action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New {labelMap[childRole]}</Button>}
+      />
+      <PageBody>
+        <div className="rounded-xl border border-border/60 bg-card">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Name</TableHead><TableHead>Email</TableHead>
+              <TableHead>Commission</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {isLoading ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                : !data?.length ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
+                : data.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell>{u.commission_rate ? `${(Number(u.commission_rate) * 100).toFixed(0)}%` : "—"}</TableCell>
+                    <TableCell><Badge variant={u.status === "active" ? "default" : "secondary"}>{u.status}</Badge></TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      </PageBody>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create {labelMap[childRole]}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Full name</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
+            <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><Label>Temporary password</Label><Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 8 characters" /></div>
+            <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
+              <p className="mt-1 text-xs text-muted-foreground">Maximum 30%.</p></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>{createMut.isPending ? "Creating…" : "Create"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

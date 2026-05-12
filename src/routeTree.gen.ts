@@ -18,6 +18,32 @@ import { Route as AuthenticatedSamRouteImport } from './routes/_authenticated/sa
 import { Route as AuthenticatedManagerRouteImport } from './routes/_authenticated/manager'
 import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedSamIndexRouteImport } from './routes/_authenticated/sam/index'
+import { Route as AuthenticatedManagerIndexRouteImport } from './routes/_authenticated/manager/index'
+import { Route as AuthenticatedAffiliateIndexRouteImport } from './routes/_authenticated/affiliate/index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as ApiV1PlansRouteImport } from './routes/api/v1/plans'
+import { Route as AuthenticatedSamReportsRouteImport } from './routes/_authenticated/sam/reports'
+import { Route as AuthenticatedSamPayoutsRouteImport } from './routes/_authenticated/sam/payouts'
+import { Route as AuthenticatedSamManagersRouteImport } from './routes/_authenticated/sam/managers'
+import { Route as AuthenticatedSamAffiliatesRouteImport } from './routes/_authenticated/sam/affiliates'
+import { Route as AuthenticatedManagerSubscribersRouteImport } from './routes/_authenticated/manager/subscribers'
+import { Route as AuthenticatedManagerReportsRouteImport } from './routes/_authenticated/manager/reports'
+import { Route as AuthenticatedManagerAffiliatesRouteImport } from './routes/_authenticated/manager/affiliates'
+import { Route as AuthenticatedAffiliateSubscribersRouteImport } from './routes/_authenticated/affiliate/subscribers'
+import { Route as AuthenticatedAffiliatePromoCodesRouteImport } from './routes/_authenticated/affiliate/promo-codes'
+import { Route as AuthenticatedAffiliateEarningsRouteImport } from './routes/_authenticated/affiliate/earnings'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
+import { Route as AuthenticatedAdminPromoCodesRouteImport } from './routes/_authenticated/admin/promo-codes'
+import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
+import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
+import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin/audit-logs'
+import { Route as AuthenticatedAdminApiKeysRouteImport } from './routes/_authenticated/admin/api-keys'
+import { Route as ApiV1SubscriptionsCreateRouteImport } from './routes/api/v1/subscriptions/create'
+import { Route as ApiV1CouponsValidateRouteImport } from './routes/api/v1/coupons/validate'
+import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -63,26 +89,221 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSamIndexRoute = AuthenticatedSamIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedSamRoute,
+} as any)
+const AuthenticatedManagerIndexRoute =
+  AuthenticatedManagerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedAffiliateIndexRoute =
+  AuthenticatedAffiliateIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const ApiV1PlansRoute = ApiV1PlansRouteImport.update({
+  id: '/api/v1/plans',
+  path: '/api/v1/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSamReportsRoute = AuthenticatedSamReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedSamRoute,
+} as any)
+const AuthenticatedSamPayoutsRoute = AuthenticatedSamPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => AuthenticatedSamRoute,
+} as any)
+const AuthenticatedSamManagersRoute =
+  AuthenticatedSamManagersRouteImport.update({
+    id: '/managers',
+    path: '/managers',
+    getParentRoute: () => AuthenticatedSamRoute,
+  } as any)
+const AuthenticatedSamAffiliatesRoute =
+  AuthenticatedSamAffiliatesRouteImport.update({
+    id: '/affiliates',
+    path: '/affiliates',
+    getParentRoute: () => AuthenticatedSamRoute,
+  } as any)
+const AuthenticatedManagerSubscribersRoute =
+  AuthenticatedManagerSubscribersRouteImport.update({
+    id: '/subscribers',
+    path: '/subscribers',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedManagerReportsRoute =
+  AuthenticatedManagerReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedManagerAffiliatesRoute =
+  AuthenticatedManagerAffiliatesRouteImport.update({
+    id: '/affiliates',
+    path: '/affiliates',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedAffiliateSubscribersRoute =
+  AuthenticatedAffiliateSubscribersRouteImport.update({
+    id: '/subscribers',
+    path: '/subscribers',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
+const AuthenticatedAffiliatePromoCodesRoute =
+  AuthenticatedAffiliatePromoCodesRouteImport.update({
+    id: '/promo-codes',
+    path: '/promo-codes',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
+const AuthenticatedAffiliateEarningsRoute =
+  AuthenticatedAffiliateEarningsRouteImport.update({
+    id: '/earnings',
+    path: '/earnings',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPromoCodesRoute =
+  AuthenticatedAdminPromoCodesRouteImport.update({
+    id: '/promo-codes',
+    path: '/promo-codes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminPlansRoute = AuthenticatedAdminPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminPayoutsRoute =
+  AuthenticatedAdminPayoutsRouteImport.update({
+    id: '/payouts',
+    path: '/payouts',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAuditLogsRoute =
+  AuthenticatedAdminAuditLogsRouteImport.update({
+    id: '/audit-logs',
+    path: '/audit-logs',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminApiKeysRoute =
+  AuthenticatedAdminApiKeysRouteImport.update({
+    id: '/api-keys',
+    path: '/api-keys',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const ApiV1SubscriptionsCreateRoute =
+  ApiV1SubscriptionsCreateRouteImport.update({
+    id: '/api/v1/subscriptions/create',
+    path: '/api/v1/subscriptions/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiV1CouponsValidateRoute = ApiV1CouponsValidateRouteImport.update({
+  id: '/api/v1/coupons/validate',
+  path: '/api/v1/coupons/validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
+  id: '/api/public/webhooks/stripe',
+  path: '/api/public/webhooks/stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof AuthenticatedAdminRoute
-  '/affiliate': typeof AuthenticatedAffiliateRoute
-  '/manager': typeof AuthenticatedManagerRoute
-  '/sam': typeof AuthenticatedSamRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
+  '/manager': typeof AuthenticatedManagerRouteWithChildren
+  '/sam': typeof AuthenticatedSamRouteWithChildren
+  '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
+  '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
+  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
+  '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/manager/reports': typeof AuthenticatedManagerReportsRoute
+  '/manager/subscribers': typeof AuthenticatedManagerSubscribersRoute
+  '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
+  '/sam/managers': typeof AuthenticatedSamManagersRoute
+  '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
+  '/sam/reports': typeof AuthenticatedSamReportsRoute
+  '/api/v1/plans': typeof ApiV1PlansRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/affiliate/': typeof AuthenticatedAffiliateIndexRoute
+  '/manager/': typeof AuthenticatedManagerIndexRoute
+  '/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
+  '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof AuthenticatedAdminRoute
-  '/affiliate': typeof AuthenticatedAffiliateRoute
-  '/manager': typeof AuthenticatedManagerRoute
-  '/sam': typeof AuthenticatedSamRoute
+  '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
+  '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
+  '/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
+  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
+  '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/manager/reports': typeof AuthenticatedManagerReportsRoute
+  '/manager/subscribers': typeof AuthenticatedManagerSubscribersRoute
+  '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
+  '/sam/managers': typeof AuthenticatedSamManagersRoute
+  '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
+  '/sam/reports': typeof AuthenticatedSamReportsRoute
+  '/api/v1/plans': typeof ApiV1PlansRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/affiliate': typeof AuthenticatedAffiliateIndexRoute
+  '/manager': typeof AuthenticatedManagerIndexRoute
+  '/sam': typeof AuthenticatedSamIndexRoute
+  '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
+  '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -91,10 +312,36 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/affiliate': typeof AuthenticatedAffiliateRoute
-  '/_authenticated/manager': typeof AuthenticatedManagerRoute
-  '/_authenticated/sam': typeof AuthenticatedSamRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
+  '/_authenticated/manager': typeof AuthenticatedManagerRouteWithChildren
+  '/_authenticated/sam': typeof AuthenticatedSamRouteWithChildren
+  '/_authenticated/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
+  '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
+  '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
+  '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
+  '/_authenticated/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
+  '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
+  '/_authenticated/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/_authenticated/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
+  '/_authenticated/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/_authenticated/manager/reports': typeof AuthenticatedManagerReportsRoute
+  '/_authenticated/manager/subscribers': typeof AuthenticatedManagerSubscribersRoute
+  '/_authenticated/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
+  '/_authenticated/sam/managers': typeof AuthenticatedSamManagersRoute
+  '/_authenticated/sam/payouts': typeof AuthenticatedSamPayoutsRoute
+  '/_authenticated/sam/reports': typeof AuthenticatedSamReportsRoute
+  '/api/v1/plans': typeof ApiV1PlansRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/affiliate/': typeof AuthenticatedAffiliateIndexRoute
+  '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
+  '/_authenticated/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
+  '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,16 +354,64 @@ export interface FileRouteTypes {
     | '/affiliate'
     | '/manager'
     | '/sam'
+    | '/admin/api-keys'
+    | '/admin/audit-logs'
+    | '/admin/payouts'
+    | '/admin/plans'
+    | '/admin/promo-codes'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/affiliate/earnings'
+    | '/affiliate/promo-codes'
+    | '/affiliate/subscribers'
+    | '/manager/affiliates'
+    | '/manager/reports'
+    | '/manager/subscribers'
+    | '/sam/affiliates'
+    | '/sam/managers'
+    | '/sam/payouts'
+    | '/sam/reports'
+    | '/api/v1/plans'
+    | '/admin/'
+    | '/affiliate/'
+    | '/manager/'
+    | '/sam/'
+    | '/api/public/webhooks/stripe'
+    | '/api/v1/coupons/validate'
+    | '/api/v1/subscriptions/create'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
     | '/sitemap.xml'
+    | '/admin/api-keys'
+    | '/admin/audit-logs'
+    | '/admin/payouts'
+    | '/admin/plans'
+    | '/admin/promo-codes'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/affiliate/earnings'
+    | '/affiliate/promo-codes'
+    | '/affiliate/subscribers'
+    | '/manager/affiliates'
+    | '/manager/reports'
+    | '/manager/subscribers'
+    | '/sam/affiliates'
+    | '/sam/managers'
+    | '/sam/payouts'
+    | '/sam/reports'
+    | '/api/v1/plans'
     | '/admin'
     | '/affiliate'
     | '/manager'
     | '/sam'
+    | '/api/public/webhooks/stripe'
+    | '/api/v1/coupons/validate'
+    | '/api/v1/subscriptions/create'
   id:
     | '__root__'
     | '/'
@@ -128,6 +423,32 @@ export interface FileRouteTypes {
     | '/_authenticated/affiliate'
     | '/_authenticated/manager'
     | '/_authenticated/sam'
+    | '/_authenticated/admin/api-keys'
+    | '/_authenticated/admin/audit-logs'
+    | '/_authenticated/admin/payouts'
+    | '/_authenticated/admin/plans'
+    | '/_authenticated/admin/promo-codes'
+    | '/_authenticated/admin/reports'
+    | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/users'
+    | '/_authenticated/affiliate/earnings'
+    | '/_authenticated/affiliate/promo-codes'
+    | '/_authenticated/affiliate/subscribers'
+    | '/_authenticated/manager/affiliates'
+    | '/_authenticated/manager/reports'
+    | '/_authenticated/manager/subscribers'
+    | '/_authenticated/sam/affiliates'
+    | '/_authenticated/sam/managers'
+    | '/_authenticated/sam/payouts'
+    | '/_authenticated/sam/reports'
+    | '/api/v1/plans'
+    | '/_authenticated/admin/'
+    | '/_authenticated/affiliate/'
+    | '/_authenticated/manager/'
+    | '/_authenticated/sam/'
+    | '/api/public/webhooks/stripe'
+    | '/api/v1/coupons/validate'
+    | '/api/v1/subscriptions/create'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,6 +457,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiV1PlansRoute: typeof ApiV1PlansRoute
+  ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiV1CouponsValidateRoute: typeof ApiV1CouponsValidateRoute
+  ApiV1SubscriptionsCreateRoute: typeof ApiV1SubscriptionsCreateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -203,21 +528,288 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/sam/': {
+      id: '/_authenticated/sam/'
+      path: '/'
+      fullPath: '/sam/'
+      preLoaderRoute: typeof AuthenticatedSamIndexRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/manager/': {
+      id: '/_authenticated/manager/'
+      path: '/'
+      fullPath: '/manager/'
+      preLoaderRoute: typeof AuthenticatedManagerIndexRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/affiliate/': {
+      id: '/_authenticated/affiliate/'
+      path: '/'
+      fullPath: '/affiliate/'
+      preLoaderRoute: typeof AuthenticatedAffiliateIndexRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/v1/plans': {
+      id: '/api/v1/plans'
+      path: '/api/v1/plans'
+      fullPath: '/api/v1/plans'
+      preLoaderRoute: typeof ApiV1PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/sam/reports': {
+      id: '/_authenticated/sam/reports'
+      path: '/reports'
+      fullPath: '/sam/reports'
+      preLoaderRoute: typeof AuthenticatedSamReportsRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/sam/payouts': {
+      id: '/_authenticated/sam/payouts'
+      path: '/payouts'
+      fullPath: '/sam/payouts'
+      preLoaderRoute: typeof AuthenticatedSamPayoutsRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/sam/managers': {
+      id: '/_authenticated/sam/managers'
+      path: '/managers'
+      fullPath: '/sam/managers'
+      preLoaderRoute: typeof AuthenticatedSamManagersRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/sam/affiliates': {
+      id: '/_authenticated/sam/affiliates'
+      path: '/affiliates'
+      fullPath: '/sam/affiliates'
+      preLoaderRoute: typeof AuthenticatedSamAffiliatesRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/manager/subscribers': {
+      id: '/_authenticated/manager/subscribers'
+      path: '/subscribers'
+      fullPath: '/manager/subscribers'
+      preLoaderRoute: typeof AuthenticatedManagerSubscribersRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/manager/reports': {
+      id: '/_authenticated/manager/reports'
+      path: '/reports'
+      fullPath: '/manager/reports'
+      preLoaderRoute: typeof AuthenticatedManagerReportsRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/manager/affiliates': {
+      id: '/_authenticated/manager/affiliates'
+      path: '/affiliates'
+      fullPath: '/manager/affiliates'
+      preLoaderRoute: typeof AuthenticatedManagerAffiliatesRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/affiliate/subscribers': {
+      id: '/_authenticated/affiliate/subscribers'
+      path: '/subscribers'
+      fullPath: '/affiliate/subscribers'
+      preLoaderRoute: typeof AuthenticatedAffiliateSubscribersRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
+    }
+    '/_authenticated/affiliate/promo-codes': {
+      id: '/_authenticated/affiliate/promo-codes'
+      path: '/promo-codes'
+      fullPath: '/affiliate/promo-codes'
+      preLoaderRoute: typeof AuthenticatedAffiliatePromoCodesRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
+    }
+    '/_authenticated/affiliate/earnings': {
+      id: '/_authenticated/affiliate/earnings'
+      path: '/earnings'
+      fullPath: '/affiliate/earnings'
+      preLoaderRoute: typeof AuthenticatedAffiliateEarningsRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/promo-codes': {
+      id: '/_authenticated/admin/promo-codes'
+      path: '/promo-codes'
+      fullPath: '/admin/promo-codes'
+      preLoaderRoute: typeof AuthenticatedAdminPromoCodesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/plans': {
+      id: '/_authenticated/admin/plans'
+      path: '/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AuthenticatedAdminPlansRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/payouts': {
+      id: '/_authenticated/admin/payouts'
+      path: '/payouts'
+      fullPath: '/admin/payouts'
+      preLoaderRoute: typeof AuthenticatedAdminPayoutsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/audit-logs': {
+      id: '/_authenticated/admin/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/admin/audit-logs'
+      preLoaderRoute: typeof AuthenticatedAdminAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/api-keys': {
+      id: '/_authenticated/admin/api-keys'
+      path: '/api-keys'
+      fullPath: '/admin/api-keys'
+      preLoaderRoute: typeof AuthenticatedAdminApiKeysRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/v1/subscriptions/create': {
+      id: '/api/v1/subscriptions/create'
+      path: '/api/v1/subscriptions/create'
+      fullPath: '/api/v1/subscriptions/create'
+      preLoaderRoute: typeof ApiV1SubscriptionsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/coupons/validate': {
+      id: '/api/v1/coupons/validate'
+      path: '/api/v1/coupons/validate'
+      fullPath: '/api/v1/coupons/validate'
+      preLoaderRoute: typeof ApiV1CouponsValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/stripe': {
+      id: '/api/public/webhooks/stripe'
+      path: '/api/public/webhooks/stripe'
+      fullPath: '/api/public/webhooks/stripe'
+      preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminApiKeysRoute: typeof AuthenticatedAdminApiKeysRoute
+  AuthenticatedAdminAuditLogsRoute: typeof AuthenticatedAdminAuditLogsRoute
+  AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
+  AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
+  AuthenticatedAdminPromoCodesRoute: typeof AuthenticatedAdminPromoCodesRoute
+  AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminApiKeysRoute: AuthenticatedAdminApiKeysRoute,
+  AuthenticatedAdminAuditLogsRoute: AuthenticatedAdminAuditLogsRoute,
+  AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
+  AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
+  AuthenticatedAdminPromoCodesRoute: AuthenticatedAdminPromoCodesRoute,
+  AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedAffiliateRouteChildren {
+  AuthenticatedAffiliateEarningsRoute: typeof AuthenticatedAffiliateEarningsRoute
+  AuthenticatedAffiliatePromoCodesRoute: typeof AuthenticatedAffiliatePromoCodesRoute
+  AuthenticatedAffiliateSubscribersRoute: typeof AuthenticatedAffiliateSubscribersRoute
+  AuthenticatedAffiliateIndexRoute: typeof AuthenticatedAffiliateIndexRoute
+}
+
+const AuthenticatedAffiliateRouteChildren: AuthenticatedAffiliateRouteChildren =
+  {
+    AuthenticatedAffiliateEarningsRoute: AuthenticatedAffiliateEarningsRoute,
+    AuthenticatedAffiliatePromoCodesRoute:
+      AuthenticatedAffiliatePromoCodesRoute,
+    AuthenticatedAffiliateSubscribersRoute:
+      AuthenticatedAffiliateSubscribersRoute,
+    AuthenticatedAffiliateIndexRoute: AuthenticatedAffiliateIndexRoute,
+  }
+
+const AuthenticatedAffiliateRouteWithChildren =
+  AuthenticatedAffiliateRoute._addFileChildren(
+    AuthenticatedAffiliateRouteChildren,
+  )
+
+interface AuthenticatedManagerRouteChildren {
+  AuthenticatedManagerAffiliatesRoute: typeof AuthenticatedManagerAffiliatesRoute
+  AuthenticatedManagerReportsRoute: typeof AuthenticatedManagerReportsRoute
+  AuthenticatedManagerSubscribersRoute: typeof AuthenticatedManagerSubscribersRoute
+  AuthenticatedManagerIndexRoute: typeof AuthenticatedManagerIndexRoute
+}
+
+const AuthenticatedManagerRouteChildren: AuthenticatedManagerRouteChildren = {
+  AuthenticatedManagerAffiliatesRoute: AuthenticatedManagerAffiliatesRoute,
+  AuthenticatedManagerReportsRoute: AuthenticatedManagerReportsRoute,
+  AuthenticatedManagerSubscribersRoute: AuthenticatedManagerSubscribersRoute,
+  AuthenticatedManagerIndexRoute: AuthenticatedManagerIndexRoute,
+}
+
+const AuthenticatedManagerRouteWithChildren =
+  AuthenticatedManagerRoute._addFileChildren(AuthenticatedManagerRouteChildren)
+
+interface AuthenticatedSamRouteChildren {
+  AuthenticatedSamAffiliatesRoute: typeof AuthenticatedSamAffiliatesRoute
+  AuthenticatedSamManagersRoute: typeof AuthenticatedSamManagersRoute
+  AuthenticatedSamPayoutsRoute: typeof AuthenticatedSamPayoutsRoute
+  AuthenticatedSamReportsRoute: typeof AuthenticatedSamReportsRoute
+  AuthenticatedSamIndexRoute: typeof AuthenticatedSamIndexRoute
+}
+
+const AuthenticatedSamRouteChildren: AuthenticatedSamRouteChildren = {
+  AuthenticatedSamAffiliatesRoute: AuthenticatedSamAffiliatesRoute,
+  AuthenticatedSamManagersRoute: AuthenticatedSamManagersRoute,
+  AuthenticatedSamPayoutsRoute: AuthenticatedSamPayoutsRoute,
+  AuthenticatedSamReportsRoute: AuthenticatedSamReportsRoute,
+  AuthenticatedSamIndexRoute: AuthenticatedSamIndexRoute,
+}
+
+const AuthenticatedSamRouteWithChildren =
+  AuthenticatedSamRoute._addFileChildren(AuthenticatedSamRouteChildren)
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRoute
-  AuthenticatedManagerRoute: typeof AuthenticatedManagerRoute
-  AuthenticatedSamRoute: typeof AuthenticatedSamRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRouteWithChildren
+  AuthenticatedManagerRoute: typeof AuthenticatedManagerRouteWithChildren
+  AuthenticatedSamRoute: typeof AuthenticatedSamRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedAffiliateRoute: AuthenticatedAffiliateRoute,
-  AuthenticatedManagerRoute: AuthenticatedManagerRoute,
-  AuthenticatedSamRoute: AuthenticatedSamRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAffiliateRoute: AuthenticatedAffiliateRouteWithChildren,
+  AuthenticatedManagerRoute: AuthenticatedManagerRouteWithChildren,
+  AuthenticatedSamRoute: AuthenticatedSamRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -230,17 +822,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiV1PlansRoute: ApiV1PlansRoute,
+  ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiV1CouponsValidateRoute: ApiV1CouponsValidateRoute,
+  ApiV1SubscriptionsCreateRoute: ApiV1SubscriptionsCreateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
