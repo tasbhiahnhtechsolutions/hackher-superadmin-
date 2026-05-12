@@ -20,9 +20,10 @@ interface Props {
   childRole: "sam" | "manager" | "affiliate";
   // when true, show all descendants (recursive); else only direct
   recursive?: boolean;
+  readOnly?: boolean;
 }
 
-export function TeamManagement({ title, subtitle, childRole, recursive = false }: Props) {
+export function TeamManagement({ title, subtitle, childRole, recursive = false, readOnly = false }: Props) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const create = useServerFn(createSubordinate);
