@@ -51,14 +51,11 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
 
   const createMut = useMutation({
     mutationFn: async () => {
-      const isAffiliate = childRole === "affiliate";
       return create({ data: {
         email: form.email,
         fullName: form.fullName,
         password: form.password,
         role: childRole,
-        // Only super admin can set a custom commission; others use server defaults
-        commissionRate: isSuperAdmin && !isAffiliate ? form.commission / 100 : undefined,
       }});
     },
     onSuccess: (res) => {
