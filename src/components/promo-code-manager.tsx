@@ -181,7 +181,20 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                     <TableCell>{c.usage_count} / {c.usage_limit ?? "∞"}</TableCell>
                     <TableCell>{c.stripe_promo_id ? <Badge variant="outline">Synced</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
                     <TableCell><Badge variant={c.status === "active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-2">
+                      {canEdit && (
+                        <Button size="sm" variant="outline"
+                          onClick={() => setEditing({
+                            id: c.id,
+                            code: c.code,
+                            discount: Number(c.discount_percent),
+                            usageLimit: c.usage_limit?.toString() ?? "",
+                            usageCount: c.usage_count,
+                            status: c.status as "active" | "inactive",
+                          })}>
+                          Edit
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline"
                         onClick={() => toggleStatus.mutate({ id: c.id, status: c.status === "active" ? "inactive" : "active" })}>
                         {c.status === "active" ? "Disable" : "Enable"}
