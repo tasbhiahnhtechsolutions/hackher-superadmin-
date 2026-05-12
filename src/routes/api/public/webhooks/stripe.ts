@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendAppEmail } from "@/lib/email/send.server";
+import { detectSelfReferral, detectRapidRefund } from "@/lib/fraud.server";
 
 const APP_URL = process.env.APP_URL || "https://hackher.ai";
 
