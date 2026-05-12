@@ -25,11 +25,13 @@ const CreateSchema = z.object({
 
 const UpdateSchema = z.object({
   id: z.string().uuid(),
+  code: z.string().regex(/^[A-Za-z0-9]{3,30}$/).optional(),
   discountPercent: z.number().min(1).max(MAX_DISCOUNT_PCT).optional(),
   status: z.enum(["active", "inactive"]).optional(),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
   usageLimit: z.number().int().positive().nullable().optional(),
+  usageCount: z.number().int().min(0).optional(),
 });
 
 async function callerRole(userId: string) {
