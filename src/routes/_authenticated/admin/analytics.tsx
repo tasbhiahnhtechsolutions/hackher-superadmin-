@@ -65,7 +65,6 @@ function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Advanced Analytics" description="Cohorts, LTV, churn, revenue trends" icon={TrendingUp} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card><CardContent className="p-5">

@@ -69,9 +69,8 @@ function FraudPage() {
     <div className="space-y-6">
       <PageHeader
         title="Fraud Review"
-        description="Suspicious activity flagged by automated detection"
-        icon={ShieldAlert}
-        actions={
+        subtitle="Suspicious activity flagged by automated detection"
+        action={
           <div className="flex gap-2">
             <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>

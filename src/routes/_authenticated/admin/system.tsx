@@ -53,9 +53,8 @@ function SystemPage() {
     <div className="space-y-6">
       <PageHeader
         title="System Health"
-        description="Live operational metrics across webhooks, email, fraud, and auth"
-        icon={Activity}
-        actions={<Button variant="outline" size="icon" onClick={load} disabled={loading}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></Button>}
+        subtitle="Live operational metrics across webhooks, email, fraud, and auth"
+        action={<Button variant="outline" size="icon" onClick={load} disabled={loading}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></Button>}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
