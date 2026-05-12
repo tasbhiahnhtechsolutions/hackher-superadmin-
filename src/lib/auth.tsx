@@ -33,7 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadedFor = useRef<string | null>(null);
+
   const loadUserData = async (uid: string) => {
+    if (loadedFor.current === uid) return;
+    loadedFor.current = uid;
     const [{ data: profileData }, { data: roleData }] = await Promise.all([
       supabase.from("profiles").select("id,email,full_name,avatar_url,status").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid).order("role").limit(1).maybeSingle(),
@@ -48,22 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        // defer to avoid deadlock
+        // defer to avoid deadlock; dedup via loadedFor ref
         setTimeout(() => loadUserData(sess.user.id), 0);
       } else {
+        loadedFor.current = null;
         setProfile(null);
         setRole(null);
       }
-    });
-
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        loadUserData(data.session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
     return () => sub.subscription.unsubscribe();
