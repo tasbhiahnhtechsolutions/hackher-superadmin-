@@ -23,13 +23,13 @@ function LoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signIn(email, password);
+    const { error, role: signedInRole } = await signIn(email, password);
     setLoading(false);
     if (error) {
       toast.error(error);
     } else {
       toast.success("Welcome back");
-      navigate({ to: "/", replace: true });
+      if (signedInRole) navigate({ to: ROLE_HOME[signedInRole], replace: true });
     }
   };
 

@@ -18,7 +18,7 @@ interface AuthContextValue {
   profile: Profile | null;
   role: AppRole | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string) => Promise<{ error?: string; role?: AppRole | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -35,9 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadedFor = useRef<string | null>(null);
 
-  const loadUserData = useCallback(async (uid: string) => {
-    if (loadedFor.current === uid) return;
-    loadedFor.current = uid;
+  const loadUserData = useCallback(async (uid: string, force = false) => {
+    if (!force && loadedFor.current === uid) return role;
     setLoading(true);
     try {
       const [{ data: profileData }, { data: roleRows }] = await Promise.all([
@@ -46,12 +45,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
       const rolePriority: AppRole[] = ["super_admin", "sam", "manager", "affiliate", "customer"];
+      const resolvedRole = rolePriority.find((candidate) => roles.includes(candidate)) ?? null;
       setProfile(profileData as Profile | null);
-      setRole(rolePriority.find((candidate) => roles.includes(candidate)) ?? null);
+      setRole(resolvedRole);
+      loadedFor.current = uid;
+      return resolvedRole;
+    } catch (error) {
+      console.error("Failed to load signed-in user data", error);
+      loadedFor.current = null;
+      setProfile(null);
+      setRole(null);
+      return null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     // CRITICAL: set listener BEFORE getSession
@@ -84,8 +92,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadUserData]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message };
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      return { error: error.message };
+    }
+    if (data.user) {
+      setSession(data.session);
+      setUser(data.user);
+      const loadedRole = await loadUserData(data.user.id, true);
+      return { role: loadedRole };
+    } else {
+      setLoading(false);
+    }
+    return {};
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
