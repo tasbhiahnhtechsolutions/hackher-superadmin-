@@ -57,7 +57,8 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
         fullName: form.fullName,
         password: form.password,
         role: childRole,
-        commissionRate: isAffiliate ? undefined : form.commission / 100,
+        // Only super admin can set a custom commission; others use server defaults
+        commissionRate: isSuperAdmin && !isAffiliate ? form.commission / 100 : undefined,
       }});
     },
     onSuccess: (res) => {
