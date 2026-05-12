@@ -19,6 +19,7 @@ interface NavItem { to: string; label: string; icon: typeof Users; }
 const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
   super_admin: [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/admin/sams", label: "Super Admin Managers", icon: UserCog },
     { to: "/admin/users", label: "Users & Roles", icon: Users },
     { to: "/admin/plans", label: "Subscription Plans", icon: CreditCard },
     { to: "/admin/promo-codes", label: "Promo Codes", icon: Tag },
