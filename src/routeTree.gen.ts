@@ -36,7 +36,6 @@ import { Route as AuthenticatedManagerSubscribersRouteImport } from './routes/_a
 import { Route as AuthenticatedManagerReportsRouteImport } from './routes/_authenticated/manager/reports'
 import { Route as AuthenticatedManagerAffiliatesRouteImport } from './routes/_authenticated/manager/affiliates'
 import { Route as AuthenticatedAffiliateSubscribersRouteImport } from './routes/_authenticated/affiliate/subscribers'
-import { Route as AuthenticatedAffiliatePromoCodesRouteImport } from './routes/_authenticated/affiliate/promo-codes'
 import { Route as AuthenticatedAffiliateEarningsRouteImport } from './routes/_authenticated/affiliate/earnings'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin/system'
@@ -48,7 +47,6 @@ import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminFraudRouteImport } from './routes/_authenticated/admin/fraud'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin/audit-logs'
-import { Route as AuthenticatedAdminApiKeysRouteImport } from './routes/_authenticated/admin/api-keys'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as ApiV1SubscriptionsCreateRouteImport } from './routes/api/v1/subscriptions/create'
 import { Route as ApiV1CouponsValidateRouteImport } from './routes/api/v1/coupons/validate'
@@ -200,12 +198,6 @@ const AuthenticatedAffiliateSubscribersRoute =
     path: '/subscribers',
     getParentRoute: () => AuthenticatedAffiliateRoute,
   } as any)
-const AuthenticatedAffiliatePromoCodesRoute =
-  AuthenticatedAffiliatePromoCodesRouteImport.update({
-    id: '/promo-codes',
-    path: '/promo-codes',
-    getParentRoute: () => AuthenticatedAffiliateRoute,
-  } as any)
 const AuthenticatedAffiliateEarningsRoute =
   AuthenticatedAffiliateEarningsRouteImport.update({
     id: '/earnings',
@@ -269,12 +261,6 @@ const AuthenticatedAdminAuditLogsRoute =
     path: '/audit-logs',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminApiKeysRoute =
-  AuthenticatedAdminApiKeysRouteImport.update({
-    id: '/api-keys',
-    path: '/api-keys',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminAnalyticsRoute =
   AuthenticatedAdminAnalyticsRouteImport.update({
     id: '/analytics',
@@ -324,7 +310,6 @@ export interface FileRoutesByFullPath {
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
-  '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/fraud': typeof AuthenticatedAdminFraudRoute
@@ -336,7 +321,6 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
-  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -367,7 +351,6 @@ export interface FileRoutesByTo {
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
-  '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/fraud': typeof AuthenticatedAdminFraudRoute
@@ -379,7 +362,6 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
-  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -416,7 +398,6 @@ export interface FileRoutesById {
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
-  '/_authenticated/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/fraud': typeof AuthenticatedAdminFraudRoute
@@ -428,7 +409,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
-  '/_authenticated/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
   '/_authenticated/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/_authenticated/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/_authenticated/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -465,7 +445,6 @@ export interface FileRouteTypes {
     | '/checkout/cancel'
     | '/checkout/success'
     | '/admin/analytics'
-    | '/admin/api-keys'
     | '/admin/audit-logs'
     | '/admin/emails'
     | '/admin/fraud'
@@ -477,7 +456,6 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/affiliate/earnings'
-    | '/affiliate/promo-codes'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
     | '/manager/reports'
@@ -508,7 +486,6 @@ export interface FileRouteTypes {
     | '/checkout/cancel'
     | '/checkout/success'
     | '/admin/analytics'
-    | '/admin/api-keys'
     | '/admin/audit-logs'
     | '/admin/emails'
     | '/admin/fraud'
@@ -520,7 +497,6 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/affiliate/earnings'
-    | '/affiliate/promo-codes'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
     | '/manager/reports'
@@ -556,7 +532,6 @@ export interface FileRouteTypes {
     | '/checkout/cancel'
     | '/checkout/success'
     | '/_authenticated/admin/analytics'
-    | '/_authenticated/admin/api-keys'
     | '/_authenticated/admin/audit-logs'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/fraud'
@@ -568,7 +543,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/system'
     | '/_authenticated/admin/users'
     | '/_authenticated/affiliate/earnings'
-    | '/_authenticated/affiliate/promo-codes'
     | '/_authenticated/affiliate/subscribers'
     | '/_authenticated/manager/affiliates'
     | '/_authenticated/manager/reports'
@@ -798,13 +772,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAffiliateSubscribersRouteImport
       parentRoute: typeof AuthenticatedAffiliateRoute
     }
-    '/_authenticated/affiliate/promo-codes': {
-      id: '/_authenticated/affiliate/promo-codes'
-      path: '/promo-codes'
-      fullPath: '/affiliate/promo-codes'
-      preLoaderRoute: typeof AuthenticatedAffiliatePromoCodesRouteImport
-      parentRoute: typeof AuthenticatedAffiliateRoute
-    }
     '/_authenticated/affiliate/earnings': {
       id: '/_authenticated/affiliate/earnings'
       path: '/earnings'
@@ -882,13 +849,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditLogsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/api-keys': {
-      id: '/_authenticated/admin/api-keys'
-      path: '/api-keys'
-      fullPath: '/admin/api-keys'
-      preLoaderRoute: typeof AuthenticatedAdminApiKeysRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/admin/analytics': {
       id: '/_authenticated/admin/analytics'
       path: '/analytics'
@@ -936,7 +896,6 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
-  AuthenticatedAdminApiKeysRoute: typeof AuthenticatedAdminApiKeysRoute
   AuthenticatedAdminAuditLogsRoute: typeof AuthenticatedAdminAuditLogsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminFraudRoute: typeof AuthenticatedAdminFraudRoute
@@ -952,7 +911,6 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
-  AuthenticatedAdminApiKeysRoute: AuthenticatedAdminApiKeysRoute,
   AuthenticatedAdminAuditLogsRoute: AuthenticatedAdminAuditLogsRoute,
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminFraudRoute: AuthenticatedAdminFraudRoute,
@@ -971,7 +929,6 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedAffiliateRouteChildren {
   AuthenticatedAffiliateEarningsRoute: typeof AuthenticatedAffiliateEarningsRoute
-  AuthenticatedAffiliatePromoCodesRoute: typeof AuthenticatedAffiliatePromoCodesRoute
   AuthenticatedAffiliateSubscribersRoute: typeof AuthenticatedAffiliateSubscribersRoute
   AuthenticatedAffiliateIndexRoute: typeof AuthenticatedAffiliateIndexRoute
 }
@@ -979,8 +936,6 @@ interface AuthenticatedAffiliateRouteChildren {
 const AuthenticatedAffiliateRouteChildren: AuthenticatedAffiliateRouteChildren =
   {
     AuthenticatedAffiliateEarningsRoute: AuthenticatedAffiliateEarningsRoute,
-    AuthenticatedAffiliatePromoCodesRoute:
-      AuthenticatedAffiliatePromoCodesRoute,
     AuthenticatedAffiliateSubscribersRoute:
       AuthenticatedAffiliateSubscribersRoute,
     AuthenticatedAffiliateIndexRoute: AuthenticatedAffiliateIndexRoute,
@@ -1069,3 +1024,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
