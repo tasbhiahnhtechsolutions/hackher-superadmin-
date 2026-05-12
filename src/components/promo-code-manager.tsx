@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +22,7 @@ interface Props {
   affiliatePicker?: "self" | "descendants" | "all";
 }
 
-interface AffiliateOpt { id: string; full_name: string | null; email: string }
+interface PersonOpt { id: string; full_name: string | null; email: string; parent_user_id?: string | null }
 
 export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: Props) {
   const qc = useQueryClient();
@@ -30,7 +30,9 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
   const create = useServerFn(createPromoCode);
   const update = useServerFn(updatePromoCode);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ code: "", discount: 15, affiliateId: "" });
+  const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "" });
+
+  const showHierarchy = affiliatePicker !== "self";
 
   // List promo codes — RLS already filters: affiliate sees own, SAM sees descendants, super sees all
   const { data: codes, isLoading } = useQuery({
@@ -45,32 +47,62 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
     },
   });
 
-  // Affiliate picker options for SAM/Super (descendants only)
+  // Managers in the current scope (RLS filters to descendants for SAM, all for super)
+  const { data: managers } = useQuery({
+    queryKey: ["manager-pick", user?.id, affiliatePicker],
+    enabled: !!user && showHierarchy,
+    queryFn: async () => {
+      const { data: roleRows } = await supabase.from("user_roles").select("user_id").eq("role", "manager");
+      const ids = (roleRows ?? []).map((r) => r.user_id);
+      if (!ids.length) return [];
+      const { data } = await supabase.from("profiles").select("id,full_name,email,parent_user_id").in("id", ids);
+      return (data ?? []) as PersonOpt[];
+    },
+  });
+
+  // All affiliates in scope (used both for the picker and for table labels)
   const { data: affiliates } = useQuery({
     queryKey: ["affiliate-pick", user?.id, affiliatePicker],
-    enabled: !!user && affiliatePicker !== "self",
+    enabled: !!user && showHierarchy,
     queryFn: async () => {
       const { data: roleRows } = await supabase.from("user_roles").select("user_id").eq("role", "affiliate");
       const ids = (roleRows ?? []).map((r) => r.user_id);
       if (!ids.length) return [];
-      // RLS on profiles already restricts SAM to descendants
-      const { data } = await supabase.from("profiles").select("id,full_name,email").in("id", ids);
-      return (data ?? []) as AffiliateOpt[];
+      const { data } = await supabase.from("profiles").select("id,full_name,email,parent_user_id").in("id", ids);
+      return (data ?? []) as PersonOpt[];
     },
   });
+
+  // Lookup maps for fast labeling
+  const affMap = useMemo(() => {
+    const m = new Map<string, PersonOpt>();
+    (affiliates ?? []).forEach((a) => m.set(a.id, a));
+    return m;
+  }, [affiliates]);
+  const mgrMap = useMemo(() => {
+    const m = new Map<string, PersonOpt>();
+    (managers ?? []).forEach((mg) => m.set(mg.id, mg));
+    return m;
+  }, [managers]);
+
+  // Affiliates filtered by selected manager
+  const filteredAffiliates = useMemo(() => {
+    if (!form.managerId) return [];
+    return (affiliates ?? []).filter((a) => a.parent_user_id === form.managerId);
+  }, [affiliates, form.managerId]);
 
   const createMut = useMutation({
     mutationFn: async () => {
       return create({ data: {
         code: form.code,
         discountPercent: form.discount,
-        affiliateId: affiliatePicker === "self" ? undefined : (form.affiliateId || undefined),
+        affiliateId: showHierarchy ? (form.affiliateId || undefined) : undefined,
       }});
     },
     onSuccess: () => {
       toast.success("Promo code created");
       setOpen(false);
-      setForm({ code: "", discount: 15, affiliateId: "" });
+      setForm({ code: "", discount: 15, managerId: "", affiliateId: "" });
       qc.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -86,6 +118,8 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const labelFor = (p?: PersonOpt | null) => p ? (p.full_name ?? p.email) : "—";
+
   return (
     <>
       <PageHeader
@@ -98,13 +132,17 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
           <Table>
             <TableHeader><TableRow>
               <TableHead>Code</TableHead><TableHead>Discount</TableHead>
+              {showHierarchy && <><TableHead>Affiliate</TableHead><TableHead>Manager</TableHead></>}
               <TableHead>Uses</TableHead><TableHead>Stripe</TableHead>
               <TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                : !codes?.length ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No promo codes yet. Create one to get started.</TableCell></TableRow>
-                : codes.map((c) => (
+              {isLoading ? <TableRow><TableCell colSpan={showHierarchy ? 8 : 6} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                : !codes?.length ? <TableRow><TableCell colSpan={showHierarchy ? 8 : 6} className="text-center py-8 text-muted-foreground">No promo codes yet. Create one to get started.</TableCell></TableRow>
+                : codes.map((c) => {
+                  const aff = c.affiliate_id ? affMap.get(c.affiliate_id) : null;
+                  const mgr = aff?.parent_user_id ? mgrMap.get(aff.parent_user_id) : null;
+                  return (
                   <TableRow key={c.id}>
                     <TableCell className="font-mono font-semibold">{c.code}
                       <Button size="sm" variant="ghost" className="ml-1 h-6 w-6 p-0"
@@ -113,6 +151,10 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                       </Button>
                     </TableCell>
                     <TableCell>{Number(c.discount_percent)}%</TableCell>
+                    {showHierarchy && <>
+                      <TableCell>{labelFor(aff)}</TableCell>
+                      <TableCell>{labelFor(mgr)}</TableCell>
+                    </>}
                     <TableCell>{c.usage_count} / {c.usage_limit ?? "∞"}</TableCell>
                     <TableCell>{c.stripe_promo_id ? <Badge variant="outline">Synced</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
                     <TableCell><Badge variant={c.status === "active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
@@ -123,7 +165,8 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
             </TableBody>
           </Table>
         </div>
@@ -145,23 +188,51 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                 onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} />
               <p className="mt-1 text-xs text-muted-foreground">Maximum 15% (30% rule: discount + commissions ≤ 30%).</p>
             </div>
-            {affiliatePicker !== "self" && (
-              <div>
-                <Label>Assign to affiliate</Label>
-                <Select value={form.affiliateId} onValueChange={(v) => setForm({ ...form, affiliateId: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select affiliate…" /></SelectTrigger>
-                  <SelectContent>
-                    {(affiliates ?? []).map((a) => (
-                      <SelectItem key={a.id} value={a.id}>{a.full_name ?? a.email}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {showHierarchy && (
+              <>
+                <div>
+                  <Label>Manager</Label>
+                  <Select
+                    value={form.managerId}
+                    onValueChange={(v) => setForm({ ...form, managerId: v, affiliateId: "" })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select manager…" /></SelectTrigger>
+                    <SelectContent>
+                      {(managers ?? []).map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{labelFor(m)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">Pick a manager to see their affiliates.</p>
+                </div>
+                <div>
+                  <Label>Affiliate</Label>
+                  <Select
+                    value={form.affiliateId}
+                    onValueChange={(v) => setForm({ ...form, affiliateId: v })}
+                    disabled={!form.managerId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={form.managerId ? "Select affiliate…" : "Select a manager first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredAffiliates.length === 0 ? (
+                        <div className="px-2 py-3 text-sm text-muted-foreground">No affiliates under this manager.</div>
+                      ) : filteredAffiliates.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>{labelFor(a)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>
+            <Button
+              onClick={() => createMut.mutate()}
+              disabled={createMut.isPending || (showHierarchy && !form.affiliateId) || !form.code}
+            >
               {createMut.isPending ? "Creating…" : "Create & sync"}
             </Button>
           </DialogFooter>
