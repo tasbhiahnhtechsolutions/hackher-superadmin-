@@ -145,10 +145,21 @@ export function AppShell({ children }: { children?: ReactNode }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur">
+        <header className="flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-4 md:px-6 backdrop-blur">
           <div className="flex items-center gap-2 md:hidden">
-            <div className="h-7 w-7 rounded-md bg-gradient-brand" />
-            <span className="font-semibold">HackHer.ai</span>
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon"><Menu className="h-5 w-5" /></Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-64 bg-sidebar">
+                <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
+                  <span className="text-sm font-semibold">HackHer<span className="text-primary">.ai</span></span>
+                </div>
+                {navList}
+              </SheetContent>
+            </Sheet>
+            <span className="font-semibold text-sm">HackHer.ai</span>
           </div>
           <div className="hidden md:block" />
           <div className="flex items-center gap-1">
