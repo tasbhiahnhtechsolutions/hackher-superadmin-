@@ -2,6 +2,37 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendAppEmail } from "@/lib/email/send.server";
+
+const APP_URL = process.env.APP_URL || "https://hackher.ai";
+
+async function notifyAdmins(category: "admin_alerts", title: string, message: string, severity: "info" | "warning" | "critical" = "warning") {
+  const { data: admins } = await supabaseAdmin
+    .from("user_roles").select("user_id, profiles!inner(email,full_name)")
+    .eq("role", "super_admin");
+  if (!admins?.length) return;
+  for (const a of admins as unknown as Array<{ user_id: string; profiles: { email: string; full_name: string | null } }>) {
+    await supabaseAdmin.rpc("notify_user_with_pref" as never, {
+      _user_id: a.user_id, _category: category, _type: "admin_alert",
+      _title: title, _body: message, _link: "/admin",
+    } as never);
+    await sendAppEmail({
+      to: a.profiles.email, template: "admin_alert",
+      data: { title, message, severity }, category, userId: a.user_id,
+    });
+  }
+}
+
+async function notifyAffiliateChainOfCommission(beneficiaryId: string, amountCents: number, currency: string) {
+  const { data: prof } = await supabaseAdmin.from("profiles").select("email,full_name").eq("id", beneficiaryId).maybeSingle();
+  if (!prof?.email) return;
+  await supabaseAdmin.rpc("notify_user_with_pref" as never, {
+    _user_id: beneficiaryId, _category: "commissions", _type: "commission_earned",
+    _title: "New commission earned",
+    _body: `${(amountCents / 100).toFixed(2)} ${currency.toUpperCase()} pending`,
+    _link: "/affiliate/earnings",
+  } as never);
+}
 
 type AppRole = "super_admin" | "sam" | "manager" | "affiliate" | "customer";
 
@@ -68,6 +99,9 @@ async function attributeCommissions(opts: {
 
   if (inserts.length) {
     await supabaseAdmin.from("commissions").insert(inserts as never);
+    for (const ins of inserts) {
+      void notifyAffiliateChainOfCommission(ins.beneficiary_id, ins.amount_cents, "usd");
+    }
   }
 }
 
@@ -116,7 +150,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               if (subscriptionId && customerId && planId) {
                 const fullSub = await stripe.subscriptions.retrieve(subscriptionId);
                 const periodEnd = (fullSub as unknown as { current_period_end?: number }).current_period_end;
-                const { data: plan } = await supabaseAdmin.from("plans").select("price_cents").eq("id", planId).maybeSingle();
+                const { data: plan } = await supabaseAdmin.from("plans").select("price_cents,name,currency").eq("id", planId).maybeSingle();
                 await supabaseAdmin.from("subscriptions").upsert({
                   customer_id: customerId,
                   plan_id: planId,
@@ -125,6 +159,16 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
                   amount_paid_cents: plan?.price_cents ?? 0,
                 }, { onConflict: "stripe_subscription_id" } as never);
+
+                // Email customer + notify
+                const { data: cust } = await supabaseAdmin.from("customers").select("email,full_name").eq("id", customerId).maybeSingle();
+                if (cust?.email && plan) {
+                  await sendAppEmail({
+                    to: cust.email, template: "subscription_created",
+                    data: { planName: plan.name, amountCents: plan.price_cents, currency: plan.currency, appUrl: APP_URL },
+                    category: "subscription", idempotencyKey: `subcreated-${subscriptionId}`,
+                  });
+                }
               }
 
               // If used a promo, increment usage
@@ -157,10 +201,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 raw: inv as never,
               });
               if (subId) {
-                // Find local subscription + customer + affiliate
-                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("id,customer_id").eq("stripe_subscription_id", subId).maybeSingle();
+                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("id,customer_id,plan_id").eq("stripe_subscription_id", subId).maybeSingle();
                 if (subRow) {
-                  const { data: cust } = await supabaseAdmin.from("customers").select("affiliate_id").eq("id", subRow.customer_id).maybeSingle();
+                  const { data: cust } = await supabaseAdmin.from("customers").select("email,full_name,affiliate_id").eq("id", subRow.customer_id).maybeSingle();
+                  const { data: plan } = subRow.plan_id ? await supabaseAdmin.from("plans").select("name").eq("id", subRow.plan_id).maybeSingle() : { data: null };
+                  if (cust?.email) {
+                    await sendAppEmail({
+                      to: cust.email, template: "payment_success",
+                      data: { amountCents: inv.amount_paid, currency: inv.currency, planName: plan?.name },
+                      category: "subscription", idempotencyKey: `paid-${inv.id}`,
+                    });
+                  }
                   await attributeCommissions({
                     stripe, subscriptionId: subId, invoiceId: inv.id ?? "",
                     amountCents: inv.amount_paid, affiliateId: cust?.affiliate_id ?? null,
@@ -169,17 +220,54 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
+            case "invoice.payment_failed": {
+              const inv = event.data.object as Stripe.Invoice;
+              const subId = (inv as unknown as { subscription?: string | null }).subscription;
+              if (subId) {
+                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("customer_id").eq("stripe_subscription_id", subId).maybeSingle();
+                if (subRow) {
+                  const { data: cust } = await supabaseAdmin.from("customers").select("email").eq("id", subRow.customer_id).maybeSingle();
+                  if (cust?.email) {
+                    await sendAppEmail({
+                      to: cust.email, template: "payment_failed",
+                      data: { amountCents: inv.amount_due, currency: inv.currency, updateUrl: `${APP_URL}/account/billing` },
+                      category: "subscription", idempotencyKey: `failed-${inv.id}`,
+                    });
+                  }
+                }
+              }
+              await notifyAdmins("admin_alerts", "Payment failed", `Invoice payment failed (${inv.id}) for ${(inv.amount_due / 100).toFixed(2)} ${inv.currency.toUpperCase()}`, "warning");
+              break;
+            }
             case "charge.refunded": {
               const charge = event.data.object as Stripe.Charge;
               await supabaseAdmin.from("transactions").insert({
                 stripe_event_id: event.id, type: "refund",
                 amount_cents: -(charge.amount_refunded ?? 0), currency: charge.currency, raw: charge as never,
               });
+              await notifyAdmins("admin_alerts", "Refund issued", `Refund of ${((charge.amount_refunded ?? 0) / 100).toFixed(2)} ${charge.currency.toUpperCase()} on charge ${charge.id}`, "warning");
+              break;
+            }
+            case "charge.dispute.created": {
+              const dispute = event.data.object as Stripe.Dispute;
+              await notifyAdmins("admin_alerts", "Chargeback received", `Dispute of ${(dispute.amount / 100).toFixed(2)} ${dispute.currency.toUpperCase()} on charge ${dispute.charge}`, "critical");
               break;
             }
             case "customer.subscription.deleted": {
               const sub = event.data.object as Stripe.Subscription;
               await supabaseAdmin.from("subscriptions").update({ status: "canceled" }).eq("stripe_subscription_id", sub.id);
+              const { data: subRow } = await supabaseAdmin.from("subscriptions").select("customer_id,plan_id").eq("stripe_subscription_id", sub.id).maybeSingle();
+              if (subRow) {
+                const { data: cust } = await supabaseAdmin.from("customers").select("email").eq("id", subRow.customer_id).maybeSingle();
+                const { data: plan } = subRow.plan_id ? await supabaseAdmin.from("plans").select("name").eq("id", subRow.plan_id).maybeSingle() : { data: null };
+                if (cust?.email) {
+                  await sendAppEmail({
+                    to: cust.email, template: "subscription_canceled",
+                    data: { planName: plan?.name || "Subscription" },
+                    category: "subscription", idempotencyKey: `canceled-${sub.id}`,
+                  });
+                }
+              }
               break;
             }
           }

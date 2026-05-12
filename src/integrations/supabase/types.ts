@@ -234,8 +234,11 @@ export type Database = {
           id: string
           message_id: string | null
           metadata: Json | null
+          next_retry_at: string | null
           recipient_email: string
+          retry_count: number
           status: string
+          subject: string | null
           template_name: string
         }
         Insert: {
@@ -244,8 +247,11 @@ export type Database = {
           id?: string
           message_id?: string | null
           metadata?: Json | null
+          next_retry_at?: string | null
           recipient_email: string
+          retry_count?: number
           status?: string
+          subject?: string | null
           template_name: string
         }
         Update: {
@@ -254,11 +260,67 @@ export type Database = {
           id?: string
           message_id?: string | null
           metadata?: Json | null
+          next_retry_at?: string | null
           recipient_email?: string
+          retry_count?: number
           status?: string
+          subject?: string | null
           template_name?: string
         }
         Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          email_admin_alerts: boolean
+          email_commissions: boolean
+          email_marketing: boolean
+          email_payouts: boolean
+          email_security: boolean
+          email_subscription: boolean
+          inapp_admin_alerts: boolean
+          inapp_commissions: boolean
+          inapp_payouts: boolean
+          inapp_subscription: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          email_admin_alerts?: boolean
+          email_commissions?: boolean
+          email_marketing?: boolean
+          email_payouts?: boolean
+          email_security?: boolean
+          email_subscription?: boolean
+          inapp_admin_alerts?: boolean
+          inapp_commissions?: boolean
+          inapp_payouts?: boolean
+          inapp_subscription?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          email_admin_alerts?: boolean
+          email_commissions?: boolean
+          email_marketing?: boolean
+          email_payouts?: boolean
+          email_security?: boolean
+          email_subscription?: boolean
+          inapp_admin_alerts?: boolean
+          inapp_commissions?: boolean
+          inapp_payouts?: boolean
+          inapp_subscription?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -707,6 +769,17 @@ export type Database = {
       is_ancestor_of: {
         Args: { _ancestor: string; _descendant: string }
         Returns: boolean
+      }
+      notify_user_with_pref: {
+        Args: {
+          _body?: string
+          _category: string
+          _link?: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: string
       }
       report_revenue_timeseries: {
         Args: { _bucket?: string; _end: string; _start: string }

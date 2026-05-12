@@ -10,6 +10,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/notification-bell";
 
 interface NavItem { to: string; label: string; icon: typeof Users; }
 
@@ -23,6 +24,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { to: "/admin/reports", label: "Reports", icon: FileBarChart },
     { to: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
     { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
+    { to: "/admin/emails", label: "Email Delivery", icon: ScrollText },
     { to: "/admin/settings", label: "Settings", icon: Settings },
   ],
   sam: [
@@ -119,14 +121,18 @@ export function AppShell({ children }: { children?: ReactNode }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur md:hidden">
-          <div className="flex items-center gap-2">
+        <header className="flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur">
+          <div className="flex items-center gap-2 md:hidden">
             <div className="h-7 w-7 rounded-md bg-gradient-brand" />
             <span className="font-semibold">HackHer.ai</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="hidden md:block" />
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="md:hidden">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </header>
         <main className="flex-1 overflow-auto">{children ?? <Outlet />}</main>
       </div>
