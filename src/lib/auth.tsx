@@ -35,9 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadedFor = useRef<string | null>(null);
 
-  const loadUserData = useCallback(async (uid: string) => {
-    if (loadedFor.current === uid) return;
-    loadedFor.current = uid;
+  const loadUserData = useCallback(async (uid: string, force = false) => {
+    if (!force && loadedFor.current === uid) return;
     setLoading(true);
     try {
       const [{ data: profileData }, { data: roleRows }] = await Promise.all([
@@ -48,6 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const rolePriority: AppRole[] = ["super_admin", "sam", "manager", "affiliate", "customer"];
       setProfile(profileData as Profile | null);
       setRole(rolePriority.find((candidate) => roles.includes(candidate)) ?? null);
+      loadedFor.current = uid;
+    } catch (error) {
+      console.error("Failed to load signed-in user data", error);
+      loadedFor.current = null;
+      setProfile(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }
@@ -84,7 +89,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadUserData]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      return { error: error.message };
+    }
+    if (data.user) {
+      setSession(data.session);
+      setUser(data.user);
+      await loadUserData(data.user.id, true);
+    } else {
+      setLoading(false);
+    }
     return { error: error?.message };
   };
 
