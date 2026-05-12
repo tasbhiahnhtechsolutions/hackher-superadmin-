@@ -25,10 +25,11 @@ interface Props {
 
 export function TeamManagement({ title, subtitle, childRole, recursive = false, readOnly = false }: Props) {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const create = useServerFn(createSubordinate);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", fullName: "", password: "", commission: 10 });
+  const isSuperAdmin = role === "super_admin";
 
   const queryKey = ["team", childRole, user?.id, recursive];
   const { data, isLoading } = useQuery({
@@ -56,7 +57,8 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
         fullName: form.fullName,
         password: form.password,
         role: childRole,
-        commissionRate: isAffiliate ? undefined : form.commission / 100,
+        // Only super admin can set a custom commission; others use server defaults
+        commissionRate: isSuperAdmin && !isAffiliate ? form.commission / 100 : undefined,
       }});
     },
     onSuccess: (res) => {
@@ -116,9 +118,13 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
               <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
                 A unique promo code (e.g. <span className="font-mono font-semibold">{(form.fullName || "AFF").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12)}123</span>) will be generated automatically and synced to Stripe. Affiliate earns <b>10%</b>, customer gets <b>15%</b> off.
               </div>
-            ) : (
+            ) : isSuperAdmin ? (
               <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
-                <p className="mt-1 text-xs text-muted-foreground">Maximum 30%.</p></div>
+                <p className="mt-1 text-xs text-muted-foreground">Maximum 30%. Only Super Admin can set this.</p></div>
+            ) : (
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                Commission rates are set by the Super Admin. The default rate for this role will be applied.
+              </div>
             )}
           </div>
           <DialogFooter>
