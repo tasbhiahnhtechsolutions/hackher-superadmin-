@@ -51,14 +51,11 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
 
   const createMut = useMutation({
     mutationFn: async () => {
-      const isAffiliate = childRole === "affiliate";
       return create({ data: {
         email: form.email,
         fullName: form.fullName,
         password: form.password,
         role: childRole,
-        // Only super admin can set a custom commission; others use server defaults
-        commissionRate: isSuperAdmin && !isAffiliate ? form.commission / 100 : undefined,
       }});
     },
     onSuccess: (res) => {
@@ -118,12 +115,9 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
               <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
                 The affiliate will create their own branded promo codes (e.g. <span className="font-mono font-semibold">YOURNAMETIKTOK</span>) from their dashboard. Default split: customer <b>15%</b> off, affiliate <b>10%</b>, manager <b>4%</b>, SAM <b>1%</b>.
               </div>
-            ) : isSuperAdmin ? (
-              <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
-                <p className="mt-1 text-xs text-muted-foreground">Maximum 30%. Only Super Admin can set this.</p></div>
             ) : (
               <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-                Commission rates are set by the Super Admin. The default rate for this role will be applied.
+                Commission rate uses the platform default for {labelMap[childRole]}s configured in <b>Platform Settings</b>. Update it there to apply globally.
               </div>
             )}
           </div>

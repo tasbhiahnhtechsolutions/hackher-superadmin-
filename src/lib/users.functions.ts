@@ -38,10 +38,11 @@ export const createSubordinate = createServerFn({ method: "POST" })
       throw new Error(`You don't have permission to create a ${data.role}`);
     }
 
+    const { data: settings } = await supabaseAdmin.from("app_settings").select("default_affiliate_rate, default_manager_rate, default_sam_rate").eq("id", 1).maybeSingle();
     const defaultRate =
-      data.role === "affiliate" ? COMMISSION_AFFILIATE :
-      data.role === "manager" ? COMMISSION_MANAGER :
-      data.role === "sam" ? COMMISSION_SAM : 0;
+      data.role === "affiliate" ? Number(settings?.default_affiliate_rate ?? COMMISSION_AFFILIATE) :
+      data.role === "manager" ? Number(settings?.default_manager_rate ?? COMMISSION_MANAGER) :
+      data.role === "sam" ? Number(settings?.default_sam_rate ?? COMMISSION_SAM) : 0;
     const commissionRate = (callerRole === "super_admin" && data.commissionRate !== undefined)
       ? data.commissionRate
       : defaultRate;
