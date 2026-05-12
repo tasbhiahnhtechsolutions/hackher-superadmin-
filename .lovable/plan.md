@@ -1,71 +1,98 @@
-# Production-Ready Build Plan
+# Phase 2 — Reports, Admin Mgmt, Emails, Notifications
 
-This is a large scope. I'll execute in phases, verifying each before moving on. Each phase ships a working slice — you can test mid-way.
+This is a large scope (~40 files, 4 migrations). Building in 4 sequential batches in this single request, integrating with existing schema (no rebuilds).
 
-## Phase 1 — Stripe Checkout end-to-end
+## Batch A — Reporting & Analytics (real data, no placeholders)
 
-The `subscriptions/create` route and `webhooks/stripe` route exist but checkout flow isn't wired into the UI. I'll:
+**New server fns** in `src/lib/reports.functions.ts`:
+- `getAdminMetrics(range)` → gross/net revenue, MRR, active subs, churn, refund rate, commission liabilities (sum pending), cleared/pending payouts, conversion rate
+- `getRevenueTimeseries(range, bucket)` → daily/monthly revenue from `transactions`
+- `getTopAffiliates(range, limit)` → join customers→subs→commissions
+- `getTopPromoCodes(range)` → from `subscriptions.promo_code_id`
+- `getPlanPerformance()` → subs per plan, revenue per plan
+- `getSamReport`, `getManagerReport`, `getAffiliateAnalytics` — scoped via `is_ancestor_of` / `auth.uid()`
+- `exportCsv(reportName, range)` → returns CSV string
 
-- Add a public `/pricing` page listing active plans with "Subscribe" buttons
-- New server fn `createCheckoutSession` that creates a Stripe Checkout Session, applying promo code from `?ref=CODE` query param (stored in cookie/localStorage on landing)
-- Success/cancel pages (`/checkout/success`, `/checkout/cancel`)
-- Update `webhooks/stripe.ts` to fully handle: `checkout.session.completed` → create customer + subscription rows, attribute affiliate from promo code, then `invoice.paid` → create commission rows for affiliate + manager + sam (multi-level split using `commission_rate` from each ancestor profile)
-- Hold period of 30 days on commissions; cleared via cron
+**Pages** (replace placeholders):
+- `/admin/reports` — KPI cards, line chart (revenue), bar chart (top affiliates), tables, date range picker, CSV export buttons
+- `/sam/reports`, `/manager/reports`, `/affiliate/analytics` — scoped versions
+- Use **Recharts** (already in shadcn stack) for all charts
 
-## Phase 2 — Admin CRUD with real forms
+## Batch B — Advanced Admin & Hierarchy
 
-Currently most admin pages are read-only tables. I'll add working dialogs:
+**Server fns** in `src/lib/admin.functions.ts`:
+- `updateUserRole`, `updateUserParent`, `updateUserCommissionRate`, `setUserStatus` (active/suspended/disabled), `resetUserPassword` (admin generates link), `getUserAuditHistory(userId)`
+- `reassignAffiliate(affiliateId, newManagerId)`, `reassignManager(managerId, newSamId)` — validates hierarchy, writes audit log
+- `bulkSetStatus(userIds[], status)`
 
-- **Plans**: create/edit (name, description, price, interval, trial days, features) + "Sync to Stripe" button (already implemented in stripe.functions.ts), toggle active, archive
-- **Promo Codes**: admin can create platform-wide promos and assign to any affiliate
-- **API Keys**: create with one-time secret reveal (hash stored), revoke
-- **Users**: change status (active/suspended), change parent, change role, change commission rate
-- **Settings**: platform-wide commission defaults stored in a new `app_settings` table
+**UI**:
+- `/admin/users/$userId` — full profile page: KPIs, commission history, payout history, subscribers, promo codes, audit timeline
+- `<EditUserDialog />` — comprehensive edit (role, parent, rate, status)
+- Hierarchy management: replace cards on SAM/Manager team pages with reassignment dialogs (no drag-drop — use "Reassign" button per row, simpler & more reliable)
+- Bulk select + bulk action toolbar on user lists
 
-## Phase 3 — Team & hierarchy management
+## Batch C — Email Notification System (Resend connector)
 
-Add `<TeamManagement />` (already scaffolded) to:
-- SAM → managers page (invite manager)
-- SAM/Manager → affiliates page (invite affiliate)
-- Each invite uses existing `createSubordinate` server fn with email + temp password + commission rate
+**Decision**: Use **Resend** (user explicitly requested). Connect via standard_connectors. Skip Lovable Emails infra.
 
-## Phase 4 — Payouts & commission lifecycle
+**New edge function** `supabase/functions/send-email/index.ts`:
+- Accepts `{ template, to, data, idempotencyKey }`
+- Renders branded HTML templates (inline, no React Email — keep simple & deployable)
+- Logs to `email_send_log` table
+- Suppression check via `suppressed_emails` table
 
-- Server fn `generatePayouts({ periodStart, periodEnd })` (admin only): aggregates `cleared` commissions per beneficiary, creates `payouts` row, marks commissions `paid` with `payout_id`
-- Server fn `markPayoutPaid({ payoutId, notes })`: admin marks paid, records timestamp
-- Daily cron via pg_cron: clear commissions whose `hold_until < now()`
-- Affiliate/manager/sam earnings pages show: pending / cleared / paid totals + history
+**Templates** (12 total, all premium dark/light HTML):
+1. welcome, 2. password-reset, 3. email-verification, 4. login-alert
+5. subscription-created, 6. trial-ending, 7. payment-success, 8. payment-failed, 9. subscription-canceled
+10. affiliate-welcome, 11. promo-approved, 12. commission-cleared, 13. payout-sent
+14. admin-failed-payout, 15. admin-refund, 16. admin-chargeback, 17. admin-top-affiliate
 
-## Phase 5 — Production hardening
+**Triggers** wired into:
+- `handle_new_user` trigger → enqueue welcome
+- Stripe webhook → subscription/payment emails
+- `clear_due_commissions` → commission-cleared emails
+- `markPayoutPaid` → payout-sent
+- `createSubordinate` → affiliate-welcome
 
-- Rate limiting on public `/api/v1/*` routes (in-memory token bucket per API key, 60 req/min)
-- Zod validation everywhere it's missing
-- 404 + error boundary pages with retry
-- `<NotFound />` for unknown routes
-- SEO: titles/meta on every public page (pricing, signup, login)
-- Run security linter, fix critical findings
-- Disable email confirmation OR add proper resend flow (already disabled per earlier migration)
+**Note**: Auth emails (password reset, verification) — Supabase Auth sends defaults; we'll override via `supabase--configure_auth` SMTP using Resend.
 
-## Technical notes
+## Batch D — Notifications, Subscribers, Search, Polish
 
-- **Stripe webhook signature**: already verified using `STRIPE_WEBHOOK_SECRET` you provided
-- **Multi-level commission split**: when an invoice is paid, walk up `parent_user_id` chain from the attributing affiliate. Each ancestor with a `commission_rate` gets a commission row. Sum of rates capped at 30% (DB constraint already enforces per-row max).
-- **Cron job**: pg_cron will POST to `/api/public/hooks/clear-commissions` daily at 2 AM with apikey header
-- **No new secrets needed** — Stripe keys are already configured
+**Migration**: new `notifications` table (user_id, type, title, body, link, read_at, created_at) with RLS (own-only).
 
-## What I will NOT touch this round
+**UI**:
+- `<NotificationBell />` in header — unread badge, dropdown list, realtime via Supabase channel
+- `/notifications` full history page
+- Insert notifications from server fns (commission cleared, payout sent, refund, etc.)
 
-- Email sending (welcome, payout notifications) — would need Lovable Email setup; can add as Phase 6 if you want
-- Affiliate marketing materials / landing page builder
-- Multi-currency support (USD only for now)
-- Refunds workflow (manual via Stripe dashboard for now; webhook will negate commissions on `charge.refunded`)
+**Subscriber pages**:
+- `/sam/subscribers`, `/manager/subscribers` — table from `customers`+`subscriptions` joined, filtered by ancestor scope
+- Search, status/plan filters, CSV export
 
-## Estimated execution
+**Global search**:
+- `<GlobalSearch />` cmd-k modal in header
+- Server fn `globalSearch(query)` → users/promo_codes/customers/subscriptions (admin-scoped)
 
-- Phase 1: ~6 file edits + 1 migration
-- Phase 2: ~8 dialog components + form server fns
-- Phase 3: ~3 page updates
-- Phase 4: ~2 server fns + UI + 1 migration for cron
-- Phase 5: ~middleware + polish across all public routes
+**Polish**:
+- Skeleton loaders on all data tables
+- Empty states with icons + CTA
+- Audit-log writes on all admin mutations
+- Rate limit `send-email` (10/min/user)
 
-I'll work through them sequentially and report at each phase boundary so you can test the running app.
+## Migrations
+1. `notifications` table + RLS + realtime publication
+2. `email_send_log`, `suppressed_emails` tables + RLS
+3. Trigger updates for welcome email enqueue
+4. Indexes on `transactions(created_at)`, `commissions(beneficiary_id, status)`, `customers(affiliate_id)` for report perf
+
+## Secrets needed
+- `RESEND_API_KEY` — will request via add_secret after user confirms
+
+## Out of scope (per your list)
+- Drag-drop hierarchy (using button-based reassign — same outcome, more robust)
+- React Email components (using HTML strings — works in Deno edge runtime without bundling)
+- Auth emails customization beyond Supabase SMTP swap
+
+---
+
+**Confirm to proceed.** This will be ~40 file changes + 4 migrations + 1 secret request, executed in one continuous run.
