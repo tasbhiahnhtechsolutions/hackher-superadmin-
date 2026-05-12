@@ -121,6 +121,26 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const editMut = useMutation({
+    mutationFn: async () => {
+      if (!editing) throw new Error("No promo selected");
+      return update({ data: {
+        id: editing.id,
+        ...(canEditAll && editing.code ? { code: editing.code.toUpperCase() } : {}),
+        discountPercent: editing.discount,
+        status: editing.status,
+        usageLimit: editing.usageLimit === "" ? null : Number(editing.usageLimit),
+        ...(canEditAll ? { usageCount: editing.usageCount } : {}),
+      }});
+    },
+    onSuccess: () => {
+      toast.success("Promo code updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["promo-codes"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const labelFor = (p?: PersonOpt | null) => p ? (p.full_name ?? p.email) : "—";
 
   return (
