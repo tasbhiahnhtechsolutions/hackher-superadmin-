@@ -274,6 +274,56 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit promo code</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div>
+                <Label>Code</Label>
+                <Input value={editing.code} disabled={!canEditAll}
+                  onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })} />
+                {!canEditAll && <p className="mt-1 text-xs text-muted-foreground">Only super admin can rename a code.</p>}
+              </div>
+              <div>
+                <Label>Discount %</Label>
+                <Input type="number" min={1} max={15} value={editing.discount}
+                  onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Usage limit</Label>
+                  <Input type="number" min={1} placeholder="∞" value={editing.usageLimit}
+                    onChange={(e) => setEditing({ ...editing, usageLimit: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Usage count</Label>
+                  <Input type="number" min={0} value={editing.usageCount} disabled={!canEditAll}
+                    onChange={(e) => setEditing({ ...editing, usageCount: Number(e.target.value) })} />
+                  {!canEditAll && <p className="mt-1 text-xs text-muted-foreground">Super admin only.</p>}
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v as "active" | "inactive" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => editMut.mutate()} disabled={editMut.isPending}>
+              {editMut.isPending ? "Saving…" : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
