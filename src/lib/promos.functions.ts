@@ -1,0 +1,153 @@
+// Promo code CRUD with Stripe sync. Authorization:
+// - super_admin: any affiliate (or unassigned)
+// - sam: only affiliates whose ancestor chain includes the SAM
+// - affiliate: only themselves
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import Stripe from "stripe";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const MAX_TOTAL = 0.30;
+const COMM_AFFILIATE = 0.10;
+const COMM_MANAGER = 0.04;
+const COMM_SAM = 0.01;
+const MAX_DISCOUNT_PCT = Math.floor((MAX_TOTAL - (COMM_AFFILIATE + COMM_MANAGER + COMM_SAM)) * 100); // 15
+
+const CreateSchema = z.object({
+  code: z.string().regex(/^[A-Za-z0-9]{3,30}$/, "3-30 alphanumeric chars"),
+  discountPercent: z.number().min(1).max(MAX_DISCOUNT_PCT),
+  affiliateId: z.string().uuid().optional(),
+  startsAt: z.string().datetime().optional(),
+  endsAt: z.string().datetime().optional(),
+  usageLimit: z.number().int().positive().optional(),
+});
+
+const UpdateSchema = z.object({
+  id: z.string().uuid(),
+  discountPercent: z.number().min(1).max(MAX_DISCOUNT_PCT).optional(),
+  status: z.enum(["active", "inactive"]).optional(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+  usageLimit: z.number().int().positive().nullable().optional(),
+});
+
+async function callerRole(userId: string) {
+  const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  return data?.role as "super_admin" | "sam" | "manager" | "affiliate" | "customer" | undefined;
+}
+
+async function isAncestorOf(ancestorId: string, descendantId: string) {
+  const { data } = await supabaseAdmin.rpc("is_ancestor_of", { _ancestor: ancestorId, _descendant: descendantId });
+  return !!data;
+}
+
+async function syncToStripe(promoId: string) {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return;
+  const { data: promo } = await supabaseAdmin.from("promo_codes").select("*").eq("id", promoId).maybeSingle();
+  if (!promo) return;
+  const stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" as never });
+  try {
+    let couponId = promo.stripe_coupon_id;
+    if (!couponId) {
+      const coupon = await stripe.coupons.create({
+        percent_off: Number(promo.discount_percent),
+        duration: "forever",
+        name: promo.code,
+        metadata: { promo_id: promo.id, affiliate_id: promo.affiliate_id ?? "" },
+      });
+      couponId = coupon.id;
+    }
+    let stripePromoId = promo.stripe_promo_id;
+    if (!stripePromoId) {
+      const sp = await stripe.promotionCodes.create({
+        promotion: { coupon: couponId, type: "coupon" },
+        code: promo.code,
+        max_redemptions: promo.usage_limit ?? undefined,
+        expires_at: promo.ends_at ? Math.floor(new Date(promo.ends_at).getTime() / 1000) : undefined,
+        metadata: { promo_id: promo.id },
+      } as never);
+      stripePromoId = sp.id;
+    } else {
+      await stripe.promotionCodes.update(stripePromoId, { active: promo.status === "active" });
+    }
+    await supabaseAdmin.from("promo_codes").update({
+      stripe_coupon_id: couponId,
+      stripe_promo_id: stripePromoId,
+    }).eq("id", promoId);
+  } catch (e) {
+    console.error("[promo stripe sync]", e);
+  }
+}
+
+export const createPromoCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => CreateSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const role = await callerRole(userId);
+    if (!role || role === "manager" || role === "customer") {
+      throw new Error("You don't have permission to create promo codes");
+    }
+
+    let affiliateId = data.affiliateId ?? null;
+    if (role === "affiliate") {
+      affiliateId = userId; // always self
+    } else if (role === "sam") {
+      if (!affiliateId) throw new Error("Pick an affiliate");
+      // verify SAM is ancestor of this affiliate
+      const ok = await isAncestorOf(userId, affiliateId);
+      if (!ok) throw new Error("That affiliate is not in your hierarchy");
+    }
+
+    // Code uniqueness (case-insensitive)
+    const upperCode = data.code.toUpperCase();
+    const { data: existing } = await supabaseAdmin.from("promo_codes").select("id").ilike("code", upperCode).maybeSingle();
+    if (existing) throw new Error("That code is already taken");
+
+    const { data: created, error } = await supabaseAdmin.from("promo_codes").insert({
+      code: upperCode,
+      discount_percent: data.discountPercent,
+      affiliate_id: affiliateId,
+      starts_at: data.startsAt ?? null,
+      ends_at: data.endsAt ?? null,
+      usage_limit: data.usageLimit ?? null,
+      status: "active",
+    }).select("id").single();
+    if (error || !created) throw new Error(error?.message ?? "Failed to create");
+
+    await syncToStripe(created.id);
+    return { id: created.id, code: upperCode };
+  });
+
+export const updatePromoCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => UpdateSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const role = await callerRole(userId);
+    if (!role) throw new Error("Unauthorized");
+
+    const { data: promo } = await supabaseAdmin.from("promo_codes").select("*").eq("id", data.id).maybeSingle();
+    if (!promo) throw new Error("Not found");
+
+    if (role === "affiliate" && promo.affiliate_id !== userId) throw new Error("Forbidden");
+    if (role === "sam") {
+      if (!promo.affiliate_id || !(await isAncestorOf(userId, promo.affiliate_id))) throw new Error("Forbidden");
+    }
+    if (role === "manager" || role === "customer") throw new Error("Forbidden");
+
+    const patch: Record<string, unknown> = {};
+    if (data.discountPercent !== undefined) patch.discount_percent = data.discountPercent;
+    if (data.status !== undefined) patch.status = data.status;
+    if (data.startsAt !== undefined) patch.starts_at = data.startsAt;
+    if (data.endsAt !== undefined) patch.ends_at = data.endsAt;
+    if (data.usageLimit !== undefined) patch.usage_limit = data.usageLimit;
+
+    const { error } = await supabaseAdmin.from("promo_codes").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    await syncToStripe(data.id);
+    return { ok: true };
+  });
