@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendAppEmail } from "@/lib/email/send.server";
 
 async function ensureSuperAdmin(userId: string) {
   const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "super_admin").maybeSingle();
@@ -71,12 +72,29 @@ export const markPayoutPaid = createServerFn({ method: "POST" })
   .inputValidator((i) => MarkPaidSchema.parse(i))
   .handler(async ({ data, context }) => {
     await ensureSuperAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("payouts").update({
+    const { data: payout, error } = await supabaseAdmin.from("payouts").update({
       status: "paid", paid_at: new Date().toISOString(), notes: data.notes ?? null,
-    }).eq("id", data.payoutId);
+    }).eq("id", data.payoutId).select("beneficiary_id,amount_cents,period_start,period_end").maybeSingle();
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: context.userId, action: "mark_payout_paid", entity_type: "payout", entity_id: data.payoutId,
     });
+    if (payout) {
+      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", payout.beneficiary_id).maybeSingle();
+      await supabaseAdmin.rpc("notify_user_with_pref" as never, {
+        _user_id: payout.beneficiary_id, _category: "payouts", _type: "payout_sent",
+        _title: "Payout sent",
+        _body: `${(payout.amount_cents / 100).toFixed(2)} USD has been sent`,
+        _link: "/affiliate/earnings",
+      } as never);
+      if (prof?.email) {
+        await sendAppEmail({
+          to: prof.email, template: "payout_sent",
+          data: { amountCents: payout.amount_cents, currency: "usd", periodStart: payout.period_start ?? undefined, periodEnd: payout.period_end ?? undefined },
+          category: "payouts", userId: payout.beneficiary_id,
+          idempotencyKey: `payout-${data.payoutId}`,
+        });
+      }
+    }
     return { ok: true };
   });
