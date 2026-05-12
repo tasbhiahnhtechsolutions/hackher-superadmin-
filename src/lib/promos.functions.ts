@@ -12,7 +12,7 @@ const MAX_TOTAL = 0.30;
 const COMM_AFFILIATE = 0.10;
 const COMM_MANAGER = 0.04;
 const COMM_SAM = 0.01;
-const MAX_DISCOUNT_PCT = Math.floor((MAX_TOTAL - (COMM_AFFILIATE + COMM_MANAGER + COMM_SAM)) * 100); // 15
+const MAX_DISCOUNT_PCT = Math.round((MAX_TOTAL - (COMM_AFFILIATE + COMM_MANAGER + COMM_SAM)) * 100); // 15
 
 const CreateSchema = z.object({
   code: z.string().regex(/^[A-Za-z0-9]{3,30}$/, "3-30 alphanumeric chars"),
