@@ -85,12 +85,14 @@ export const createSubordinate = createServerFn({ method: "POST" })
       throw new Error(`You don't have permission to create a ${data.role}`);
     }
 
-    // Default commission per role if not provided
+    // Default commission per role. Only super_admin can override.
     const defaultRate =
       data.role === "affiliate" ? COMMISSION_AFFILIATE :
       data.role === "manager" ? COMMISSION_MANAGER :
       data.role === "sam" ? COMMISSION_SAM : 0;
-    const commissionRate = data.commissionRate ?? defaultRate;
+    const commissionRate = (callerRole === "super_admin" && data.commissionRate !== undefined)
+      ? data.commissionRate
+      : defaultRate;
 
     // Determine discount for affiliate auto-promo (enforce 30% rule)
     const headroom = Math.max(0, MAX_COMBINED - (COMMISSION_AFFILIATE + COMMISSION_MANAGER + COMMISSION_SAM));
