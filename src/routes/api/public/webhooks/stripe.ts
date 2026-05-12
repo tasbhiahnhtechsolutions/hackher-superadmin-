@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendAppEmail } from "@/lib/email/send.server";
+import { detectSelfReferral, detectRapidRefund } from "@/lib/fraud.server";
 
 const APP_URL = process.env.APP_URL || "https://hackher.ai";
 
@@ -146,6 +147,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 
               if (customerStripeId && customerId) {
                 await supabaseAdmin.from("customers").update({ stripe_customer_id: customerStripeId, ...(affiliateId ? { affiliate_id: affiliateId } : {}) }).eq("id", customerId);
+                if (affiliateId) await detectSelfReferral(customerId, affiliateId);
               }
               if (subscriptionId && customerId && planId) {
                 const fullSub = await stripe.subscriptions.retrieve(subscriptionId);
@@ -245,6 +247,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 stripe_event_id: event.id, type: "refund",
                 amount_cents: -(charge.amount_refunded ?? 0), currency: charge.currency, raw: charge as never,
               });
+              const subId = (charge as unknown as { subscription?: string | null }).subscription;
+              if (subId) await detectRapidRefund(subId, charge.amount_refunded ?? 0);
               await notifyAdmins("admin_alerts", "Refund issued", `Refund of ${((charge.amount_refunded ?? 0) / 100).toFixed(2)} ${charge.currency.toUpperCase()} on charge ${charge.id}`, "warning");
               break;
             }

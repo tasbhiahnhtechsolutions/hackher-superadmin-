@@ -55,6 +55,39 @@ export type Database = {
           },
         ]
       }
+      api_request_log: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          duration_ms: number | null
+          id: string
+          ip_address: string | null
+          method: string
+          path: string
+          status_code: number | null
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          ip_address?: string | null
+          method: string
+          path: string
+          status_code?: number | null
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          ip_address?: string | null
+          method?: string
+          path?: string
+          status_code?: number | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           commission_hold_days: number
@@ -266,6 +299,93 @@ export type Database = {
           status?: string
           subject?: string | null
           template_name?: string
+        }
+        Relationships: []
+      }
+      fraud_flags: {
+        Row: {
+          created_at: string
+          details: Json
+          device_fingerprint: string | null
+          flag_type: string
+          id: string
+          ip_address: string | null
+          promo_code_id: string | null
+          related_user_id: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number
+          severity: Database["public"]["Enums"]["fraud_severity"]
+          status: Database["public"]["Enums"]["fraud_status"]
+          subject_user_id: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          device_fingerprint?: string | null
+          flag_type: string
+          id?: string
+          ip_address?: string | null
+          promo_code_id?: string | null
+          related_user_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number
+          severity?: Database["public"]["Enums"]["fraud_severity"]
+          status?: Database["public"]["Enums"]["fraud_status"]
+          subject_user_id?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          device_fingerprint?: string | null
+          flag_type?: string
+          id?: string
+          ip_address?: string | null
+          promo_code_id?: string | null
+          related_user_id?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number
+          severity?: Database["public"]["Enums"]["fraud_severity"]
+          status?: Database["public"]["Enums"]["fraud_status"]
+          subject_user_id?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -746,6 +866,17 @@ export type Database = {
         }
         Returns: string
       }
+      flag_fraud: {
+        Args: {
+          _details: Json
+          _flag_type: string
+          _related: string
+          _risk: number
+          _severity: Database["public"]["Enums"]["fraud_severity"]
+          _subject: string
+        }
+        Returns: string
+      }
       get_ancestor_chain: {
         Args: { _user_id: string }
         Returns: {
@@ -781,6 +912,31 @@ export type Database = {
         }
         Returns: string
       }
+      report_churn: {
+        Args: { _days?: number }
+        Returns: {
+          active_start: number
+          churn_rate: number
+          churned: number
+        }[]
+      }
+      report_cohort_retention: {
+        Args: { _months_back?: number }
+        Returns: {
+          cohort: string
+          customers: number
+          period_offset: number
+          retained: number
+        }[]
+      }
+      report_ltv: {
+        Args: never
+        Returns: {
+          avg_ltv_cents: number
+          total_customers: number
+          total_revenue_cents: number
+        }[]
+      }
       report_revenue_timeseries: {
         Args: { _bucket?: string; _end: string; _start: string }
         Returns: {
@@ -790,6 +946,7 @@ export type Database = {
           refunds_cents: number
         }[]
       }
+      system_health_snapshot: { Args: never; Returns: Json }
     }
     Enums: {
       account_status: "active" | "suspended" | "pending"
@@ -801,6 +958,8 @@ export type Database = {
         | "paid"
         | "refunded"
         | "failed"
+      fraud_severity: "low" | "medium" | "high" | "critical"
+      fraud_status: "open" | "reviewing" | "dismissed" | "confirmed"
       payout_status: "pending" | "processing" | "paid" | "failed"
       plan_interval: "month" | "quarter" | "year"
       promo_status: "active" | "inactive" | "expired"
@@ -947,6 +1106,8 @@ export const Constants = {
         "refunded",
         "failed",
       ],
+      fraud_severity: ["low", "medium", "high", "critical"],
+      fraud_status: ["open", "reviewing", "dismissed", "confirmed"],
       payout_status: ["pending", "processing", "paid", "failed"],
       plan_interval: ["month", "quarter", "year"],
       promo_status: ["active", "inactive", "expired"],
