@@ -51,10 +51,10 @@ async function syncPromoToStripeInline(promoId: string) {
       metadata: { promo_id: promo.id, affiliate_id: promo.affiliate_id ?? "" },
     });
     const sp = await stripe.promotionCodes.create({
-      coupon: coupon.id,
+      promotion: { coupon: coupon.id, type: "coupon" },
       code: promo.code,
       metadata: { promo_id: promo.id },
-    });
+    } as never);
     await supabaseAdmin.from("promo_codes").update({
       stripe_coupon_id: coupon.id,
       stripe_promo_id: sp.id,
