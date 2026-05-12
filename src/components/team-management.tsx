@@ -98,20 +98,27 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
           <Table>
             <TableHeader><TableRow>
               <TableHead>Name</TableHead><TableHead>Email</TableHead>
+              {showManagerCol && <TableHead>Manager</TableHead>}
               <TableHead>Commission</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                : !data?.length ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
-                : data.map((u) => (
+              {isLoading ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                : !rows.length ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
+                : rows.map((u) => {
+                  const mgr = u.parent_user_id ? parents.get(u.parent_user_id) : null;
+                  return (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
                     <TableCell>{u.email}</TableCell>
+                    {showManagerCol && (
+                      <TableCell>{mgr ? (mgr.full_name ?? mgr.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    )}
                     <TableCell>{u.commission_rate ? `${(Number(u.commission_rate) * 100).toFixed(0)}%` : "—"}</TableCell>
                     <TableCell><Badge variant={u.status === "active" ? "default" : "secondary"}>{u.status}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
             </TableBody>
           </Table>
         </div>
