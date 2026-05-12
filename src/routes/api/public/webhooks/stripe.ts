@@ -34,6 +34,7 @@ async function notifyAffiliateChainOfCommission(beneficiaryId: string, amountCen
   } as never);
 }
 
+type AppRole = "super_admin" | "sam" | "manager" | "affiliate" | "customer";
 
 async function attributeCommissions(opts: {
   stripe: Stripe;
