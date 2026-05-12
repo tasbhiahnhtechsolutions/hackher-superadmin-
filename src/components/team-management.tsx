@@ -45,10 +45,21 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false }
 
   const createMut = useMutation({
     mutationFn: async () => {
-      return create({ data: { email: form.email, fullName: form.fullName, password: form.password, role: childRole, commissionRate: form.commission / 100 } });
+      const isAffiliate = childRole === "affiliate";
+      return create({ data: {
+        email: form.email,
+        fullName: form.fullName,
+        password: form.password,
+        role: childRole,
+        commissionRate: isAffiliate ? undefined : form.commission / 100,
+      }});
     },
-    onSuccess: () => {
-      toast.success("Account created");
+    onSuccess: (res) => {
+      if (childRole === "affiliate" && res?.promoCode) {
+        toast.success(`Affiliate created — promo code ${res.promoCode}`);
+      } else {
+        toast.success("Account created");
+      }
       setOpen(false);
       setForm({ email: "", fullName: "", password: "", commission: 10 });
       qc.invalidateQueries({ queryKey });
