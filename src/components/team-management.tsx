@@ -107,8 +107,14 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false }
             <div><Label>Full name</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div><Label>Temporary password</Label><Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 8 characters" /></div>
-            <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
-              <p className="mt-1 text-xs text-muted-foreground">Maximum 30%.</p></div>
+            {childRole === "affiliate" ? (
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                A unique promo code (e.g. <span className="font-mono font-semibold">{(form.fullName || "AFF").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12)}123</span>) will be generated automatically and synced to Stripe. Affiliate earns <b>10%</b>, customer gets <b>15%</b> off.
+              </div>
+            ) : (
+              <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
+                <p className="mt-1 text-xs text-muted-foreground">Maximum 30%.</p></div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
