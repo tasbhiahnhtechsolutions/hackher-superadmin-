@@ -39,15 +39,28 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
       // Get user_ids for this role (RLS now allows ancestors to see descendant roles)
       const { data: rolesRows } = await supabase.from("user_roles").select("user_id").eq("role", childRole);
       const ids = (rolesRows ?? []).map((r) => r.user_id);
-      if (!ids.length) return [];
+      if (!ids.length) return { rows: [], parents: new Map<string, { full_name: string | null; email: string }>() };
       let q = supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
-      // For non-recursive lists (Manager → affiliates, SAM → managers, SuperAdmin → SAMs)
-      // restrict to DIRECT children of the current user.
       if (!recursive && user) q = q.eq("parent_user_id", user.id);
       const { data: profiles } = await q;
-      return profiles ?? [];
+      const rows = profiles ?? [];
+
+      // For affiliate view, also fetch their manager (parent) profiles to show a "Manager" column
+      const parents = new Map<string, { full_name: string | null; email: string }>();
+      if (childRole === "affiliate" && rows.length) {
+        const parentIds = Array.from(new Set(rows.map((r) => r.parent_user_id).filter(Boolean))) as string[];
+        if (parentIds.length) {
+          const { data: parentProfiles } = await supabase
+            .from("profiles").select("id,full_name,email").in("id", parentIds);
+          (parentProfiles ?? []).forEach((p) => parents.set(p.id, { full_name: p.full_name, email: p.email }));
+        }
+      }
+      return { rows, parents };
     },
   });
+  const rows = data?.rows ?? [];
+  const parents = data?.parents ?? new Map<string, { full_name: string | null; email: string }>();
+  const showManagerCol = childRole === "affiliate";
 
   const createMut = useMutation({
     mutationFn: async () => {
@@ -85,20 +98,27 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
           <Table>
             <TableHeader><TableRow>
               <TableHead>Name</TableHead><TableHead>Email</TableHead>
+              {showManagerCol && <TableHead>Manager</TableHead>}
               <TableHead>Commission</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                : !data?.length ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
-                : data.map((u) => (
+              {isLoading ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                : !rows.length ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
+                : rows.map((u) => {
+                  const mgr = u.parent_user_id ? parents.get(u.parent_user_id) : null;
+                  return (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
                     <TableCell>{u.email}</TableCell>
+                    {showManagerCol && (
+                      <TableCell>{mgr ? (mgr.full_name ?? mgr.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    )}
                     <TableCell>{u.commission_rate ? `${(Number(u.commission_rate) * 100).toFixed(0)}%` : "—"}</TableCell>
                     <TableCell><Badge variant={u.status === "active" ? "default" : "secondary"}>{u.status}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
             </TableBody>
           </Table>
         </div>
