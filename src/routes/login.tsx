@@ -29,7 +29,6 @@ function LoginPage() {
       toast.error(error);
     } else {
       toast.success("Welcome back");
-      navigate({ to: "/", replace: true });
     }
   };
 
