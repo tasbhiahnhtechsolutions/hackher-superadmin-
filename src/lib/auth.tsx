@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,16 +35,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadedFor = useRef<string | null>(null);
 
-  const loadUserData = async (uid: string) => {
+  const loadUserData = useCallback(async (uid: string) => {
     if (loadedFor.current === uid) return;
     loadedFor.current = uid;
-    const [{ data: profileData }, { data: roleData }] = await Promise.all([
-      supabase.from("profiles").select("id,email,full_name,avatar_url,status").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid).order("role").limit(1).maybeSingle(),
-    ]);
-    setProfile(profileData as Profile | null);
-    setRole((roleData?.role as AppRole) ?? null);
-  };
+    setLoading(true);
+    try {
+      const [{ data: profileData }, { data: roleRows }] = await Promise.all([
+        supabase.from("profiles").select("id,email,full_name,avatar_url,status").eq("id", uid).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+      ]);
+      const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
+      const rolePriority: AppRole[] = ["super_admin", "sam", "manager", "affiliate", "customer"];
+      setProfile(profileData as Profile | null);
+      setRole(rolePriority.find((candidate) => roles.includes(candidate)) ?? null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     // CRITICAL: set listener BEFORE getSession
@@ -58,12 +65,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadedFor.current = null;
         setProfile(null);
         setRole(null);
+        setLoading(false);
       }
-      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(({ data }) => {
+      const sess = data.session;
+      setSession(sess);
+      setUser(sess?.user ?? null);
+      if (sess?.user) {
+        void loadUserData(sess.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [loadUserData]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
