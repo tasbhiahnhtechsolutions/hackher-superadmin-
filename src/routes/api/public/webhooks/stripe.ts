@@ -2,8 +2,38 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { sendAppEmail } from "@/lib/email/send.server";
 
-type AppRole = "super_admin" | "sam" | "manager" | "affiliate" | "customer";
+const APP_URL = process.env.APP_URL || "https://hackher.ai";
+
+async function notifyAdmins(category: "admin_alerts", title: string, message: string, severity: "info" | "warning" | "critical" = "warning") {
+  const { data: admins } = await supabaseAdmin
+    .from("user_roles").select("user_id, profiles!inner(email,full_name)")
+    .eq("role", "super_admin");
+  if (!admins?.length) return;
+  for (const a of admins as unknown as Array<{ user_id: string; profiles: { email: string; full_name: string | null } }>) {
+    await supabaseAdmin.rpc("notify_user_with_pref" as never, {
+      _user_id: a.user_id, _category: category, _type: "admin_alert",
+      _title: title, _body: message, _link: "/admin",
+    } as never);
+    await sendAppEmail({
+      to: a.profiles.email, template: "admin_alert",
+      data: { title, message, severity }, category, userId: a.user_id,
+    });
+  }
+}
+
+async function notifyAffiliateChainOfCommission(beneficiaryId: string, amountCents: number, currency: string) {
+  const { data: prof } = await supabaseAdmin.from("profiles").select("email,full_name").eq("id", beneficiaryId).maybeSingle();
+  if (!prof?.email) return;
+  await supabaseAdmin.rpc("notify_user_with_pref" as never, {
+    _user_id: beneficiaryId, _category: "commissions", _type: "commission_earned",
+    _title: "New commission earned",
+    _body: `${(amountCents / 100).toFixed(2)} ${currency.toUpperCase()} pending`,
+    _link: "/affiliate/earnings",
+  } as never);
+}
+
 
 async function attributeCommissions(opts: {
   stripe: Stripe;
