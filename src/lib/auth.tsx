@@ -87,7 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refresh = async () => {
-    if (user) await loadUserData(user.id);
+    if (user) {
+      loadedFor.current = null;
+      await loadUserData(user.id);
+    }
   };
 
   return (
