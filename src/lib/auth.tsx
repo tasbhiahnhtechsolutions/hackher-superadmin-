@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       setLoading(false);
     }
-    return { error: error?.message };
+    return {};
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
