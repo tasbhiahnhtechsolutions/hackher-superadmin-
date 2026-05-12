@@ -29,7 +29,7 @@ function LoginPage() {
       toast.error(error);
     } else {
       toast.success("Welcome back");
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     }
   };
 
