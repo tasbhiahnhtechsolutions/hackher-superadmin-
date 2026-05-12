@@ -32,9 +32,8 @@ function Landing() {
           </div>
           <div className="flex items-center gap-3">
             <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground">Pricing</Link>
-            <Link to="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground">Sign in</Link>
-            <Link to="/signup" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-elegant hover:opacity-90">
-              Get started <ArrowRight className="h-3.5 w-3.5" />
+            <Link to="/login" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-elegant hover:opacity-90">
+              Sign in <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
@@ -53,11 +52,11 @@ function Landing() {
           Manage affiliates, promo codes, commissions, and Stripe subscriptions across a multi-tier hierarchy — with enterprise-grade security baked in.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/signup" className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-elegant hover:opacity-90">
-            Create your account <ArrowRight className="h-4 w-4" />
+          <Link to="/login" className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-elegant hover:opacity-90">
+            Sign in to your portal <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link to="/login" className="inline-flex items-center rounded-md border border-border bg-card/50 px-6 py-3 text-sm font-medium hover:bg-accent glass">
-            Sign in
+          <Link to="/pricing" className="inline-flex items-center rounded-md border border-border bg-card/50 px-6 py-3 text-sm font-medium hover:bg-accent glass">
+            View pricing
           </Link>
         </div>
 
