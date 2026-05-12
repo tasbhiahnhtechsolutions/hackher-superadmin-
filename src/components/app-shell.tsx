@@ -36,6 +36,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { to: "/sam", label: "Dashboard", icon: LayoutDashboard },
     { to: "/sam/managers", label: "Managers", icon: UserCog },
     { to: "/sam/affiliates", label: "Affiliates", icon: Users },
+    { to: "/sam/promo-codes", label: "Promo Codes", icon: Tag },
     { to: "/sam/payouts", label: "Payouts", icon: Wallet },
     { to: "/sam/reports", label: "Reports", icon: FileBarChart },
   ],

@@ -120,20 +120,10 @@ export const createSubordinate = createServerFn({ method: "POST" })
     await supabaseAdmin.from("user_roles").delete().eq("user_id", newId);
     await supabaseAdmin.from("user_roles").insert({ user_id: newId, role: data.role });
 
-    // Auto-create promo code for affiliates
-    let promoCode: string | null = null;
-    if (data.role === "affiliate") {
-      promoCode = await generateUniquePromoCode(data.fullName || data.email.split("@")[0]);
-      const { data: promoRow } = await supabaseAdmin.from("promo_codes").insert({
-        code: promoCode,
-        discount_percent: discountPercent,
-        affiliate_id: newId,
-        status: "active",
-      }).select("id").single();
-      if (promoRow) {
-        await syncPromoToStripeInline(promoRow.id);
-      }
-    }
+    // Affiliates create their own promo codes from the affiliate dashboard.
+    // We no longer auto-generate one on account creation.
+    const promoCode: string | null = null;
+    void discountPercent; // reserved for future default-discount UI
 
     await supabaseAdmin.from("audit_logs").insert({
       actor_id: userId,

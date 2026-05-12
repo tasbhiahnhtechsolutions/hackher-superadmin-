@@ -138,7 +138,13 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     }
     if (role === "manager" || role === "customer") throw new Error("Forbidden");
 
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      discount_percent?: number;
+      status?: "active" | "inactive";
+      starts_at?: string | null;
+      ends_at?: string | null;
+      usage_limit?: number | null;
+    } = {};
     if (data.discountPercent !== undefined) patch.discount_percent = data.discountPercent;
     if (data.status !== undefined) patch.status = data.status;
     if (data.startsAt !== undefined) patch.starts_at = data.startsAt;
