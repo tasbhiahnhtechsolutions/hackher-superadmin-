@@ -20,9 +20,10 @@ interface Props {
   childRole: "sam" | "manager" | "affiliate";
   // when true, show all descendants (recursive); else only direct
   recursive?: boolean;
+  readOnly?: boolean;
 }
 
-export function TeamManagement({ title, subtitle, childRole, recursive = false }: Props) {
+export function TeamManagement({ title, subtitle, childRole, recursive = false, readOnly = false }: Props) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const create = useServerFn(createSubordinate);
@@ -45,10 +46,21 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false }
 
   const createMut = useMutation({
     mutationFn: async () => {
-      return create({ data: { email: form.email, fullName: form.fullName, password: form.password, role: childRole, commissionRate: form.commission / 100 } });
+      const isAffiliate = childRole === "affiliate";
+      return create({ data: {
+        email: form.email,
+        fullName: form.fullName,
+        password: form.password,
+        role: childRole,
+        commissionRate: isAffiliate ? undefined : form.commission / 100,
+      }});
     },
-    onSuccess: () => {
-      toast.success("Account created");
+    onSuccess: (res) => {
+      if (childRole === "affiliate" && res?.promoCode) {
+        toast.success(`Affiliate created — promo code ${res.promoCode}`);
+      } else {
+        toast.success("Account created");
+      }
       setOpen(false);
       setForm({ email: "", fullName: "", password: "", commission: 10 });
       qc.invalidateQueries({ queryKey });
@@ -63,7 +75,7 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false }
       <PageHeader
         title={title}
         subtitle={subtitle}
-        action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New {labelMap[childRole]}</Button>}
+        action={readOnly ? undefined : <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New {labelMap[childRole]}</Button>}
       />
       <PageBody>
         <div className="rounded-xl border border-border/60 bg-card">
@@ -96,8 +108,14 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false }
             <div><Label>Full name</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <div><Label>Temporary password</Label><Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 8 characters" /></div>
-            <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
-              <p className="mt-1 text-xs text-muted-foreground">Maximum 30%.</p></div>
+            {childRole === "affiliate" ? (
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                A unique promo code (e.g. <span className="font-mono font-semibold">{(form.fullName || "AFF").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12)}123</span>) will be generated automatically and synced to Stripe. Affiliate earns <b>10%</b>, customer gets <b>15%</b> off.
+              </div>
+            ) : (
+              <div><Label>Commission %</Label><Input type="number" min={0} max={30} value={form.commission} onChange={(e) => setForm({ ...form, commission: Number(e.target.value) })} />
+                <p className="mt-1 text-xs text-muted-foreground">Maximum 30%.</p></div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

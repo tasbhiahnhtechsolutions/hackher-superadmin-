@@ -27,6 +27,7 @@ import { Route as AuthenticatedManagerIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAffiliateIndexRouteImport } from './routes/_authenticated/affiliate/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as ApiV1PlansRouteImport } from './routes/api/v1/plans'
+import { Route as ApiCustomerPlansRouteImport } from './routes/api/customer/plans'
 import { Route as AuthenticatedSettingsNotificationsRouteImport } from './routes/_authenticated/settings.notifications'
 import { Route as AuthenticatedSamReportsRouteImport } from './routes/_authenticated/sam/reports'
 import { Route as AuthenticatedSamPayoutsRouteImport } from './routes/_authenticated/sam/payouts'
@@ -36,7 +37,7 @@ import { Route as AuthenticatedManagerSubscribersRouteImport } from './routes/_a
 import { Route as AuthenticatedManagerReportsRouteImport } from './routes/_authenticated/manager/reports'
 import { Route as AuthenticatedManagerAffiliatesRouteImport } from './routes/_authenticated/manager/affiliates'
 import { Route as AuthenticatedAffiliateSubscribersRouteImport } from './routes/_authenticated/affiliate/subscribers'
-import { Route as AuthenticatedAffiliatePromoCodesRouteImport } from './routes/_authenticated/affiliate/promo-codes'
+import { Route as AuthenticatedAffiliateMyCodeRouteImport } from './routes/_authenticated/affiliate/my-code'
 import { Route as AuthenticatedAffiliateEarningsRouteImport } from './routes/_authenticated/affiliate/earnings'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin/system'
@@ -48,13 +49,14 @@ import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminFraudRouteImport } from './routes/_authenticated/admin/fraud'
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin/audit-logs'
-import { Route as AuthenticatedAdminApiKeysRouteImport } from './routes/_authenticated/admin/api-keys'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
 import { Route as ApiV1SubscriptionsCreateRouteImport } from './routes/api/v1/subscriptions/create'
 import { Route as ApiV1CouponsValidateRouteImport } from './routes/api/v1/coupons/validate'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksRetryEmailsRouteImport } from './routes/api/public/hooks/retry-emails'
 import { Route as ApiPublicHooksClearCommissionsRouteImport } from './routes/api/public/hooks/clear-commissions'
+import { Route as ApiCustomerSubscriptionCreateRouteImport } from './routes/api/customer/subscription.create'
+import { Route as ApiCustomerCouponValidateRouteImport } from './routes/api/customer/coupon.validate'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -148,6 +150,11 @@ const ApiV1PlansRoute = ApiV1PlansRouteImport.update({
   path: '/api/v1/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCustomerPlansRoute = ApiCustomerPlansRouteImport.update({
+  id: '/api/customer/plans',
+  path: '/api/customer/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsNotificationsRoute =
   AuthenticatedSettingsNotificationsRouteImport.update({
     id: '/settings/notifications',
@@ -200,10 +207,10 @@ const AuthenticatedAffiliateSubscribersRoute =
     path: '/subscribers',
     getParentRoute: () => AuthenticatedAffiliateRoute,
   } as any)
-const AuthenticatedAffiliatePromoCodesRoute =
-  AuthenticatedAffiliatePromoCodesRouteImport.update({
-    id: '/promo-codes',
-    path: '/promo-codes',
+const AuthenticatedAffiliateMyCodeRoute =
+  AuthenticatedAffiliateMyCodeRouteImport.update({
+    id: '/my-code',
+    path: '/my-code',
     getParentRoute: () => AuthenticatedAffiliateRoute,
   } as any)
 const AuthenticatedAffiliateEarningsRoute =
@@ -269,12 +276,6 @@ const AuthenticatedAdminAuditLogsRoute =
     path: '/audit-logs',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminApiKeysRoute =
-  AuthenticatedAdminApiKeysRouteImport.update({
-    id: '/api-keys',
-    path: '/api-keys',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminAnalyticsRoute =
   AuthenticatedAdminAnalyticsRouteImport.update({
     id: '/analytics',
@@ -309,6 +310,18 @@ const ApiPublicHooksClearCommissionsRoute =
     path: '/api/public/hooks/clear-commissions',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCustomerSubscriptionCreateRoute =
+  ApiCustomerSubscriptionCreateRouteImport.update({
+    id: '/api/customer/subscription/create',
+    path: '/api/customer/subscription/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCustomerCouponValidateRoute =
+  ApiCustomerCouponValidateRouteImport.update({
+    id: '/api/customer/coupon/validate',
+    path: '/api/customer/coupon/validate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -324,7 +337,6 @@ export interface FileRoutesByFullPath {
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
-  '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/fraud': typeof AuthenticatedAdminFraudRoute
@@ -336,7 +348,7 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
-  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -346,11 +358,14 @@ export interface FileRoutesByFullPath {
   '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
   '/sam/reports': typeof AuthenticatedSamReportsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/api/customer/plans': typeof ApiCustomerPlansRoute
   '/api/v1/plans': typeof ApiV1PlansRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/affiliate/': typeof AuthenticatedAffiliateIndexRoute
   '/manager/': typeof AuthenticatedManagerIndexRoute
   '/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/customer/coupon/validate': typeof ApiCustomerCouponValidateRoute
+  '/api/customer/subscription/create': typeof ApiCustomerSubscriptionCreateRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -367,7 +382,6 @@ export interface FileRoutesByTo {
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
-  '/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/admin/fraud': typeof AuthenticatedAdminFraudRoute
@@ -379,7 +393,7 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AuthenticatedAdminSystemRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
-  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -389,11 +403,14 @@ export interface FileRoutesByTo {
   '/sam/payouts': typeof AuthenticatedSamPayoutsRoute
   '/sam/reports': typeof AuthenticatedSamReportsRoute
   '/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/api/customer/plans': typeof ApiCustomerPlansRoute
   '/api/v1/plans': typeof ApiV1PlansRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/affiliate': typeof AuthenticatedAffiliateIndexRoute
   '/manager': typeof AuthenticatedManagerIndexRoute
   '/sam': typeof AuthenticatedSamIndexRoute
+  '/api/customer/coupon/validate': typeof ApiCustomerCouponValidateRoute
+  '/api/customer/subscription/create': typeof ApiCustomerSubscriptionCreateRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -416,7 +433,6 @@ export interface FileRoutesById {
   '/checkout/cancel': typeof CheckoutCancelRoute
   '/checkout/success': typeof CheckoutSuccessRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
-  '/_authenticated/admin/api-keys': typeof AuthenticatedAdminApiKeysRoute
   '/_authenticated/admin/audit-logs': typeof AuthenticatedAdminAuditLogsRoute
   '/_authenticated/admin/emails': typeof AuthenticatedAdminEmailsRoute
   '/_authenticated/admin/fraud': typeof AuthenticatedAdminFraudRoute
@@ -428,7 +444,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/affiliate/earnings': typeof AuthenticatedAffiliateEarningsRoute
-  '/_authenticated/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/_authenticated/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/_authenticated/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/_authenticated/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
   '/_authenticated/manager/reports': typeof AuthenticatedManagerReportsRoute
@@ -438,11 +454,14 @@ export interface FileRoutesById {
   '/_authenticated/sam/payouts': typeof AuthenticatedSamPayoutsRoute
   '/_authenticated/sam/reports': typeof AuthenticatedSamReportsRoute
   '/_authenticated/settings/notifications': typeof AuthenticatedSettingsNotificationsRoute
+  '/api/customer/plans': typeof ApiCustomerPlansRoute
   '/api/v1/plans': typeof ApiV1PlansRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/affiliate/': typeof AuthenticatedAffiliateIndexRoute
   '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
   '/_authenticated/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/customer/coupon/validate': typeof ApiCustomerCouponValidateRoute
+  '/api/customer/subscription/create': typeof ApiCustomerSubscriptionCreateRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -465,7 +484,6 @@ export interface FileRouteTypes {
     | '/checkout/cancel'
     | '/checkout/success'
     | '/admin/analytics'
-    | '/admin/api-keys'
     | '/admin/audit-logs'
     | '/admin/emails'
     | '/admin/fraud'
@@ -477,7 +495,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/affiliate/earnings'
-    | '/affiliate/promo-codes'
+    | '/affiliate/my-code'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
     | '/manager/reports'
@@ -487,11 +505,14 @@ export interface FileRouteTypes {
     | '/sam/payouts'
     | '/sam/reports'
     | '/settings/notifications'
+    | '/api/customer/plans'
     | '/api/v1/plans'
     | '/admin/'
     | '/affiliate/'
     | '/manager/'
     | '/sam/'
+    | '/api/customer/coupon/validate'
+    | '/api/customer/subscription/create'
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
@@ -508,7 +529,6 @@ export interface FileRouteTypes {
     | '/checkout/cancel'
     | '/checkout/success'
     | '/admin/analytics'
-    | '/admin/api-keys'
     | '/admin/audit-logs'
     | '/admin/emails'
     | '/admin/fraud'
@@ -520,7 +540,7 @@ export interface FileRouteTypes {
     | '/admin/system'
     | '/admin/users'
     | '/affiliate/earnings'
-    | '/affiliate/promo-codes'
+    | '/affiliate/my-code'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
     | '/manager/reports'
@@ -530,11 +550,14 @@ export interface FileRouteTypes {
     | '/sam/payouts'
     | '/sam/reports'
     | '/settings/notifications'
+    | '/api/customer/plans'
     | '/api/v1/plans'
     | '/admin'
     | '/affiliate'
     | '/manager'
     | '/sam'
+    | '/api/customer/coupon/validate'
+    | '/api/customer/subscription/create'
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
@@ -556,7 +579,6 @@ export interface FileRouteTypes {
     | '/checkout/cancel'
     | '/checkout/success'
     | '/_authenticated/admin/analytics'
-    | '/_authenticated/admin/api-keys'
     | '/_authenticated/admin/audit-logs'
     | '/_authenticated/admin/emails'
     | '/_authenticated/admin/fraud'
@@ -568,7 +590,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/system'
     | '/_authenticated/admin/users'
     | '/_authenticated/affiliate/earnings'
-    | '/_authenticated/affiliate/promo-codes'
+    | '/_authenticated/affiliate/my-code'
     | '/_authenticated/affiliate/subscribers'
     | '/_authenticated/manager/affiliates'
     | '/_authenticated/manager/reports'
@@ -578,11 +600,14 @@ export interface FileRouteTypes {
     | '/_authenticated/sam/payouts'
     | '/_authenticated/sam/reports'
     | '/_authenticated/settings/notifications'
+    | '/api/customer/plans'
     | '/api/v1/plans'
     | '/_authenticated/admin/'
     | '/_authenticated/affiliate/'
     | '/_authenticated/manager/'
     | '/_authenticated/sam/'
+    | '/api/customer/coupon/validate'
+    | '/api/customer/subscription/create'
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
@@ -599,7 +624,10 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CheckoutCancelRoute: typeof CheckoutCancelRoute
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
+  ApiCustomerPlansRoute: typeof ApiCustomerPlansRoute
   ApiV1PlansRoute: typeof ApiV1PlansRoute
+  ApiCustomerCouponValidateRoute: typeof ApiCustomerCouponValidateRoute
+  ApiCustomerSubscriptionCreateRoute: typeof ApiCustomerSubscriptionCreateRoute
   ApiPublicHooksClearCommissionsRoute: typeof ApiPublicHooksClearCommissionsRoute
   ApiPublicHooksRetryEmailsRoute: typeof ApiPublicHooksRetryEmailsRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
@@ -735,6 +763,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1PlansRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/customer/plans': {
+      id: '/api/customer/plans'
+      path: '/api/customer/plans'
+      fullPath: '/api/customer/plans'
+      preLoaderRoute: typeof ApiCustomerPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/notifications': {
       id: '/_authenticated/settings/notifications'
       path: '/settings/notifications'
@@ -798,11 +833,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAffiliateSubscribersRouteImport
       parentRoute: typeof AuthenticatedAffiliateRoute
     }
-    '/_authenticated/affiliate/promo-codes': {
-      id: '/_authenticated/affiliate/promo-codes'
-      path: '/promo-codes'
-      fullPath: '/affiliate/promo-codes'
-      preLoaderRoute: typeof AuthenticatedAffiliatePromoCodesRouteImport
+    '/_authenticated/affiliate/my-code': {
+      id: '/_authenticated/affiliate/my-code'
+      path: '/my-code'
+      fullPath: '/affiliate/my-code'
+      preLoaderRoute: typeof AuthenticatedAffiliateMyCodeRouteImport
       parentRoute: typeof AuthenticatedAffiliateRoute
     }
     '/_authenticated/affiliate/earnings': {
@@ -882,13 +917,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditLogsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/api-keys': {
-      id: '/_authenticated/admin/api-keys'
-      path: '/api-keys'
-      fullPath: '/admin/api-keys'
-      preLoaderRoute: typeof AuthenticatedAdminApiKeysRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/admin/analytics': {
       id: '/_authenticated/admin/analytics'
       path: '/analytics'
@@ -931,12 +959,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksClearCommissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/customer/subscription/create': {
+      id: '/api/customer/subscription/create'
+      path: '/api/customer/subscription/create'
+      fullPath: '/api/customer/subscription/create'
+      preLoaderRoute: typeof ApiCustomerSubscriptionCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/customer/coupon/validate': {
+      id: '/api/customer/coupon/validate'
+      path: '/api/customer/coupon/validate'
+      fullPath: '/api/customer/coupon/validate'
+      preLoaderRoute: typeof ApiCustomerCouponValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
-  AuthenticatedAdminApiKeysRoute: typeof AuthenticatedAdminApiKeysRoute
   AuthenticatedAdminAuditLogsRoute: typeof AuthenticatedAdminAuditLogsRoute
   AuthenticatedAdminEmailsRoute: typeof AuthenticatedAdminEmailsRoute
   AuthenticatedAdminFraudRoute: typeof AuthenticatedAdminFraudRoute
@@ -952,7 +993,6 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
-  AuthenticatedAdminApiKeysRoute: AuthenticatedAdminApiKeysRoute,
   AuthenticatedAdminAuditLogsRoute: AuthenticatedAdminAuditLogsRoute,
   AuthenticatedAdminEmailsRoute: AuthenticatedAdminEmailsRoute,
   AuthenticatedAdminFraudRoute: AuthenticatedAdminFraudRoute,
@@ -971,7 +1011,7 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedAffiliateRouteChildren {
   AuthenticatedAffiliateEarningsRoute: typeof AuthenticatedAffiliateEarningsRoute
-  AuthenticatedAffiliatePromoCodesRoute: typeof AuthenticatedAffiliatePromoCodesRoute
+  AuthenticatedAffiliateMyCodeRoute: typeof AuthenticatedAffiliateMyCodeRoute
   AuthenticatedAffiliateSubscribersRoute: typeof AuthenticatedAffiliateSubscribersRoute
   AuthenticatedAffiliateIndexRoute: typeof AuthenticatedAffiliateIndexRoute
 }
@@ -979,8 +1019,7 @@ interface AuthenticatedAffiliateRouteChildren {
 const AuthenticatedAffiliateRouteChildren: AuthenticatedAffiliateRouteChildren =
   {
     AuthenticatedAffiliateEarningsRoute: AuthenticatedAffiliateEarningsRoute,
-    AuthenticatedAffiliatePromoCodesRoute:
-      AuthenticatedAffiliatePromoCodesRoute,
+    AuthenticatedAffiliateMyCodeRoute: AuthenticatedAffiliateMyCodeRoute,
     AuthenticatedAffiliateSubscribersRoute:
       AuthenticatedAffiliateSubscribersRoute,
     AuthenticatedAffiliateIndexRoute: AuthenticatedAffiliateIndexRoute,
@@ -1059,7 +1098,10 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CheckoutCancelRoute: CheckoutCancelRoute,
   CheckoutSuccessRoute: CheckoutSuccessRoute,
+  ApiCustomerPlansRoute: ApiCustomerPlansRoute,
   ApiV1PlansRoute: ApiV1PlansRoute,
+  ApiCustomerCouponValidateRoute: ApiCustomerCouponValidateRoute,
+  ApiCustomerSubscriptionCreateRoute: ApiCustomerSubscriptionCreateRoute,
   ApiPublicHooksClearCommissionsRoute: ApiPublicHooksClearCommissionsRoute,
   ApiPublicHooksRetryEmailsRoute: ApiPublicHooksRetryEmailsRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
