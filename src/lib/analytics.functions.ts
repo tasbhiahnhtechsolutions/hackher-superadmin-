@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const requireAdmin = async (supabase: ReturnType<typeof requireSupabaseAuth> extends never ? never : any, userId: string) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const requireAdmin = async (supabase: any, userId: string) => {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (!data?.some((r: { role: string }) => r.role === "super_admin")) {
     throw new Response("Forbidden", { status: 403 });
