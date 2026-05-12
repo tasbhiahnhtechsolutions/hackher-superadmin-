@@ -147,6 +147,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 
               if (customerStripeId && customerId) {
                 await supabaseAdmin.from("customers").update({ stripe_customer_id: customerStripeId, ...(affiliateId ? { affiliate_id: affiliateId } : {}) }).eq("id", customerId);
+                if (affiliateId) await detectSelfReferral(customerId, affiliateId);
               }
               if (subscriptionId && customerId && planId) {
                 const fullSub = await stripe.subscriptions.retrieve(subscriptionId);
