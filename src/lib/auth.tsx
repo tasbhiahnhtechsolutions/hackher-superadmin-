@@ -34,32 +34,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadedFor = useRef<string | null>(null);
+  const loadedRole = useRef<AppRole | null>(null);
+
+  const resetUserState = useCallback(() => {
+    loadedFor.current = null;
+    loadedRole.current = null;
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setRole(null);
+  }, []);
+
+  const clearLocalSession = useCallback(async () => {
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch (error) {
+      console.warn("Failed to clear local auth session", error);
+    } finally {
+      resetUserState();
+      setLoading(false);
+    }
+  }, [resetUserState]);
 
   const loadUserData = useCallback(async (uid: string, force = false) => {
-    if (!force && loadedFor.current === uid) return role;
+    if (!force && loadedFor.current === uid) return loadedRole.current;
     setLoading(true);
     try {
-      const [{ data: profileData }, { data: roleRows }] = await Promise.all([
+      const [{ data: profileData, error: profileError }, { data: roleRows, error: roleError }] = await Promise.all([
         supabase.from("profiles").select("id,email,full_name,avatar_url,status").eq("id", uid).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", uid),
       ]);
+      if (profileError) throw profileError;
+      if (roleError) throw roleError;
       const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
       const rolePriority: AppRole[] = ["super_admin", "sam", "manager", "affiliate", "customer"];
       const resolvedRole = rolePriority.find((candidate) => roles.includes(candidate)) ?? null;
       setProfile(profileData as Profile | null);
       setRole(resolvedRole);
       loadedFor.current = uid;
+      loadedRole.current = resolvedRole;
       return resolvedRole;
     } catch (error) {
       console.error("Failed to load signed-in user data", error);
       loadedFor.current = null;
+      loadedRole.current = null;
       setProfile(null);
       setRole(null);
       return null;
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, []);
 
   useEffect(() => {
     // CRITICAL: set listener BEFORE getSession
