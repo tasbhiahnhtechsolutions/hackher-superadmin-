@@ -18,7 +18,14 @@ import { Route as AuthenticatedSamRouteImport } from './routes/_authenticated/sa
 import { Route as AuthenticatedManagerRouteImport } from './routes/_authenticated/manager'
 import { Route as AuthenticatedAffiliateRouteImport } from './routes/_authenticated/affiliate'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedSamIndexRouteImport } from './routes/_authenticated/sam/index'
+import { Route as AuthenticatedManagerIndexRouteImport } from './routes/_authenticated/manager/index'
+import { Route as AuthenticatedAffiliateIndexRouteImport } from './routes/_authenticated/affiliate/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedSamManagersRouteImport } from './routes/_authenticated/sam/managers'
+import { Route as AuthenticatedSamAffiliatesRouteImport } from './routes/_authenticated/sam/affiliates'
+import { Route as AuthenticatedManagerAffiliatesRouteImport } from './routes/_authenticated/manager/affiliates'
+import { Route as AuthenticatedAffiliatePromoCodesRouteImport } from './routes/_authenticated/affiliate/promo-codes'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminPromoCodesRouteImport } from './routes/_authenticated/admin/promo-codes'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
@@ -67,11 +74,52 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSamIndexRoute = AuthenticatedSamIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedSamRoute,
+} as any)
+const AuthenticatedManagerIndexRoute =
+  AuthenticatedManagerIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedAffiliateIndexRoute =
+  AuthenticatedAffiliateIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedSamManagersRoute =
+  AuthenticatedSamManagersRouteImport.update({
+    id: '/managers',
+    path: '/managers',
+    getParentRoute: () => AuthenticatedSamRoute,
+  } as any)
+const AuthenticatedSamAffiliatesRoute =
+  AuthenticatedSamAffiliatesRouteImport.update({
+    id: '/affiliates',
+    path: '/affiliates',
+    getParentRoute: () => AuthenticatedSamRoute,
+  } as any)
+const AuthenticatedManagerAffiliatesRoute =
+  AuthenticatedManagerAffiliatesRouteImport.update({
+    id: '/affiliates',
+    path: '/affiliates',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedAffiliatePromoCodesRoute =
+  AuthenticatedAffiliatePromoCodesRouteImport.update({
+    id: '/promo-codes',
+    path: '/promo-codes',
+    getParentRoute: () => AuthenticatedAffiliateRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -95,26 +143,37 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/affiliate': typeof AuthenticatedAffiliateRoute
-  '/manager': typeof AuthenticatedManagerRoute
-  '/sam': typeof AuthenticatedSamRoute
+  '/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
+  '/manager': typeof AuthenticatedManagerRouteWithChildren
+  '/sam': typeof AuthenticatedSamRouteWithChildren
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
+  '/sam/managers': typeof AuthenticatedSamManagersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/affiliate/': typeof AuthenticatedAffiliateIndexRoute
+  '/manager/': typeof AuthenticatedManagerIndexRoute
+  '/sam/': typeof AuthenticatedSamIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/affiliate': typeof AuthenticatedAffiliateRoute
-  '/manager': typeof AuthenticatedManagerRoute
-  '/sam': typeof AuthenticatedSamRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
+  '/sam/managers': typeof AuthenticatedSamManagersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/affiliate': typeof AuthenticatedAffiliateIndexRoute
+  '/manager': typeof AuthenticatedManagerIndexRoute
+  '/sam': typeof AuthenticatedSamIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,13 +183,20 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/affiliate': typeof AuthenticatedAffiliateRoute
-  '/_authenticated/manager': typeof AuthenticatedManagerRoute
-  '/_authenticated/sam': typeof AuthenticatedSamRoute
+  '/_authenticated/affiliate': typeof AuthenticatedAffiliateRouteWithChildren
+  '/_authenticated/manager': typeof AuthenticatedManagerRouteWithChildren
+  '/_authenticated/sam': typeof AuthenticatedSamRouteWithChildren
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/affiliate/promo-codes': typeof AuthenticatedAffiliatePromoCodesRoute
+  '/_authenticated/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/_authenticated/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
+  '/_authenticated/sam/managers': typeof AuthenticatedSamManagersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/affiliate/': typeof AuthenticatedAffiliateIndexRoute
+  '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
+  '/_authenticated/sam/': typeof AuthenticatedSamIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -146,20 +212,31 @@ export interface FileRouteTypes {
     | '/admin/plans'
     | '/admin/promo-codes'
     | '/admin/users'
+    | '/affiliate/promo-codes'
+    | '/manager/affiliates'
+    | '/sam/affiliates'
+    | '/sam/managers'
     | '/admin/'
+    | '/affiliate/'
+    | '/manager/'
+    | '/sam/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/signup'
     | '/sitemap.xml'
-    | '/affiliate'
-    | '/manager'
-    | '/sam'
     | '/admin/plans'
     | '/admin/promo-codes'
     | '/admin/users'
+    | '/affiliate/promo-codes'
+    | '/manager/affiliates'
+    | '/sam/affiliates'
+    | '/sam/managers'
     | '/admin'
+    | '/affiliate'
+    | '/manager'
+    | '/sam'
   id:
     | '__root__'
     | '/'
@@ -174,7 +251,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/promo-codes'
     | '/_authenticated/admin/users'
+    | '/_authenticated/affiliate/promo-codes'
+    | '/_authenticated/manager/affiliates'
+    | '/_authenticated/sam/affiliates'
+    | '/_authenticated/sam/managers'
     | '/_authenticated/admin/'
+    | '/_authenticated/affiliate/'
+    | '/_authenticated/manager/'
+    | '/_authenticated/sam/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,12 +334,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/sam/': {
+      id: '/_authenticated/sam/'
+      path: '/'
+      fullPath: '/sam/'
+      preLoaderRoute: typeof AuthenticatedSamIndexRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/manager/': {
+      id: '/_authenticated/manager/'
+      path: '/'
+      fullPath: '/manager/'
+      preLoaderRoute: typeof AuthenticatedManagerIndexRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/affiliate/': {
+      id: '/_authenticated/affiliate/'
+      path: '/'
+      fullPath: '/affiliate/'
+      preLoaderRoute: typeof AuthenticatedAffiliateIndexRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/sam/managers': {
+      id: '/_authenticated/sam/managers'
+      path: '/managers'
+      fullPath: '/sam/managers'
+      preLoaderRoute: typeof AuthenticatedSamManagersRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/sam/affiliates': {
+      id: '/_authenticated/sam/affiliates'
+      path: '/affiliates'
+      fullPath: '/sam/affiliates'
+      preLoaderRoute: typeof AuthenticatedSamAffiliatesRouteImport
+      parentRoute: typeof AuthenticatedSamRoute
+    }
+    '/_authenticated/manager/affiliates': {
+      id: '/_authenticated/manager/affiliates'
+      path: '/affiliates'
+      fullPath: '/manager/affiliates'
+      preLoaderRoute: typeof AuthenticatedManagerAffiliatesRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/affiliate/promo-codes': {
+      id: '/_authenticated/affiliate/promo-codes'
+      path: '/promo-codes'
+      fullPath: '/affiliate/promo-codes'
+      preLoaderRoute: typeof AuthenticatedAffiliatePromoCodesRouteImport
+      parentRoute: typeof AuthenticatedAffiliateRoute
     }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
@@ -298,18 +431,63 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedAffiliateRouteChildren {
+  AuthenticatedAffiliatePromoCodesRoute: typeof AuthenticatedAffiliatePromoCodesRoute
+  AuthenticatedAffiliateIndexRoute: typeof AuthenticatedAffiliateIndexRoute
+}
+
+const AuthenticatedAffiliateRouteChildren: AuthenticatedAffiliateRouteChildren =
+  {
+    AuthenticatedAffiliatePromoCodesRoute:
+      AuthenticatedAffiliatePromoCodesRoute,
+    AuthenticatedAffiliateIndexRoute: AuthenticatedAffiliateIndexRoute,
+  }
+
+const AuthenticatedAffiliateRouteWithChildren =
+  AuthenticatedAffiliateRoute._addFileChildren(
+    AuthenticatedAffiliateRouteChildren,
+  )
+
+interface AuthenticatedManagerRouteChildren {
+  AuthenticatedManagerAffiliatesRoute: typeof AuthenticatedManagerAffiliatesRoute
+  AuthenticatedManagerIndexRoute: typeof AuthenticatedManagerIndexRoute
+}
+
+const AuthenticatedManagerRouteChildren: AuthenticatedManagerRouteChildren = {
+  AuthenticatedManagerAffiliatesRoute: AuthenticatedManagerAffiliatesRoute,
+  AuthenticatedManagerIndexRoute: AuthenticatedManagerIndexRoute,
+}
+
+const AuthenticatedManagerRouteWithChildren =
+  AuthenticatedManagerRoute._addFileChildren(AuthenticatedManagerRouteChildren)
+
+interface AuthenticatedSamRouteChildren {
+  AuthenticatedSamAffiliatesRoute: typeof AuthenticatedSamAffiliatesRoute
+  AuthenticatedSamManagersRoute: typeof AuthenticatedSamManagersRoute
+  AuthenticatedSamIndexRoute: typeof AuthenticatedSamIndexRoute
+}
+
+const AuthenticatedSamRouteChildren: AuthenticatedSamRouteChildren = {
+  AuthenticatedSamAffiliatesRoute: AuthenticatedSamAffiliatesRoute,
+  AuthenticatedSamManagersRoute: AuthenticatedSamManagersRoute,
+  AuthenticatedSamIndexRoute: AuthenticatedSamIndexRoute,
+}
+
+const AuthenticatedSamRouteWithChildren =
+  AuthenticatedSamRoute._addFileChildren(AuthenticatedSamRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRoute
-  AuthenticatedManagerRoute: typeof AuthenticatedManagerRoute
-  AuthenticatedSamRoute: typeof AuthenticatedSamRoute
+  AuthenticatedAffiliateRoute: typeof AuthenticatedAffiliateRouteWithChildren
+  AuthenticatedManagerRoute: typeof AuthenticatedManagerRouteWithChildren
+  AuthenticatedSamRoute: typeof AuthenticatedSamRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedAffiliateRoute: AuthenticatedAffiliateRoute,
-  AuthenticatedManagerRoute: AuthenticatedManagerRoute,
-  AuthenticatedSamRoute: AuthenticatedSamRoute,
+  AuthenticatedAffiliateRoute: AuthenticatedAffiliateRouteWithChildren,
+  AuthenticatedManagerRoute: AuthenticatedManagerRouteWithChildren,
+  AuthenticatedSamRoute: AuthenticatedSamRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
