@@ -60,6 +60,25 @@ export function AppShell({ children }: { children?: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const items = role ? NAV_BY_ROLE[role] : [];
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navList = (
+    <nav className="flex-1 space-y-1 p-3">
+      {items.map((item) => {
+        const active = pathname === item.to || pathname.startsWith(item.to + "/");
+        return (
+          <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+              active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+            }`}>
+            <item.icon className="h-4 w-4" />
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
 
   const handleSignOut = async () => {
     await signOut();
