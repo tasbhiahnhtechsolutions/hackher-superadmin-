@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-route
 import { useAuth, ROLE_LABELS, type AppRole } from "@/lib/auth";
 import {
   LayoutDashboard, Users, UserCog, Tag, CreditCard, Wallet,
-  FileBarChart, KeyRound, ScrollText, Settings, LogOut, ChevronDown,
+  FileBarChart, ScrollText, Settings, LogOut, ChevronDown,
   ShieldAlert, Activity, TrendingUp, Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
