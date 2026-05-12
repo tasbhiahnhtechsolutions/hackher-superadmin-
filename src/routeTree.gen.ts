@@ -47,6 +47,7 @@ import { Route as AuthenticatedAdminApiKeysRouteImport } from './routes/_authent
 import { Route as ApiV1SubscriptionsCreateRouteImport } from './routes/api/v1/subscriptions/create'
 import { Route as ApiV1CouponsValidateRouteImport } from './routes/api/v1/coupons/validate'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
+import { Route as ApiPublicHooksRetryEmailsRouteImport } from './routes/api/public/hooks/retry-emails'
 import { Route as ApiPublicHooksClearCommissionsRouteImport } from './routes/api/public/hooks/clear-commissions'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -255,6 +256,12 @@ const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   path: '/api/public/webhooks/stripe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRetryEmailsRoute =
+  ApiPublicHooksRetryEmailsRouteImport.update({
+    id: '/api/public/hooks/retry-emails',
+    path: '/api/public/hooks/retry-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksClearCommissionsRoute =
   ApiPublicHooksClearCommissionsRouteImport.update({
     id: '/api/public/hooks/clear-commissions',
@@ -298,6 +305,7 @@ export interface FileRoutesByFullPath {
   '/manager/': typeof AuthenticatedManagerIndexRoute
   '/sam/': typeof AuthenticatedSamIndexRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
+  '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
   '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
@@ -334,6 +342,7 @@ export interface FileRoutesByTo {
   '/manager': typeof AuthenticatedManagerIndexRoute
   '/sam': typeof AuthenticatedSamIndexRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
+  '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
   '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
@@ -376,6 +385,7 @@ export interface FileRoutesById {
   '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
   '/_authenticated/sam/': typeof AuthenticatedSamIndexRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
+  '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
   '/api/v1/coupons/validate': typeof ApiV1CouponsValidateRoute
   '/api/v1/subscriptions/create': typeof ApiV1SubscriptionsCreateRoute
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/manager/'
     | '/sam/'
     | '/api/public/hooks/clear-commissions'
+    | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
     | '/api/v1/coupons/validate'
     | '/api/v1/subscriptions/create'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/manager'
     | '/sam'
     | '/api/public/hooks/clear-commissions'
+    | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
     | '/api/v1/coupons/validate'
     | '/api/v1/subscriptions/create'
@@ -495,6 +507,7 @@ export interface FileRouteTypes {
     | '/_authenticated/manager/'
     | '/_authenticated/sam/'
     | '/api/public/hooks/clear-commissions'
+    | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
     | '/api/v1/coupons/validate'
     | '/api/v1/subscriptions/create'
@@ -511,6 +524,7 @@ export interface RootRouteChildren {
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   ApiV1PlansRoute: typeof ApiV1PlansRoute
   ApiPublicHooksClearCommissionsRoute: typeof ApiPublicHooksClearCommissionsRoute
+  ApiPublicHooksRetryEmailsRoute: typeof ApiPublicHooksRetryEmailsRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
   ApiV1CouponsValidateRoute: typeof ApiV1CouponsValidateRoute
   ApiV1SubscriptionsCreateRoute: typeof ApiV1SubscriptionsCreateRoute
@@ -784,6 +798,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksStripeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/retry-emails': {
+      id: '/api/public/hooks/retry-emails'
+      path: '/api/public/hooks/retry-emails'
+      fullPath: '/api/public/hooks/retry-emails'
+      preLoaderRoute: typeof ApiPublicHooksRetryEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/clear-commissions': {
       id: '/api/public/hooks/clear-commissions'
       path: '/api/public/hooks/clear-commissions'
@@ -908,6 +929,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutSuccessRoute: CheckoutSuccessRoute,
   ApiV1PlansRoute: ApiV1PlansRoute,
   ApiPublicHooksClearCommissionsRoute: ApiPublicHooksClearCommissionsRoute,
+  ApiPublicHooksRetryEmailsRoute: ApiPublicHooksRetryEmailsRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
   ApiV1CouponsValidateRoute: ApiV1CouponsValidateRoute,
   ApiV1SubscriptionsCreateRoute: ApiV1SubscriptionsCreateRoute,

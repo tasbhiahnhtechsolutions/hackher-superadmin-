@@ -139,7 +139,7 @@ export async function retryFailedEmails(): Promise<{ retried: number }> {
         template_name: row.template_name, recipient_email: row.recipient_email,
         status: "failed", error_message: result.error, message_id: row.message_id, subject: row.subject,
         retry_count: nextCount, next_retry_at: new Date(Date.now() + minutes * 60 * 1000).toISOString(),
-        metadata: meta,
+        metadata: meta as never,
       });
     }
     count++;
