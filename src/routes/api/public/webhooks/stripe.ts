@@ -201,10 +201,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 raw: inv as never,
               });
               if (subId) {
-                // Find local subscription + customer + affiliate
-                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("id,customer_id").eq("stripe_subscription_id", subId).maybeSingle();
+                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("id,customer_id,plan_id").eq("stripe_subscription_id", subId).maybeSingle();
                 if (subRow) {
-                  const { data: cust } = await supabaseAdmin.from("customers").select("affiliate_id").eq("id", subRow.customer_id).maybeSingle();
+                  const { data: cust } = await supabaseAdmin.from("customers").select("email,full_name,affiliate_id").eq("id", subRow.customer_id).maybeSingle();
+                  const { data: plan } = subRow.plan_id ? await supabaseAdmin.from("plans").select("name").eq("id", subRow.plan_id).maybeSingle() : { data: null };
+                  if (cust?.email) {
+                    await sendAppEmail({
+                      to: cust.email, template: "payment_success",
+                      data: { amountCents: inv.amount_paid, currency: inv.currency, planName: plan?.name },
+                      category: "subscription", idempotencyKey: `paid-${inv.id}`,
+                    });
+                  }
                   await attributeCommissions({
                     stripe, subscriptionId: subId, invoiceId: inv.id ?? "",
                     amountCents: inv.amount_paid, affiliateId: cust?.affiliate_id ?? null,
@@ -213,17 +220,54 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
               break;
             }
+            case "invoice.payment_failed": {
+              const inv = event.data.object as Stripe.Invoice;
+              const subId = (inv as unknown as { subscription?: string | null }).subscription;
+              if (subId) {
+                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("customer_id").eq("stripe_subscription_id", subId).maybeSingle();
+                if (subRow) {
+                  const { data: cust } = await supabaseAdmin.from("customers").select("email").eq("id", subRow.customer_id).maybeSingle();
+                  if (cust?.email) {
+                    await sendAppEmail({
+                      to: cust.email, template: "payment_failed",
+                      data: { amountCents: inv.amount_due, currency: inv.currency, updateUrl: `${APP_URL}/account/billing` },
+                      category: "subscription", idempotencyKey: `failed-${inv.id}`,
+                    });
+                  }
+                }
+              }
+              await notifyAdmins("admin_alerts", "Payment failed", `Invoice payment failed (${inv.id}) for ${(inv.amount_due / 100).toFixed(2)} ${inv.currency.toUpperCase()}`, "warning");
+              break;
+            }
             case "charge.refunded": {
               const charge = event.data.object as Stripe.Charge;
               await supabaseAdmin.from("transactions").insert({
                 stripe_event_id: event.id, type: "refund",
                 amount_cents: -(charge.amount_refunded ?? 0), currency: charge.currency, raw: charge as never,
               });
+              await notifyAdmins("admin_alerts", "Refund issued", `Refund of ${((charge.amount_refunded ?? 0) / 100).toFixed(2)} ${charge.currency.toUpperCase()} on charge ${charge.id}`, "warning");
+              break;
+            }
+            case "charge.dispute.created": {
+              const dispute = event.data.object as Stripe.Dispute;
+              await notifyAdmins("admin_alerts", "Chargeback received", `Dispute of ${(dispute.amount / 100).toFixed(2)} ${dispute.currency.toUpperCase()} on charge ${dispute.charge}`, "critical");
               break;
             }
             case "customer.subscription.deleted": {
               const sub = event.data.object as Stripe.Subscription;
               await supabaseAdmin.from("subscriptions").update({ status: "canceled" }).eq("stripe_subscription_id", sub.id);
+              const { data: subRow } = await supabaseAdmin.from("subscriptions").select("customer_id,plan_id").eq("stripe_subscription_id", sub.id).maybeSingle();
+              if (subRow) {
+                const { data: cust } = await supabaseAdmin.from("customers").select("email").eq("id", subRow.customer_id).maybeSingle();
+                const { data: plan } = subRow.plan_id ? await supabaseAdmin.from("plans").select("name").eq("id", subRow.plan_id).maybeSingle() : { data: null };
+                if (cust?.email) {
+                  await sendAppEmail({
+                    to: cust.email, template: "subscription_canceled",
+                    data: { planName: plan?.name || "Subscription" },
+                    category: "subscription", idempotencyKey: `canceled-${sub.id}`,
+                  });
+                }
+              }
               break;
             }
           }
