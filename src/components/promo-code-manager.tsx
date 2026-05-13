@@ -255,6 +255,12 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                 onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} />
               <p className="mt-1 text-xs text-muted-foreground">Maximum 15% (30% rule: discount + commissions ≤ 30%).</p>
             </div>
+            <div>
+              <Label>Campaign label <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input value={form.campaign} onChange={(e) => setForm({ ...form, campaign: e.target.value })}
+                placeholder="e.g. TikTok, Instagram, Podcast" maxLength={60} />
+              <p className="mt-1 text-xs text-muted-foreground">Tag this code to a channel/campaign for analytics & grouping.</p>
+            </div>
             {showHierarchy && (
               <>
                 <div>
@@ -321,6 +327,12 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                 <Label>Discount %</Label>
                 <Input type="number" min={1} max={15} value={editing.discount}
                   onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })} />
+              </div>
+              <div>
+                <Label>Campaign label</Label>
+                <Input value={editing.campaign} maxLength={60}
+                  placeholder="e.g. TikTok, Instagram, Podcast"
+                  onChange={(e) => setEditing({ ...editing, campaign: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
