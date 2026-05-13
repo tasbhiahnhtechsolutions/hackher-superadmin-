@@ -30,8 +30,9 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
   const create = useServerFn(createPromoCode);
   const update = useServerFn(updatePromoCode);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "" });
-  const [editing, setEditing] = useState<null | { id: string; code: string; discount: number; usageLimit: string; usageCount: number; status: "active" | "inactive" }>(null);
+  const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "", campaign: "" });
+  const [editing, setEditing] = useState<null | { id: string; code: string; discount: number; usageLimit: string; usageCount: number; status: "active" | "inactive"; campaign: string }>(null);
+  const [campaignFilter, setCampaignFilter] = useState<string>("");
   const canEdit = role === "super_admin" || role === "sam";
   const canEditAll = role === "super_admin";
 
@@ -100,12 +101,13 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
         code: form.code,
         discountPercent: form.discount,
         affiliateId: showHierarchy ? (form.affiliateId || undefined) : undefined,
+        campaignLabel: form.campaign.trim() || undefined,
       }});
     },
     onSuccess: () => {
       toast.success("Promo code created");
       setOpen(false);
-      setForm({ code: "", discount: 15, managerId: "", affiliateId: "" });
+      setForm({ code: "", discount: 15, managerId: "", affiliateId: "", campaign: "" });
       qc.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -130,6 +132,7 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
         discountPercent: editing.discount,
         status: editing.status,
         usageLimit: editing.usageLimit === "" ? null : Number(editing.usageLimit),
+        campaignLabel: editing.campaign.trim() === "" ? null : editing.campaign.trim(),
         ...(canEditAll ? { usageCount: editing.usageCount } : {}),
       }});
     },
