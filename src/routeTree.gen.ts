@@ -34,6 +34,7 @@ import { Route as AuthenticatedSamManagersRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSamAffiliatesRouteImport } from './routes/_authenticated/sam/affiliates'
 import { Route as AuthenticatedManagerSubscribersRouteImport } from './routes/_authenticated/manager/subscribers'
 import { Route as AuthenticatedManagerReportsRouteImport } from './routes/_authenticated/manager/reports'
+import { Route as AuthenticatedManagerPromoCodesRouteImport } from './routes/_authenticated/manager/promo-codes'
 import { Route as AuthenticatedManagerAffiliatesRouteImport } from './routes/_authenticated/manager/affiliates'
 import { Route as AuthenticatedAffiliateSubscribersRouteImport } from './routes/_authenticated/affiliate/subscribers'
 import { Route as AuthenticatedAffiliateMyCodeRouteImport } from './routes/_authenticated/affiliate/my-code'
@@ -193,6 +194,12 @@ const AuthenticatedManagerReportsRoute =
   AuthenticatedManagerReportsRouteImport.update({
     id: '/reports',
     path: '/reports',
+    getParentRoute: () => AuthenticatedManagerRoute,
+  } as any)
+const AuthenticatedManagerPromoCodesRoute =
+  AuthenticatedManagerPromoCodesRouteImport.update({
+    id: '/promo-codes',
+    path: '/promo-codes',
     getParentRoute: () => AuthenticatedManagerRoute,
   } as any)
 const AuthenticatedManagerAffiliatesRoute =
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/manager/promo-codes': typeof AuthenticatedManagerPromoCodesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
   '/manager/subscribers': typeof AuthenticatedManagerSubscribersRoute
   '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
@@ -431,6 +439,7 @@ export interface FileRoutesByTo {
   '/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/manager/promo-codes': typeof AuthenticatedManagerPromoCodesRoute
   '/manager/reports': typeof AuthenticatedManagerReportsRoute
   '/manager/subscribers': typeof AuthenticatedManagerSubscribersRoute
   '/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
@@ -486,6 +495,7 @@ export interface FileRoutesById {
   '/_authenticated/affiliate/my-code': typeof AuthenticatedAffiliateMyCodeRoute
   '/_authenticated/affiliate/subscribers': typeof AuthenticatedAffiliateSubscribersRoute
   '/_authenticated/manager/affiliates': typeof AuthenticatedManagerAffiliatesRoute
+  '/_authenticated/manager/promo-codes': typeof AuthenticatedManagerPromoCodesRoute
   '/_authenticated/manager/reports': typeof AuthenticatedManagerReportsRoute
   '/_authenticated/manager/subscribers': typeof AuthenticatedManagerSubscribersRoute
   '/_authenticated/sam/affiliates': typeof AuthenticatedSamAffiliatesRoute
@@ -541,6 +551,7 @@ export interface FileRouteTypes {
     | '/affiliate/my-code'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
+    | '/manager/promo-codes'
     | '/manager/reports'
     | '/manager/subscribers'
     | '/sam/affiliates'
@@ -590,6 +601,7 @@ export interface FileRouteTypes {
     | '/affiliate/my-code'
     | '/affiliate/subscribers'
     | '/manager/affiliates'
+    | '/manager/promo-codes'
     | '/manager/reports'
     | '/manager/subscribers'
     | '/sam/affiliates'
@@ -644,6 +656,7 @@ export interface FileRouteTypes {
     | '/_authenticated/affiliate/my-code'
     | '/_authenticated/affiliate/subscribers'
     | '/_authenticated/manager/affiliates'
+    | '/_authenticated/manager/promo-codes'
     | '/_authenticated/manager/reports'
     | '/_authenticated/manager/subscribers'
     | '/_authenticated/sam/affiliates'
@@ -865,6 +878,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/manager/reports'
       preLoaderRoute: typeof AuthenticatedManagerReportsRouteImport
+      parentRoute: typeof AuthenticatedManagerRoute
+    }
+    '/_authenticated/manager/promo-codes': {
+      id: '/_authenticated/manager/promo-codes'
+      path: '/promo-codes'
+      fullPath: '/manager/promo-codes'
+      preLoaderRoute: typeof AuthenticatedManagerPromoCodesRouteImport
       parentRoute: typeof AuthenticatedManagerRoute
     }
     '/_authenticated/manager/affiliates': {
@@ -1119,6 +1139,7 @@ const AuthenticatedAffiliateRouteWithChildren =
 
 interface AuthenticatedManagerRouteChildren {
   AuthenticatedManagerAffiliatesRoute: typeof AuthenticatedManagerAffiliatesRoute
+  AuthenticatedManagerPromoCodesRoute: typeof AuthenticatedManagerPromoCodesRoute
   AuthenticatedManagerReportsRoute: typeof AuthenticatedManagerReportsRoute
   AuthenticatedManagerSubscribersRoute: typeof AuthenticatedManagerSubscribersRoute
   AuthenticatedManagerIndexRoute: typeof AuthenticatedManagerIndexRoute
@@ -1126,6 +1147,7 @@ interface AuthenticatedManagerRouteChildren {
 
 const AuthenticatedManagerRouteChildren: AuthenticatedManagerRouteChildren = {
   AuthenticatedManagerAffiliatesRoute: AuthenticatedManagerAffiliatesRoute,
+  AuthenticatedManagerPromoCodesRoute: AuthenticatedManagerPromoCodesRoute,
   AuthenticatedManagerReportsRoute: AuthenticatedManagerReportsRoute,
   AuthenticatedManagerSubscribersRoute: AuthenticatedManagerSubscribersRoute,
   AuthenticatedManagerIndexRoute: AuthenticatedManagerIndexRoute,
