@@ -178,6 +178,34 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit commission · {editing?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Commission rate (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={15}
+                step={0.5}
+                value={editing?.ratePct ?? 0}
+                onChange={(e) => editing && setEditing({ ...editing, ratePct: Number(e.target.value) })}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Max 15% per role. Total chain commissions plus discount cannot exceed 30%.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => updateMut.mutate()} disabled={updateMut.isPending}>
+              {updateMut.isPending ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
