@@ -6,6 +6,7 @@ import { getCohortRetention, getLtv, getChurn, getRevenueTimeseries } from "@/li
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
+import { CampaignAnalytics } from "@/components/campaign-analytics";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend,
 } from "recharts";
