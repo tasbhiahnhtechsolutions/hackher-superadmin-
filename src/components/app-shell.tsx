@@ -49,6 +49,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
   affiliate: [
     { to: "/affiliate", label: "Dashboard", icon: LayoutDashboard },
     { to: "/affiliate/my-code", label: "My Promo Code", icon: Tag },
+    { to: "/affiliate/analytics", label: "Campaign Analytics", icon: TrendingUp },
     { to: "/affiliate/earnings", label: "Earnings", icon: Wallet },
     { to: "/affiliate/subscribers", label: "Subscribers", icon: Users },
   ],
