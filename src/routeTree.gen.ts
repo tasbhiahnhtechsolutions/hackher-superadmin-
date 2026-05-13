@@ -53,8 +53,13 @@ import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authe
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksRetryEmailsRouteImport } from './routes/api/public/hooks/retry-emails'
 import { Route as ApiPublicHooksClearCommissionsRouteImport } from './routes/api/public/hooks/clear-commissions'
+import { Route as ApiCustomerSubscriptionReactivateRouteImport } from './routes/api/customer/subscription.reactivate'
 import { Route as ApiCustomerSubscriptionCreateRouteImport } from './routes/api/customer/subscription.create'
+import { Route as ApiCustomerSubscriptionCancelRouteImport } from './routes/api/customer/subscription.cancel'
+import { Route as ApiCustomerSubscriptionIdRouteImport } from './routes/api/customer/subscription.$id'
+import { Route as ApiCustomerInvoicesCustomerIdRouteImport } from './routes/api/customer/invoices.$customerId'
 import { Route as ApiCustomerCouponValidateRouteImport } from './routes/api/customer/coupon.validate'
+import { Route as ApiCustomerBillingUpdatePaymentMethodRouteImport } from './routes/api/customer/billing.update-payment-method'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -298,16 +303,46 @@ const ApiPublicHooksClearCommissionsRoute =
     path: '/api/public/hooks/clear-commissions',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCustomerSubscriptionReactivateRoute =
+  ApiCustomerSubscriptionReactivateRouteImport.update({
+    id: '/api/customer/subscription/reactivate',
+    path: '/api/customer/subscription/reactivate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiCustomerSubscriptionCreateRoute =
   ApiCustomerSubscriptionCreateRouteImport.update({
     id: '/api/customer/subscription/create',
     path: '/api/customer/subscription/create',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiCustomerSubscriptionCancelRoute =
+  ApiCustomerSubscriptionCancelRouteImport.update({
+    id: '/api/customer/subscription/cancel',
+    path: '/api/customer/subscription/cancel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCustomerSubscriptionIdRoute =
+  ApiCustomerSubscriptionIdRouteImport.update({
+    id: '/api/customer/subscription/$id',
+    path: '/api/customer/subscription/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCustomerInvoicesCustomerIdRoute =
+  ApiCustomerInvoicesCustomerIdRouteImport.update({
+    id: '/api/customer/invoices/$customerId',
+    path: '/api/customer/invoices/$customerId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiCustomerCouponValidateRoute =
   ApiCustomerCouponValidateRouteImport.update({
     id: '/api/customer/coupon/validate',
     path: '/api/customer/coupon/validate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiCustomerBillingUpdatePaymentMethodRoute =
+  ApiCustomerBillingUpdatePaymentMethodRouteImport.update({
+    id: '/api/customer/billing/update-payment-method',
+    path: '/api/customer/billing/update-payment-method',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -352,8 +387,13 @@ export interface FileRoutesByFullPath {
   '/affiliate/': typeof AuthenticatedAffiliateIndexRoute
   '/manager/': typeof AuthenticatedManagerIndexRoute
   '/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/customer/billing/update-payment-method': typeof ApiCustomerBillingUpdatePaymentMethodRoute
   '/api/customer/coupon/validate': typeof ApiCustomerCouponValidateRoute
+  '/api/customer/invoices/$customerId': typeof ApiCustomerInvoicesCustomerIdRoute
+  '/api/customer/subscription/$id': typeof ApiCustomerSubscriptionIdRoute
+  '/api/customer/subscription/cancel': typeof ApiCustomerSubscriptionCancelRoute
   '/api/customer/subscription/create': typeof ApiCustomerSubscriptionCreateRoute
+  '/api/customer/subscription/reactivate': typeof ApiCustomerSubscriptionReactivateRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -395,8 +435,13 @@ export interface FileRoutesByTo {
   '/affiliate': typeof AuthenticatedAffiliateIndexRoute
   '/manager': typeof AuthenticatedManagerIndexRoute
   '/sam': typeof AuthenticatedSamIndexRoute
+  '/api/customer/billing/update-payment-method': typeof ApiCustomerBillingUpdatePaymentMethodRoute
   '/api/customer/coupon/validate': typeof ApiCustomerCouponValidateRoute
+  '/api/customer/invoices/$customerId': typeof ApiCustomerInvoicesCustomerIdRoute
+  '/api/customer/subscription/$id': typeof ApiCustomerSubscriptionIdRoute
+  '/api/customer/subscription/cancel': typeof ApiCustomerSubscriptionCancelRoute
   '/api/customer/subscription/create': typeof ApiCustomerSubscriptionCreateRoute
+  '/api/customer/subscription/reactivate': typeof ApiCustomerSubscriptionReactivateRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -444,8 +489,13 @@ export interface FileRoutesById {
   '/_authenticated/affiliate/': typeof AuthenticatedAffiliateIndexRoute
   '/_authenticated/manager/': typeof AuthenticatedManagerIndexRoute
   '/_authenticated/sam/': typeof AuthenticatedSamIndexRoute
+  '/api/customer/billing/update-payment-method': typeof ApiCustomerBillingUpdatePaymentMethodRoute
   '/api/customer/coupon/validate': typeof ApiCustomerCouponValidateRoute
+  '/api/customer/invoices/$customerId': typeof ApiCustomerInvoicesCustomerIdRoute
+  '/api/customer/subscription/$id': typeof ApiCustomerSubscriptionIdRoute
+  '/api/customer/subscription/cancel': typeof ApiCustomerSubscriptionCancelRoute
   '/api/customer/subscription/create': typeof ApiCustomerSubscriptionCreateRoute
+  '/api/customer/subscription/reactivate': typeof ApiCustomerSubscriptionReactivateRoute
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
@@ -493,8 +543,13 @@ export interface FileRouteTypes {
     | '/affiliate/'
     | '/manager/'
     | '/sam/'
+    | '/api/customer/billing/update-payment-method'
     | '/api/customer/coupon/validate'
+    | '/api/customer/invoices/$customerId'
+    | '/api/customer/subscription/$id'
+    | '/api/customer/subscription/cancel'
     | '/api/customer/subscription/create'
+    | '/api/customer/subscription/reactivate'
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
@@ -536,8 +591,13 @@ export interface FileRouteTypes {
     | '/affiliate'
     | '/manager'
     | '/sam'
+    | '/api/customer/billing/update-payment-method'
     | '/api/customer/coupon/validate'
+    | '/api/customer/invoices/$customerId'
+    | '/api/customer/subscription/$id'
+    | '/api/customer/subscription/cancel'
     | '/api/customer/subscription/create'
+    | '/api/customer/subscription/reactivate'
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
@@ -584,8 +644,13 @@ export interface FileRouteTypes {
     | '/_authenticated/affiliate/'
     | '/_authenticated/manager/'
     | '/_authenticated/sam/'
+    | '/api/customer/billing/update-payment-method'
     | '/api/customer/coupon/validate'
+    | '/api/customer/invoices/$customerId'
+    | '/api/customer/subscription/$id'
+    | '/api/customer/subscription/cancel'
     | '/api/customer/subscription/create'
+    | '/api/customer/subscription/reactivate'
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
@@ -600,8 +665,13 @@ export interface RootRouteChildren {
   CheckoutCancelRoute: typeof CheckoutCancelRoute
   CheckoutSuccessRoute: typeof CheckoutSuccessRoute
   ApiCustomerPlansRoute: typeof ApiCustomerPlansRoute
+  ApiCustomerBillingUpdatePaymentMethodRoute: typeof ApiCustomerBillingUpdatePaymentMethodRoute
   ApiCustomerCouponValidateRoute: typeof ApiCustomerCouponValidateRoute
+  ApiCustomerInvoicesCustomerIdRoute: typeof ApiCustomerInvoicesCustomerIdRoute
+  ApiCustomerSubscriptionIdRoute: typeof ApiCustomerSubscriptionIdRoute
+  ApiCustomerSubscriptionCancelRoute: typeof ApiCustomerSubscriptionCancelRoute
   ApiCustomerSubscriptionCreateRoute: typeof ApiCustomerSubscriptionCreateRoute
+  ApiCustomerSubscriptionReactivateRoute: typeof ApiCustomerSubscriptionReactivateRoute
   ApiPublicHooksClearCommissionsRoute: typeof ApiPublicHooksClearCommissionsRoute
   ApiPublicHooksRetryEmailsRoute: typeof ApiPublicHooksRetryEmailsRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
@@ -917,6 +987,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksClearCommissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/customer/subscription/reactivate': {
+      id: '/api/customer/subscription/reactivate'
+      path: '/api/customer/subscription/reactivate'
+      fullPath: '/api/customer/subscription/reactivate'
+      preLoaderRoute: typeof ApiCustomerSubscriptionReactivateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/customer/subscription/create': {
       id: '/api/customer/subscription/create'
       path: '/api/customer/subscription/create'
@@ -924,11 +1001,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCustomerSubscriptionCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/customer/subscription/cancel': {
+      id: '/api/customer/subscription/cancel'
+      path: '/api/customer/subscription/cancel'
+      fullPath: '/api/customer/subscription/cancel'
+      preLoaderRoute: typeof ApiCustomerSubscriptionCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/customer/subscription/$id': {
+      id: '/api/customer/subscription/$id'
+      path: '/api/customer/subscription/$id'
+      fullPath: '/api/customer/subscription/$id'
+      preLoaderRoute: typeof ApiCustomerSubscriptionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/customer/invoices/$customerId': {
+      id: '/api/customer/invoices/$customerId'
+      path: '/api/customer/invoices/$customerId'
+      fullPath: '/api/customer/invoices/$customerId'
+      preLoaderRoute: typeof ApiCustomerInvoicesCustomerIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/customer/coupon/validate': {
       id: '/api/customer/coupon/validate'
       path: '/api/customer/coupon/validate'
       fullPath: '/api/customer/coupon/validate'
       preLoaderRoute: typeof ApiCustomerCouponValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/customer/billing/update-payment-method': {
+      id: '/api/customer/billing/update-payment-method'
+      path: '/api/customer/billing/update-payment-method'
+      fullPath: '/api/customer/billing/update-payment-method'
+      preLoaderRoute: typeof ApiCustomerBillingUpdatePaymentMethodRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1060,8 +1165,15 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutCancelRoute: CheckoutCancelRoute,
   CheckoutSuccessRoute: CheckoutSuccessRoute,
   ApiCustomerPlansRoute: ApiCustomerPlansRoute,
+  ApiCustomerBillingUpdatePaymentMethodRoute:
+    ApiCustomerBillingUpdatePaymentMethodRoute,
   ApiCustomerCouponValidateRoute: ApiCustomerCouponValidateRoute,
+  ApiCustomerInvoicesCustomerIdRoute: ApiCustomerInvoicesCustomerIdRoute,
+  ApiCustomerSubscriptionIdRoute: ApiCustomerSubscriptionIdRoute,
+  ApiCustomerSubscriptionCancelRoute: ApiCustomerSubscriptionCancelRoute,
   ApiCustomerSubscriptionCreateRoute: ApiCustomerSubscriptionCreateRoute,
+  ApiCustomerSubscriptionReactivateRoute:
+    ApiCustomerSubscriptionReactivateRoute,
   ApiPublicHooksClearCommissionsRoute: ApiPublicHooksClearCommissionsRoute,
   ApiPublicHooksRetryEmailsRoute: ApiPublicHooksRetryEmailsRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
