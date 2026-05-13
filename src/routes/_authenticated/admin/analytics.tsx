@@ -120,6 +120,11 @@ function AnalyticsPage() {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      <CampaignAnalytics
+        title="Global campaign performance"
+        subtitle="Platform-wide campaigns, top performers and revenue trends."
+      />
     </div>
   );
 }
