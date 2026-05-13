@@ -3,7 +3,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { jsonOk, jsonError, corsPreflight } from "@/lib/api-auth.server";
+import { jsonOk, jsonError, corsPreflight } from "@/lib/api-cors.server";
 
 const Schema = z.object({
   coupon: z.string().min(3).max(30).regex(/^[A-Za-z0-9]+$/),
