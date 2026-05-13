@@ -16,15 +16,15 @@ function AffiliateDashboard() {
     queryKey: ["affiliate-kpis", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [promo, customers, comm] = await Promise.all([
-        supabase.from("promo_codes").select("code,discount_percent,usage_count").eq("affiliate_id", user!.id).limit(1).maybeSingle(),
+      const [promos, customers, comm] = await Promise.all([
+        supabase.from("promo_codes").select("id,code,discount_percent,usage_count,campaign_label,status").eq("affiliate_id", user!.id).order("created_at", { ascending: false }),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("affiliate_id", user!.id),
         supabase.from("commissions").select("amount_cents,status").eq("beneficiary_id", user!.id),
       ]);
       const pending = comm.data?.filter((c) => c.status === "pending").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
       const cleared = comm.data?.filter((c) => c.status === "cleared").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
       const total = comm.data?.reduce((a, c) => a + c.amount_cents, 0) ?? 0;
-      return { promo: promo.data, customers: customers.count ?? 0, pending, cleared, total };
+      return { promos: promos.data ?? [], customers: customers.count ?? 0, pending, cleared, total };
     },
   });
 
@@ -41,22 +41,33 @@ function AffiliateDashboard() {
         ]}
       />
       <PageBody>
-        <Link to="/affiliate/my-code" className="block rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-card transition hover:shadow-glow">
-          <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
-            <Tag className="h-3.5 w-3.5" /> Your assigned promo code
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
+            <Tag className="h-3.5 w-3.5" /> Your assigned promo codes ({data?.promos.length ?? 0})
           </div>
-          <div className="mt-3 flex items-center justify-between">
-            <div>
-              <div className="font-mono text-3xl font-bold tracking-tight text-primary">{data?.promo?.code ?? "—"}</div>
-              {data?.promo && (
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {Number(data.promo.discount_percent)}% off · {data.promo.usage_count} uses
+          {(data?.promos ?? []).length === 0 && (
+            <div className="rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground">No promo codes assigned yet.</div>
+          )}
+          {(data?.promos ?? []).map((promo) => (
+            <Link
+              key={promo.id}
+              to="/affiliate/my-code"
+              className="block rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-card transition hover:shadow-glow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-mono text-3xl font-bold tracking-tight text-primary">{promo.code}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {Number(promo.discount_percent)}% off · {promo.usage_count} uses
+                    {promo.campaign_label ? ` · ${promo.campaign_label}` : ""}
+                    {promo.status !== "active" ? ` · ${promo.status}` : ""}
+                  </div>
                 </div>
-              )}
-            </div>
-            <ArrowRight className="h-5 w-5 text-muted-foreground" />
-          </div>
-        </Link>
+                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+              </div>
+            </Link>
+          ))}
+        </div>
       </PageBody>
     </>
   );
