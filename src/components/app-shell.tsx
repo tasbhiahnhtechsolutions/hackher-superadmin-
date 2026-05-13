@@ -43,12 +43,13 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
   manager: [
     { to: "/manager", label: "Dashboard", icon: LayoutDashboard },
     { to: "/manager/affiliates", label: "Affiliates", icon: Users },
+    { to: "/manager/promo-codes", label: "Promo Codes", icon: Tag },
     { to: "/manager/subscribers", label: "Subscribers", icon: CreditCard },
     { to: "/manager/reports", label: "Reports", icon: FileBarChart },
   ],
   affiliate: [
     { to: "/affiliate", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/affiliate/my-code", label: "My Promo Code", icon: Tag },
+    { to: "/affiliate/my-code", label: "My Promo Codes", icon: Tag },
     { to: "/affiliate/analytics", label: "Campaign Analytics", icon: TrendingUp },
     { to: "/affiliate/earnings", label: "Earnings", icon: Wallet },
     { to: "/affiliate/subscribers", label: "Subscribers", icon: Users },

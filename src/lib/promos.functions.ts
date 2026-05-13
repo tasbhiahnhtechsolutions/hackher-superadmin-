@@ -93,19 +93,17 @@ export const createPromoCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const role = await callerRole(userId);
-    if (!role || role === "customer") {
+    if (!role || role === "customer" || role === "affiliate") {
       throw new Error("You don't have permission to create promo codes");
     }
 
-    let affiliateId = data.affiliateId ?? null;
-    if (role === "affiliate") {
-      affiliateId = userId; // always self
-    } else if (role === "sam" || role === "manager") {
-      if (!affiliateId) throw new Error("Pick an affiliate");
+    const affiliateId = data.affiliateId ?? null;
+    if (!affiliateId) throw new Error("Promo codes must be assigned to an affiliate");
+    if (role === "sam" || role === "manager") {
       const ok = await isAncestorOf(userId, affiliateId);
       if (!ok) throw new Error("That affiliate is not in your hierarchy");
     }
-    // super_admin: affiliateId optional / unrestricted
+    // super_admin: any affiliate
 
     const upperCode = data.code.toUpperCase();
     const { data: existing } = await supabaseAdmin.from("promo_codes").select("id").ilike("code", upperCode).maybeSingle();
@@ -139,11 +137,10 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     const { data: promo } = await supabaseAdmin.from("promo_codes").select("*").eq("id", data.id).maybeSingle();
     if (!promo) throw new Error("Not found");
 
-    if (role === "affiliate" && promo.affiliate_id !== userId) throw new Error("Forbidden");
+    if (role === "affiliate" || role === "customer") throw new Error("Forbidden");
     if (role === "sam" || role === "manager") {
       if (!promo.affiliate_id || !(await isAncestorOf(userId, promo.affiliate_id))) throw new Error("Forbidden");
     }
-    if (role === "customer") throw new Error("Forbidden");
 
     const patch: {
       code?: string;

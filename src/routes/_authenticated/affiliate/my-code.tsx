@@ -5,8 +5,9 @@ export const Route = createFileRoute("/_authenticated/affiliate/my-code")({
   component: () => (
     <PromoCodeManager
       title="My Promo Codes"
-      subtitle="Create branded codes (e.g. YOURNAMETIKTOK, YOURNAMEVIP) and share with your audience."
+      subtitle="Codes assigned to you by your manager. Copy and share with your audience."
       affiliatePicker="self"
+      readOnly
     />
   ),
 });
