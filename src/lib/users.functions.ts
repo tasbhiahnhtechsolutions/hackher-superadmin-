@@ -86,3 +86,49 @@ export const createSubordinate = createServerFn({ method: "POST" })
 
     return { id: newId, email: data.email, role: data.role, promoCode: null };
   });
+
+const UpdateCommissionSchema = z.object({
+  userId: z.string().uuid(),
+  commissionRate: z.number().min(0).max(0.15),
+});
+
+// Update a subordinate's commission rate.
+// Rules:
+// - super_admin: can update anyone except themselves
+// - sam / manager: can update direct or indirect descendants only, never themselves
+// - affiliate / customer: forbidden
+export const updateSubordinateCommission = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => UpdateCommissionSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    if (data.userId === userId) {
+      throw new Error("You cannot edit your own commission rate");
+    }
+
+    const { data: callerRoleRow } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+    const callerRole = callerRoleRow?.role as string | undefined;
+    if (!callerRole || callerRole === "affiliate" || callerRole === "customer") {
+      throw new Error("You don't have permission to update commission rates");
+    }
+
+    if (callerRole !== "super_admin") {
+      const { data: isAnc } = await supabaseAdmin.rpc("is_ancestor_of", { _ancestor: userId, _descendant: data.userId });
+      if (!isAnc) throw new Error("That user is not in your hierarchy");
+    }
+
+    const { error } = await supabaseAdmin.from("profiles").update({
+      commission_rate: data.commissionRate,
+    }).eq("id", data.userId);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "update_commission_rate",
+      entity_type: "profile",
+      entity_id: data.userId,
+      new_values: { commission_rate: data.commissionRate },
+    });
+
+    return { ok: true };
+  });

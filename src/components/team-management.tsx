@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/lib/auth";
-import { createSubordinate } from "@/lib/users.functions";
+import { createSubordinate, updateSubordinateCommission } from "@/lib/users.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageBody } from "@/components/page-header";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -27,9 +27,11 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
   const qc = useQueryClient();
   const { user, role } = useAuth();
   const create = useServerFn(createSubordinate);
+  const updateCommission = useServerFn(updateSubordinateCommission);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", fullName: "", password: "", commission: 10 });
-  const isSuperAdmin = role === "super_admin";
+  const [editing, setEditing] = useState<{ id: string; name: string; ratePct: number } | null>(null);
+  const canEditCommission = role === "super_admin" || role === "sam" || role === "manager";
 
   const queryKey = ["team", childRole, user?.id, recursive];
   const { data, isLoading } = useQuery({
@@ -84,6 +86,19 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updateMut = useMutation({
+    mutationFn: async () => {
+      if (!editing) throw new Error("Nothing to update");
+      return updateCommission({ data: { userId: editing.id, commissionRate: editing.ratePct / 100 } });
+    },
+    onSuccess: () => {
+      toast.success("Commission rate updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const labelMap: Record<AppRole, string> = { super_admin: "Super Admin", sam: "SAM", manager: "Manager", affiliate: "Affiliate", customer: "Customer" };
 
   return (
@@ -100,12 +115,16 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
               <TableHead>Name</TableHead><TableHead>Email</TableHead>
               {showManagerCol && <TableHead>Manager</TableHead>}
               <TableHead>Commission</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead>
+              {canEditCommission && <TableHead className="text-right">Actions</TableHead>}
             </TableRow></TableHeader>
             <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                : !rows.length ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
-                : rows.map((u) => {
+              {(() => {
+                const colCount = (showManagerCol ? 6 : 5) + (canEditCommission ? 1 : 0);
+                if (isLoading) return <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>;
+                if (!rows.length) return <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>;
+                return rows.map((u) => {
                   const mgr = u.parent_user_id ? parents.get(u.parent_user_id) : null;
+                  const isSelf = u.id === user?.id;
                   return (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
@@ -116,9 +135,21 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
                     <TableCell>{u.commission_rate ? `${(Number(u.commission_rate) * 100).toFixed(0)}%` : "—"}</TableCell>
                     <TableCell><Badge variant={u.status === "active" ? "default" : "secondary"}>{u.status}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                    {canEditCommission && (
+                      <TableCell className="text-right">
+                        {isSelf ? (
+                          <span className="text-xs text-muted-foreground">Self</span>
+                        ) : (
+                          <Button size="sm" variant="ghost" onClick={() => setEditing({ id: u.id, name: u.full_name ?? u.email, ratePct: Math.round(Number(u.commission_rate ?? 0) * 100) })}>
+                            <Pencil className="h-3.5 w-3.5 mr-1" />Edit
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                   );
-                })}
+                });
+              })()}
             </TableBody>
           </Table>
         </div>
@@ -144,6 +175,34 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>{createMut.isPending ? "Creating…" : "Create"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit commission · {editing?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Commission rate (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={15}
+                step={0.5}
+                value={editing?.ratePct ?? 0}
+                onChange={(e) => editing && setEditing({ ...editing, ratePct: Number(e.target.value) })}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Max 15% per role. Total chain commissions plus discount cannot exceed 30%.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={() => updateMut.mutate()} disabled={updateMut.isPending}>
+              {updateMut.isPending ? "Saving…" : "Save"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
