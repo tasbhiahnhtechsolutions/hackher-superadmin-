@@ -115,12 +115,16 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
               <TableHead>Name</TableHead><TableHead>Email</TableHead>
               {showManagerCol && <TableHead>Manager</TableHead>}
               <TableHead>Commission</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead>
+              {canEditCommission && <TableHead className="text-right">Actions</TableHead>}
             </TableRow></TableHeader>
             <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                : !rows.length ? <TableRow><TableCell colSpan={showManagerCol ? 6 : 5} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>
-                : rows.map((u) => {
+              {(() => {
+                const colCount = (showManagerCol ? 6 : 5) + (canEditCommission ? 1 : 0);
+                if (isLoading) return <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>;
+                if (!rows.length) return <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>;
+                return rows.map((u) => {
                   const mgr = u.parent_user_id ? parents.get(u.parent_user_id) : null;
+                  const isSelf = u.id === user?.id;
                   return (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
@@ -131,9 +135,21 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
                     <TableCell>{u.commission_rate ? `${(Number(u.commission_rate) * 100).toFixed(0)}%` : "—"}</TableCell>
                     <TableCell><Badge variant={u.status === "active" ? "default" : "secondary"}>{u.status}</Badge></TableCell>
                     <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                    {canEditCommission && (
+                      <TableCell className="text-right">
+                        {isSelf ? (
+                          <span className="text-xs text-muted-foreground">Self</span>
+                        ) : (
+                          <Button size="sm" variant="ghost" onClick={() => setEditing({ id: u.id, name: u.full_name ?? u.email, ratePct: Math.round(Number(u.commission_rate ?? 0) * 100) })}>
+                            <Pencil className="h-3.5 w-3.5 mr-1" />Edit
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
                   </TableRow>
                   );
-                })}
+                });
+              })()}
             </TableBody>
           </Table>
         </div>
