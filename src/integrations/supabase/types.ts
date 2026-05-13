@@ -910,6 +910,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      in_scope_for: {
+        Args: { _affiliate: string; _scope_user: string }
+        Returns: boolean
+      }
       is_ancestor_of: {
         Args: { _ancestor: string; _descendant: string }
         Returns: boolean
@@ -924,6 +928,34 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      report_campaign_performance: {
+        Args: { _end?: string; _scope_user: string; _start?: string }
+        Returns: {
+          avg_discount: number
+          campaign: string
+          commissions_cents: number
+          conversion_rate: number
+          gross_revenue_cents: number
+          promo_codes: number
+          subscriptions: number
+          top_promo_code: string
+          total_uses: number
+        }[]
+      }
+      report_campaign_timeseries: {
+        Args: {
+          _bucket?: string
+          _end?: string
+          _scope_user: string
+          _start?: string
+        }
+        Returns: {
+          bucket: string
+          campaign: string
+          gross_revenue_cents: number
+          subscriptions: number
+        }[]
       }
       report_churn: {
         Args: { _days?: number }
@@ -950,6 +982,15 @@ export type Database = {
           total_revenue_cents: number
         }[]
       }
+      report_plan_conversion_by_campaign: {
+        Args: { _end?: string; _scope_user: string; _start?: string }
+        Returns: {
+          campaign: string
+          gross_revenue_cents: number
+          plan_name: string
+          subscriptions: number
+        }[]
+      }
       report_revenue_timeseries: {
         Args: { _bucket?: string; _end: string; _start: string }
         Returns: {
@@ -957,6 +998,23 @@ export type Database = {
           gross_cents: number
           net_cents: number
           refunds_cents: number
+        }[]
+      }
+      report_top_promo_codes: {
+        Args: {
+          _end?: string
+          _limit?: number
+          _scope_user: string
+          _start?: string
+        }
+        Returns: {
+          affiliate_id: string
+          affiliate_name: string
+          campaign: string
+          code: string
+          gross_revenue_cents: number
+          subscriptions: number
+          uses: number
         }[]
       }
       system_health_snapshot: { Args: never; Returns: Json }
