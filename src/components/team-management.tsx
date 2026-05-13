@@ -86,6 +86,19 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const updateMut = useMutation({
+    mutationFn: async () => {
+      if (!editing) throw new Error("Nothing to update");
+      return updateCommission({ data: { userId: editing.id, commissionRate: editing.ratePct / 100 } });
+    },
+    onSuccess: () => {
+      toast.success("Commission rate updated");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const labelMap: Record<AppRole, string> = { super_admin: "Super Admin", sam: "SAM", manager: "Manager", affiliate: "Affiliate", customer: "Customer" };
 
   return (
