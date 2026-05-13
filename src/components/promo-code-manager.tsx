@@ -30,8 +30,9 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
   const create = useServerFn(createPromoCode);
   const update = useServerFn(updatePromoCode);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "" });
-  const [editing, setEditing] = useState<null | { id: string; code: string; discount: number; usageLimit: string; usageCount: number; status: "active" | "inactive" }>(null);
+  const [form, setForm] = useState({ code: "", discount: 15, managerId: "", affiliateId: "", campaign: "" });
+  const [editing, setEditing] = useState<null | { id: string; code: string; discount: number; usageLimit: string; usageCount: number; status: "active" | "inactive"; campaign: string }>(null);
+  const [campaignFilter, setCampaignFilter] = useState<string>("");
   const canEdit = role === "super_admin" || role === "sam";
   const canEditAll = role === "super_admin";
 
@@ -100,12 +101,13 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
         code: form.code,
         discountPercent: form.discount,
         affiliateId: showHierarchy ? (form.affiliateId || undefined) : undefined,
+        campaignLabel: form.campaign.trim() || undefined,
       }});
     },
     onSuccess: () => {
       toast.success("Promo code created");
       setOpen(false);
-      setForm({ code: "", discount: 15, managerId: "", affiliateId: "" });
+      setForm({ code: "", discount: 15, managerId: "", affiliateId: "", campaign: "" });
       qc.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -130,6 +132,7 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
         discountPercent: editing.discount,
         status: editing.status,
         usageLimit: editing.usageLimit === "" ? null : Number(editing.usageLimit),
+        campaignLabel: editing.campaign.trim() === "" ? null : editing.campaign.trim(),
         ...(canEditAll ? { usageCount: editing.usageCount } : {}),
       }});
     },
@@ -151,61 +154,89 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
         action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New code</Button>}
       />
       <PageBody>
-        <div className="rounded-xl border border-border/60 bg-card">
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Code</TableHead><TableHead>Discount</TableHead>
-              {showHierarchy && <><TableHead>Affiliate</TableHead><TableHead>Manager</TableHead></>}
-              <TableHead>Uses</TableHead><TableHead>Stripe</TableHead>
-              <TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={showHierarchy ? 8 : 6} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                : !codes?.length ? <TableRow><TableCell colSpan={showHierarchy ? 8 : 6} className="text-center py-8 text-muted-foreground">No promo codes yet. Create one to get started.</TableCell></TableRow>
-                : codes.map((c) => {
-                  const aff = c.affiliate_id ? affMap.get(c.affiliate_id) : null;
-                  const mgr = aff?.parent_user_id ? mgrMap.get(aff.parent_user_id) : null;
-                  return (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-mono font-semibold">{c.code}
-                      <Button size="sm" variant="ghost" className="ml-1 h-6 w-6 p-0"
-                        onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Copied"); }}>
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                    <TableCell>{Number(c.discount_percent)}%</TableCell>
-                    {showHierarchy && <>
-                      <TableCell>{labelFor(aff)}</TableCell>
-                      <TableCell>{labelFor(mgr)}</TableCell>
-                    </>}
-                    <TableCell>{c.usage_count} / {c.usage_limit ?? "∞"}</TableCell>
-                    <TableCell>{c.stripe_promo_id ? <Badge variant="outline">Synced</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
-                    <TableCell><Badge variant={c.status === "active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
-                    <TableCell className="text-right space-x-2">
-                      {canEdit && (
-                        <Button size="sm" variant="outline"
-                          onClick={() => setEditing({
-                            id: c.id,
-                            code: c.code,
-                            discount: Number(c.discount_percent),
-                            usageLimit: c.usage_limit?.toString() ?? "",
-                            usageCount: c.usage_count,
-                            status: c.status as "active" | "inactive",
-                          })}>
-                          Edit
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline"
-                        onClick={() => toggleStatus.mutate({ id: c.id, status: c.status === "active" ? "inactive" : "active" })}>
-                        {c.status === "active" ? "Disable" : "Enable"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </div>
+        {(() => {
+          const all = codes ?? [];
+          const campaignOptions = Array.from(new Set(all.map((c) => c.campaign_label).filter((x): x is string => !!x))).sort();
+          const filtered = campaignFilter
+            ? all.filter((c) => (campaignFilter === "__none__" ? !c.campaign_label : c.campaign_label === campaignFilter))
+            : all;
+          const colSpan = showHierarchy ? 9 : 7;
+          return (
+            <>
+              {campaignOptions.length > 0 && (
+                <div className="mb-3 flex items-center gap-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Campaign</Label>
+                  <Select value={campaignFilter || "__all__"} onValueChange={(v) => setCampaignFilter(v === "__all__" ? "" : v)}>
+                    <SelectTrigger className="h-8 w-56"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All campaigns</SelectItem>
+                      <SelectItem value="__none__">No campaign</SelectItem>
+                      {campaignOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <span className="ml-auto text-xs text-muted-foreground">{filtered.length} of {all.length}</span>
+                </div>
+              )}
+              <div className="rounded-xl border border-border/60 bg-card">
+                <Table>
+                  <TableHeader><TableRow>
+                    <TableHead>Code</TableHead><TableHead>Campaign</TableHead><TableHead>Discount</TableHead>
+                    {showHierarchy && <><TableHead>Affiliate</TableHead><TableHead>Manager</TableHead></>}
+                    <TableHead>Uses</TableHead><TableHead>Stripe</TableHead>
+                    <TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
+                  </TableRow></TableHeader>
+                  <TableBody>
+                    {isLoading ? <TableRow><TableCell colSpan={colSpan} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
+                      : !filtered.length ? <TableRow><TableCell colSpan={colSpan} className="text-center py-8 text-muted-foreground">{all.length ? "No codes match this campaign." : "No promo codes yet. Create one to get started."}</TableCell></TableRow>
+                      : filtered.map((c) => {
+                        const aff = c.affiliate_id ? affMap.get(c.affiliate_id) : null;
+                        const mgr = aff?.parent_user_id ? mgrMap.get(aff.parent_user_id) : null;
+                        return (
+                        <TableRow key={c.id}>
+                          <TableCell className="font-mono font-semibold">{c.code}
+                            <Button size="sm" variant="ghost" className="ml-1 h-6 w-6 p-0"
+                              onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Copied"); }}>
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </TableCell>
+                          <TableCell>{c.campaign_label ? <Badge variant="outline">{c.campaign_label}</Badge> : <span className="text-muted-foreground">—</span>}</TableCell>
+                          <TableCell>{Number(c.discount_percent)}%</TableCell>
+                          {showHierarchy && <>
+                            <TableCell>{labelFor(aff)}</TableCell>
+                            <TableCell>{labelFor(mgr)}</TableCell>
+                          </>}
+                          <TableCell>{c.usage_count} / {c.usage_limit ?? "∞"}</TableCell>
+                          <TableCell>{c.stripe_promo_id ? <Badge variant="outline">Synced</Badge> : <Badge variant="secondary">Pending</Badge>}</TableCell>
+                          <TableCell><Badge variant={c.status === "active" ? "default" : "secondary"}>{c.status}</Badge></TableCell>
+                          <TableCell className="text-right space-x-2">
+                            {canEdit && (
+                              <Button size="sm" variant="outline"
+                                onClick={() => setEditing({
+                                  id: c.id,
+                                  code: c.code,
+                                  discount: Number(c.discount_percent),
+                                  usageLimit: c.usage_limit?.toString() ?? "",
+                                  usageCount: c.usage_count,
+                                  status: c.status as "active" | "inactive",
+                                  campaign: c.campaign_label ?? "",
+                                })}>
+                                Edit
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline"
+                              onClick={() => toggleStatus.mutate({ id: c.id, status: c.status === "active" ? "inactive" : "active" })}>
+                              {c.status === "active" ? "Disable" : "Enable"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          );
+        })()}
       </PageBody>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -223,6 +254,12 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
               <Input type="number" min={1} max={15} value={form.discount}
                 onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} />
               <p className="mt-1 text-xs text-muted-foreground">Maximum 15% (30% rule: discount + commissions ≤ 30%).</p>
+            </div>
+            <div>
+              <Label>Campaign label <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Input value={form.campaign} onChange={(e) => setForm({ ...form, campaign: e.target.value })}
+                placeholder="e.g. TikTok, Instagram, Podcast" maxLength={60} />
+              <p className="mt-1 text-xs text-muted-foreground">Tag this code to a channel/campaign for analytics & grouping.</p>
             </div>
             {showHierarchy && (
               <>
@@ -290,6 +327,12 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                 <Label>Discount %</Label>
                 <Input type="number" min={1} max={15} value={editing.discount}
                   onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })} />
+              </div>
+              <div>
+                <Label>Campaign label</Label>
+                <Input value={editing.campaign} maxLength={60}
+                  placeholder="e.g. TikTok, Instagram, Podcast"
+                  onChange={(e) => setEditing({ ...editing, campaign: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
