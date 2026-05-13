@@ -27,9 +27,12 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
   const qc = useQueryClient();
   const { user, role } = useAuth();
   const create = useServerFn(createSubordinate);
+  const updateCommission = useServerFn(updateSubordinateCommission);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", fullName: "", password: "", commission: 10 });
+  const [editing, setEditing] = useState<{ id: string; name: string; ratePct: number } | null>(null);
   const isSuperAdmin = role === "super_admin";
+  const canEditCommission = role === "super_admin" || role === "sam" || role === "manager";
 
   const queryKey = ["team", childRole, user?.id, recursive];
   const { data, isLoading } = useQuery({
