@@ -194,6 +194,7 @@ export function PromoCodeManager({ title, subtitle, affiliatePicker = "self" }: 
                             usageLimit: c.usage_limit?.toString() ?? "",
                             usageCount: c.usage_count,
                             status: c.status as "active" | "inactive",
+                            campaign: c.campaign_label ?? "",
                           })}>
                           Edit
                         </Button>
