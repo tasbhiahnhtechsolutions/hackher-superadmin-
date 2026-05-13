@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_authenticated/sam/promo-codes")({
     <PromoCodeManager
       title="Affiliate Promo Codes"
       subtitle="Create promo codes for affiliates within your hierarchy."
-      affiliatePicker="descendants"
+      affiliatePicker="manager+affiliate"
     />
   ),
 });
