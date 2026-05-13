@@ -16,15 +16,15 @@ function AffiliateDashboard() {
     queryKey: ["affiliate-kpis", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [promo, customers, comm] = await Promise.all([
-        supabase.from("promo_codes").select("code,discount_percent,usage_count").eq("affiliate_id", user!.id).limit(1).maybeSingle(),
+      const [promos, customers, comm] = await Promise.all([
+        supabase.from("promo_codes").select("id,code,discount_percent,usage_count,campaign_label,status").eq("affiliate_id", user!.id).order("created_at", { ascending: false }),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("affiliate_id", user!.id),
         supabase.from("commissions").select("amount_cents,status").eq("beneficiary_id", user!.id),
       ]);
       const pending = comm.data?.filter((c) => c.status === "pending").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
       const cleared = comm.data?.filter((c) => c.status === "cleared").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
       const total = comm.data?.reduce((a, c) => a + c.amount_cents, 0) ?? 0;
-      return { promo: promo.data, customers: customers.count ?? 0, pending, cleared, total };
+      return { promos: promos.data ?? [], customers: customers.count ?? 0, pending, cleared, total };
     },
   });
 
