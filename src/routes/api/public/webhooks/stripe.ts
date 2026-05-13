@@ -248,7 +248,15 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 amount_cents: -(charge.amount_refunded ?? 0), currency: charge.currency, raw: charge as never,
               });
               const subId = (charge as unknown as { subscription?: string | null }).subscription;
-              if (subId) await detectRapidRefund(subId, charge.amount_refunded ?? 0);
+              if (subId) {
+                const { data: subRow } = await supabaseAdmin.from("subscriptions").select("id").eq("stripe_subscription_id", subId).maybeSingle();
+                if (subRow) {
+                  // Void any pending commissions tied to this subscription so refunded sales don't pay out.
+                  await supabaseAdmin.from("commissions").update({ status: "voided" } as never)
+                    .eq("subscription_id", subRow.id).eq("status", "pending");
+                }
+                await detectRapidRefund(subId, charge.amount_refunded ?? 0);
+              }
               await notifyAdmins("admin_alerts", "Refund issued", `Refund of ${((charge.amount_refunded ?? 0) / 100).toFixed(2)} ${charge.currency.toUpperCase()} on charge ${charge.id}`, "warning");
               break;
             }
