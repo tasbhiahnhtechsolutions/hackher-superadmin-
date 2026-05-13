@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { jsonOk, jsonError, corsPreflight } from "@/lib/api-auth.server";
+import { jsonOk, jsonError, corsPreflight } from "@/lib/api-cors.server";
 
 const Schema = z.object({
   email: z.string().email().max(255),

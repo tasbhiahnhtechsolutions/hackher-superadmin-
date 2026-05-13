@@ -1,7 +1,7 @@
 // GET /api/customer/plans — list active subscription plans (public, internal Customer Portal)
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { jsonOk, corsPreflight } from "@/lib/api-auth.server";
+import { jsonOk, corsPreflight } from "@/lib/api-cors.server";
 
 export const Route = createFileRoute("/api/customer/plans")({
   server: {

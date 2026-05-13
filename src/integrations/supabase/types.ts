@@ -172,6 +172,7 @@ export type Database = {
           beneficiary_role: Database["public"]["Enums"]["app_role"]
           cleared_at: string | null
           created_at: string
+          first_paid_invoice_at: string | null
           hold_until: string | null
           id: string
           paid_at: string | null
@@ -186,6 +187,7 @@ export type Database = {
           beneficiary_role: Database["public"]["Enums"]["app_role"]
           cleared_at?: string | null
           created_at?: string
+          first_paid_invoice_at?: string | null
           hold_until?: string | null
           id?: string
           paid_at?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           beneficiary_role?: Database["public"]["Enums"]["app_role"]
           cleared_at?: string | null
           created_at?: string
+          first_paid_invoice_at?: string | null
           hold_until?: string | null
           id?: string
           paid_at?: string | null
@@ -620,11 +623,13 @@ export type Database = {
       promo_codes: {
         Row: {
           affiliate_id: string | null
+          campaign_label: string | null
           code: string
           created_at: string
           discount_percent: number
           ends_at: string | null
           id: string
+          plan_id: string | null
           starts_at: string | null
           status: Database["public"]["Enums"]["promo_status"]
           stripe_coupon_id: string | null
@@ -635,11 +640,13 @@ export type Database = {
         }
         Insert: {
           affiliate_id?: string | null
+          campaign_label?: string | null
           code: string
           created_at?: string
           discount_percent: number
           ends_at?: string | null
           id?: string
+          plan_id?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["promo_status"]
           stripe_coupon_id?: string | null
@@ -650,11 +657,13 @@ export type Database = {
         }
         Update: {
           affiliate_id?: string | null
+          campaign_label?: string | null
           code?: string
           created_at?: string
           discount_percent?: number
           ends_at?: string | null
           id?: string
+          plan_id?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["promo_status"]
           stripe_coupon_id?: string | null
@@ -855,6 +864,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_promo_30_rule: {
+        Args: { _affiliate_id: string; _discount: number }
+        Returns: undefined
+      }
       clear_due_commissions: { Args: never; Returns: number }
       create_notification: {
         Args: {
