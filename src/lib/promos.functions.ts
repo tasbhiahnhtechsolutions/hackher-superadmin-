@@ -137,11 +137,10 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     const { data: promo } = await supabaseAdmin.from("promo_codes").select("*").eq("id", data.id).maybeSingle();
     if (!promo) throw new Error("Not found");
 
-    if (role === "affiliate" && promo.affiliate_id !== userId) throw new Error("Forbidden");
+    if (role === "affiliate" || role === "customer") throw new Error("Forbidden");
     if (role === "sam" || role === "manager") {
       if (!promo.affiliate_id || !(await isAncestorOf(userId, promo.affiliate_id))) throw new Error("Forbidden");
     }
-    if (role === "customer") throw new Error("Forbidden");
 
     const patch: {
       code?: string;
