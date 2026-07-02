@@ -55,14 +55,22 @@ export async function detectRapidRefund(subscriptionStripeId: string, refundCent
   if (!sub) return;
   const ageMs = Date.now() - new Date(sub.created_at).getTime();
   if (ageMs < 48 * 60 * 60 * 1000) {
-    const { data: cust } = await supabaseAdmin.from("customers").select("affiliate_id,email").eq("id", sub.customer_id).maybeSingle();
+    const { data: cust } = await supabaseAdmin
+      .from("customers")
+      .select("affiliate_id,email")
+      .eq("id", sub.customer_id)
+      .maybeSingle();
     await flagFraud({
       type: "rapid_refund",
       severity: "high",
       riskScore: 75,
       subjectUserId: cust?.affiliate_id ?? null,
       subscriptionId: sub.id,
-      details: { refund_cents: refundCents, age_hours: Math.round(ageMs / 3600000), customer_email: cust?.email },
+      details: {
+        refund_cents: refundCents,
+        age_hours: Math.round(ageMs / 3600000),
+        customer_email: cust?.email,
+      },
     });
   }
 }

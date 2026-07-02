@@ -7,8 +7,21 @@ import { createSubordinate, updateSubordinateCommission } from "@/lib/users.func
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, PageBody } from "@/components/page-header";
 import { Plus, Pencil } from "lucide-react";
@@ -23,14 +36,22 @@ interface Props {
   readOnly?: boolean;
 }
 
-export function TeamManagement({ title, subtitle, childRole, recursive = false, readOnly = false }: Props) {
+export function TeamManagement({
+  title,
+  subtitle,
+  childRole,
+  recursive = false,
+  readOnly = false,
+}: Props) {
   const qc = useQueryClient();
   const { user, role } = useAuth();
   const create = useServerFn(createSubordinate);
   const updateCommission = useServerFn(updateSubordinateCommission);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", fullName: "", password: "", commission: 10 });
-  const [editing, setEditing] = useState<{ id: string; name: string; ratePct: number } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; name: string; ratePct: number } | null>(
+    null,
+  );
   const canEditCommission = role === "super_admin" || role === "sam" || role === "manager";
 
   const queryKey = ["team", childRole, user?.id, recursive];
@@ -39,10 +60,21 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
     enabled: !!user,
     queryFn: async () => {
       // Get user_ids for this role (RLS now allows ancestors to see descendant roles)
-      const { data: rolesRows } = await supabase.from("user_roles").select("user_id").eq("role", childRole);
+      const { data: rolesRows } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", childRole);
       const ids = (rolesRows ?? []).map((r) => r.user_id);
-      if (!ids.length) return { rows: [], parents: new Map<string, { full_name: string | null; email: string }>() };
-      let q = supabase.from("profiles").select("*").in("id", ids).order("created_at", { ascending: false });
+      if (!ids.length)
+        return {
+          rows: [],
+          parents: new Map<string, { full_name: string | null; email: string }>(),
+        };
+      let q = supabase
+        .from("profiles")
+        .select("*")
+        .in("id", ids)
+        .order("created_at", { ascending: false });
       if (!recursive && user) q = q.eq("parent_user_id", user.id);
       const { data: profiles } = await q;
       const rows = profiles ?? [];
@@ -50,11 +82,17 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
       // For affiliate view, also fetch their manager (parent) profiles to show a "Manager" column
       const parents = new Map<string, { full_name: string | null; email: string }>();
       if (childRole === "affiliate" && rows.length) {
-        const parentIds = Array.from(new Set(rows.map((r) => r.parent_user_id).filter(Boolean))) as string[];
+        const parentIds = Array.from(
+          new Set(rows.map((r) => r.parent_user_id).filter(Boolean)),
+        ) as string[];
         if (parentIds.length) {
           const { data: parentProfiles } = await supabase
-            .from("profiles").select("id,full_name,email").in("id", parentIds);
-          (parentProfiles ?? []).forEach((p) => parents.set(p.id, { full_name: p.full_name, email: p.email }));
+            .from("profiles")
+            .select("id,full_name,email")
+            .in("id", parentIds);
+          (parentProfiles ?? []).forEach((p) =>
+            parents.set(p.id, { full_name: p.full_name, email: p.email }),
+          );
         }
       }
       return { rows, parents };
@@ -66,12 +104,14 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
 
   const createMut = useMutation({
     mutationFn: async () => {
-      return create({ data: {
-        email: form.email,
-        fullName: form.fullName,
-        password: form.password,
-        role: childRole,
-      }});
+      return create({
+        data: {
+          email: form.email,
+          fullName: form.fullName,
+          password: form.password,
+          role: childRole,
+        },
+      });
     },
     onSuccess: (res) => {
       if (childRole === "affiliate" && res?.promoCode) {
@@ -89,7 +129,9 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
   const updateMut = useMutation({
     mutationFn: async () => {
       if (!editing) throw new Error("Nothing to update");
-      return updateCommission({ data: { userId: editing.id, commissionRate: editing.ratePct / 100 } });
+      return updateCommission({
+        data: { userId: editing.id, commissionRate: editing.ratePct / 100 },
+      });
     },
     onSuccess: () => {
       toast.success("Commission rate updated");
@@ -99,54 +141,119 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const labelMap: Record<AppRole, string> = { super_admin: "Super Admin", sam: "SAM", manager: "Manager", affiliate: "Affiliate", customer: "Customer" };
+  const labelMap: Record<AppRole, string> = {
+    super_admin: "Super Admin",
+    sam: "SAM",
+    manager: "Manager",
+    affiliate: "Affiliate",
+    customer: "Customer",
+  };
 
   return (
     <>
       <PageHeader
         title={title}
         subtitle={subtitle}
-        action={readOnly ? undefined : <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New {labelMap[childRole]}</Button>}
+        action={
+          readOnly ? undefined : (
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New {labelMap[childRole]}
+            </Button>
+          )
+        }
       />
       <PageBody>
         <div className="rounded-xl border border-border/60 bg-card">
           <Table>
-            <TableHeader><TableRow>
-              <TableHead>Name</TableHead><TableHead>Email</TableHead>
-              {showManagerCol && <TableHead>Manager</TableHead>}
-              <TableHead>Commission</TableHead><TableHead>Status</TableHead><TableHead>Joined</TableHead>
-              {canEditCommission && <TableHead className="text-right">Actions</TableHead>}
-            </TableRow></TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                {showManagerCol && <TableHead>Manager</TableHead>}
+                <TableHead>Commission</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Joined</TableHead>
+                {canEditCommission && <TableHead className="text-right">Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
             <TableBody>
               {(() => {
                 const colCount = (showManagerCol ? 6 : 5) + (canEditCommission ? 1 : 0);
-                if (isLoading) return <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>;
-                if (!rows.length) return <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">No {labelMap[childRole]}s yet.</TableCell></TableRow>;
+                if (isLoading)
+                  return (
+                    <TableRow>
+                      <TableCell
+                        colSpan={colCount}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        Loading…
+                      </TableCell>
+                    </TableRow>
+                  );
+                if (!rows.length)
+                  return (
+                    <TableRow>
+                      <TableCell
+                        colSpan={colCount}
+                        className="text-center py-8 text-muted-foreground"
+                      >
+                        No {labelMap[childRole]}s yet.
+                      </TableCell>
+                    </TableRow>
+                  );
                 return rows.map((u) => {
                   const mgr = u.parent_user_id ? parents.get(u.parent_user_id) : null;
                   const isSelf = u.id === user?.id;
                   return (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    {showManagerCol && (
-                      <TableCell>{mgr ? (mgr.full_name ?? mgr.email) : <span className="text-muted-foreground">—</span>}</TableCell>
-                    )}
-                    <TableCell>{u.commission_rate ? `${(Number(u.commission_rate) * 100).toFixed(0)}%` : "—"}</TableCell>
-                    <TableCell><Badge variant={u.status === "active" ? "default" : "secondary"}>{u.status}</Badge></TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</TableCell>
-                    {canEditCommission && (
-                      <TableCell className="text-right">
-                        {isSelf ? (
-                          <span className="text-xs text-muted-foreground">Self</span>
-                        ) : (
-                          <Button size="sm" variant="ghost" onClick={() => setEditing({ id: u.id, name: u.full_name ?? u.email, ratePct: Math.round(Number(u.commission_rate ?? 0) * 100) })}>
-                            <Pencil className="h-3.5 w-3.5 mr-1" />Edit
-                          </Button>
-                        )}
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.full_name ?? "—"}</TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      {showManagerCol && (
+                        <TableCell>
+                          {mgr ? (
+                            (mgr.full_name ?? mgr.email)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell>
+                        {u.commission_rate
+                          ? `${(Number(u.commission_rate) * 100).toFixed(0)}%`
+                          : "—"}
                       </TableCell>
-                    )}
-                  </TableRow>
+                      <TableCell>
+                        <Badge variant={u.status === "active" ? "default" : "secondary"}>
+                          {u.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString()}
+                      </TableCell>
+                      {canEditCommission && (
+                        <TableCell className="text-right">
+                          {isSelf ? (
+                            <span className="text-xs text-muted-foreground">Self</span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                setEditing({
+                                  id: u.id,
+                                  name: u.full_name ?? u.email,
+                                  ratePct: Math.round(Number(u.commission_rate ?? 0) * 100),
+                                })
+                              }
+                            >
+                              <Pencil className="h-3.5 w-3.5 mr-1" />
+                              Edit
+                            </Button>
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
                   );
                 });
               })()}
@@ -157,31 +264,64 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create {labelMap[childRole]}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Create {labelMap[childRole]}</DialogTitle>
+          </DialogHeader>
           <div className="space-y-3">
-            <div><Label>Full name</Label><Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></div>
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Temporary password</Label><Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="At least 8 characters" /></div>
+            <div>
+              <Label>Full name</Label>
+              <Input
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Temporary password</Label>
+              <Input
+                type="text"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="At least 8 characters"
+              />
+            </div>
             {childRole === "affiliate" ? (
               <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-                The affiliate will create their own branded promo codes (e.g. <span className="font-mono font-semibold">YOURNAMETIKTOK</span>) from their dashboard. Default split: customer <b>15%</b> off, affiliate <b>10%</b>, manager <b>4%</b>, SAM <b>1%</b>.
+                The affiliate will create their own branded promo codes (e.g.{" "}
+                <span className="font-mono font-semibold">YOURNAMETIKTOK</span>) from their
+                dashboard. Default split: customer <b>15%</b> off, affiliate <b>10%</b>, manager{" "}
+                <b>4%</b>, SAM <b>1%</b>.
               </div>
             ) : (
               <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-                Commission rate uses the platform default for {labelMap[childRole]}s configured in <b>Platform Settings</b>. Update it there to apply globally.
+                Commission rate uses the platform default for {labelMap[childRole]}s configured in{" "}
+                <b>Platform Settings</b>. Update it there to apply globally.
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>{createMut.isPending ? "Creating…" : "Create"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>
+              {createMut.isPending ? "Creating…" : "Create"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit commission · {editing?.name}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Edit commission · {editing?.name}</DialogTitle>
+          </DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Commission rate (%)</Label>
@@ -191,7 +331,9 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
                 max={15}
                 step={0.5}
                 value={editing?.ratePct ?? 0}
-                onChange={(e) => editing && setEditing({ ...editing, ratePct: Number(e.target.value) })}
+                onChange={(e) =>
+                  editing && setEditing({ ...editing, ratePct: Number(e.target.value) })
+                }
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 Max 15% per role. Total chain commissions plus discount cannot exceed 30%.
@@ -199,7 +341,9 @@ export function TeamManagement({ title, subtitle, childRole, recursive = false, 
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
             <Button onClick={() => updateMut.mutate()} disabled={updateMut.isPending}>
               {updateMut.isPending ? "Saving…" : "Save"}
             </Button>

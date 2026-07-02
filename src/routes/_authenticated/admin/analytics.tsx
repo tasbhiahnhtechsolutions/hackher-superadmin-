@@ -2,13 +2,27 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { getCohortRetention, getLtv, getChurn, getRevenueTimeseries } from "@/lib/analytics.functions";
+import {
+  getCohortRetention,
+  getLtv,
+  getChurn,
+  getRevenueTimeseries,
+} from "@/lib/analytics.functions";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import { CampaignAnalytics } from "@/components/campaign-analytics";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  BarChart,
+  Bar,
+  Legend,
 } from "recharts";
 import { toast } from "sonner";
 
@@ -26,15 +40,30 @@ function AnalyticsPage() {
   const fetchChurn = useServerFn(getChurn);
   const fetchRev = useServerFn(getRevenueTimeseries);
 
-  const [cohort, setCohort] = useState<Array<{ cohort: string; period_offset: number; customers: number; retained: number }>>([]);
-  const [ltv, setLtv] = useState<{ avg_ltv_cents: number; total_customers: number; total_revenue_cents: number } | null>(null);
-  const [churn, setChurn] = useState<{ churn_rate: number; churned: number; active_start: number } | null>(null);
-  const [rev, setRev] = useState<Array<{ bucket: string; gross_cents: number; refunds_cents: number; net_cents: number }>>([]);
+  const [cohort, setCohort] = useState<
+    Array<{ cohort: string; period_offset: number; customers: number; retained: number }>
+  >([]);
+  const [ltv, setLtv] = useState<{
+    avg_ltv_cents: number;
+    total_customers: number;
+    total_revenue_cents: number;
+  } | null>(null);
+  const [churn, setChurn] = useState<{
+    churn_rate: number;
+    churned: number;
+    active_start: number;
+  } | null>(null);
+  const [rev, setRev] = useState<
+    Array<{ bucket: string; gross_cents: number; refunds_cents: number; net_cents: number }>
+  >([]);
 
   useEffect(() => {
     Promise.all([fetchCohort(), fetchLtv(), fetchChurn(), fetchRev()])
       .then(([c, l, ch, r]) => {
-        setCohort(c); setLtv(l); setChurn(ch); setRev(r);
+        setCohort(c);
+        setLtv(l);
+        setChurn(ch);
+        setRev(r);
       })
       .catch((e) => toast.error((e as Error).message));
     // eslint-disable-next-line
@@ -66,26 +95,47 @@ function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card><CardContent className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Avg LTV</div>
-          <div className="mt-2 text-2xl font-semibold">${ltv ? (Number(ltv.avg_ltv_cents) / 100).toFixed(2) : "—"}</div>
-          <div className="text-xs text-muted-foreground mt-1">{ltv?.total_customers ?? 0} customers</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total revenue</div>
-          <div className="mt-2 text-2xl font-semibold">${ltv ? (Number(ltv.total_revenue_cents) / 100).toFixed(2) : "—"}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-5">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">30-day churn</div>
-          <div className="mt-2 text-2xl font-semibold">{churn ? `${(Number(churn.churn_rate) * 100).toFixed(1)}%` : "—"}</div>
-          <div className="text-xs text-muted-foreground mt-1">{churn?.churned ?? 0} of {churn?.active_start ?? 0}</div>
-        </CardContent></Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Avg LTV</div>
+            <div className="mt-2 text-2xl font-semibold">
+              ${ltv ? (Number(ltv.avg_ltv_cents) / 100).toFixed(2) : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {ltv?.total_customers ?? 0} customers
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              Total revenue
+            </div>
+            <div className="mt-2 text-2xl font-semibold">
+              ${ltv ? (Number(ltv.total_revenue_cents) / 100).toFixed(2) : "—"}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              30-day churn
+            </div>
+            <div className="mt-2 text-2xl font-semibold">
+              {churn ? `${(Number(churn.churn_rate) * 100).toFixed(1)}%` : "—"}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {churn?.churned ?? 0} of {churn?.active_start ?? 0}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Revenue · 90 days</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Revenue · 90 days</CardTitle>
+        </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={revChart}>
@@ -98,7 +148,12 @@ function AnalyticsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                }}
+              />
               <Area type="monotone" dataKey="net" stroke="hsl(var(--primary))" fill="url(#g)" />
             </AreaChart>
           </ResponsiveContainer>
@@ -106,14 +161,21 @@ function AnalyticsPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Cohort retention curve</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Cohort retention curve</CardTitle>
+        </CardHeader>
         <CardContent className="h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={retentionCurve}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} unit="%" />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                }}
+              />
               <Legend />
               <Bar dataKey="retention" fill="hsl(var(--primary))" name="Retention %" />
             </BarChart>

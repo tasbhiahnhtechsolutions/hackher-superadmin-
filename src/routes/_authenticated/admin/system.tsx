@@ -24,18 +24,37 @@ function SystemPage() {
 
   const load = async () => {
     setLoading(true);
-    try { setData(await fetchHealth()); }
-    catch (e) { toast.error((e as Error).message); }
-    finally { setLoading(false); }
+    try {
+      setData(await fetchHealth());
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
-  useEffect(() => { load(); const i = setInterval(load, 30000); return () => clearInterval(i); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    load();
+    const i = setInterval(load, 30000);
+    return () => clearInterval(i); /* eslint-disable-next-line */
+  }, []);
 
   const webhookHealthy = data && data.webhooks_failed_24h === 0;
-  const emailHealthy = data && Number(data.emails_failed_24h ?? 0) < Number(data.emails_24h ?? 0) * 0.05;
+  const emailHealthy =
+    data && Number(data.emails_failed_24h ?? 0) < Number(data.emails_24h ?? 0) * 0.05;
   const fraudOk = data && Number(data.open_fraud_flags ?? 0) < 10;
   const loginOk = data && Number(data.failed_logins_1h ?? 0) < 50;
 
-  const Stat = ({ label, value, healthy, hint }: { label: string; value: string | number; healthy?: boolean; hint?: string }) => (
+  const Stat = ({
+    label,
+    value,
+    healthy,
+    hint,
+  }: {
+    label: string;
+    value: string | number;
+    healthy?: boolean;
+    hint?: string;
+  }) => (
     <Card>
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
@@ -54,17 +73,45 @@ function SystemPage() {
       <PageHeader
         title="System Health"
         subtitle="Live operational metrics across webhooks, email, fraud, and auth"
-        action={<Button variant="outline" size="icon" onClick={load} disabled={loading}><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /></Button>}
+        action={
+          <Button variant="outline" size="icon" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <Stat label="Webhooks 24h" value={data?.webhooks_24h ?? "—"} healthy={webhookHealthy ?? undefined} hint={`${data?.webhooks_failed_24h ?? 0} failed`} />
-        <Stat label="Emails 24h" value={data?.emails_24h ?? "—"} healthy={emailHealthy ?? undefined} hint={`${data?.emails_failed_24h ?? 0} failed · ${data?.emails_pending_retry ?? 0} pending`} />
-        <Stat label="Open fraud flags" value={data?.open_fraud_flags ?? "—"} healthy={fraudOk ?? undefined} />
-        <Stat label="Failed logins 1h" value={data?.failed_logins_1h ?? "—"} healthy={loginOk ?? undefined} />
+        <Stat
+          label="Webhooks 24h"
+          value={data?.webhooks_24h ?? "—"}
+          healthy={webhookHealthy ?? undefined}
+          hint={`${data?.webhooks_failed_24h ?? 0} failed`}
+        />
+        <Stat
+          label="Emails 24h"
+          value={data?.emails_24h ?? "—"}
+          healthy={emailHealthy ?? undefined}
+          hint={`${data?.emails_failed_24h ?? 0} failed · ${data?.emails_pending_retry ?? 0} pending`}
+        />
+        <Stat
+          label="Open fraud flags"
+          value={data?.open_fraud_flags ?? "—"}
+          healthy={fraudOk ?? undefined}
+        />
+        <Stat
+          label="Failed logins 1h"
+          value={data?.failed_logins_1h ?? "—"}
+          healthy={loginOk ?? undefined}
+        />
         <Stat label="API calls 24h" value={data?.api_calls_24h ?? "—"} />
-        <Stat label="Pending commissions" value={data ? `$${(Number(data.commissions_pending_cents) / 100).toFixed(2)}` : "—"} />
-        <Stat label="Cleared commissions" value={data ? `$${(Number(data.commissions_cleared_cents) / 100).toFixed(2)}` : "—"} />
+        <Stat
+          label="Pending commissions"
+          value={data ? `$${(Number(data.commissions_pending_cents) / 100).toFixed(2)}` : "—"}
+        />
+        <Stat
+          label="Cleared commissions"
+          value={data ? `$${(Number(data.commissions_cleared_cents) / 100).toFixed(2)}` : "—"}
+        />
       </div>
     </div>
   );

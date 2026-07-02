@@ -10,7 +10,7 @@ export interface SendArgs<T extends TemplateName = TemplateName> {
   template: T;
   data: Parameters<(typeof TEMPLATES)[T]>[0];
   category?: string; // for preference filtering
-  userId?: string;   // recipient user id (for prefs lookup)
+  userId?: string; // recipient user id (for prefs lookup)
   idempotencyKey?: string;
 }
 
@@ -23,33 +23,53 @@ const PREF_FIELD: Record<string, keyof typeof PREF_DEFAULTS> = {
   marketing: "email_marketing",
 };
 const PREF_DEFAULTS = {
-  email_payouts: true, email_commissions: true, email_subscription: true,
-  email_security: true, email_admin_alerts: true, email_marketing: false,
+  email_payouts: true,
+  email_commissions: true,
+  email_subscription: true,
+  email_security: true,
+  email_admin_alerts: true,
+  email_marketing: false,
 };
 
-async function isAllowed(userId: string | undefined, category: string | undefined): Promise<boolean> {
+async function isAllowed(
+  userId: string | undefined,
+  category: string | undefined,
+): Promise<boolean> {
   if (!userId || !category) return true;
   const field = PREF_FIELD[category];
   if (!field) return true;
-  const { data } = await supabaseAdmin.from("notification_preferences").select(field).eq("user_id", userId).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("notification_preferences")
+    .select(field)
+    .eq("user_id", userId)
+    .maybeSingle();
   if (!data) return PREF_DEFAULTS[field];
   return Boolean((data as Record<string, unknown>)[field]);
 }
 
 async function isSuppressed(email: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.from("suppressed_emails").select("email").eq("email", email.toLowerCase()).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("suppressed_emails")
+    .select("email")
+    .eq("email", email.toLowerCase())
+    .maybeSingle();
   return !!data;
 }
 
-export async function sendAppEmail<T extends TemplateName>(args: SendArgs<T>): Promise<{ ok: boolean; id?: string; skipped?: string; error?: string }> {
+export async function sendAppEmail<T extends TemplateName>(
+  args: SendArgs<T>,
+): Promise<{ ok: boolean; id?: string; skipped?: string; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: "RESEND_API_KEY missing" };
 
   const recipient = args.to.toLowerCase().trim();
   if (await isSuppressed(recipient)) {
     await supabaseAdmin.from("email_send_log").insert({
-      template_name: args.template, recipient_email: recipient, status: "suppressed",
-      message_id: args.idempotencyKey, subject: null,
+      template_name: args.template,
+      recipient_email: recipient,
+      status: "suppressed",
+      message_id: args.idempotencyKey,
+      subject: null,
     });
     return { ok: false, skipped: "suppressed" };
   }
@@ -57,15 +77,26 @@ export async function sendAppEmail<T extends TemplateName>(args: SendArgs<T>): P
     return { ok: false, skipped: "user_pref" };
   }
 
-  const tpl = TEMPLATES[args.template] as (d: unknown) => { subject: string; html: string; text: string };
+  const tpl = TEMPLATES[args.template] as (d: unknown) => {
+    subject: string;
+    html: string;
+    text: string;
+  };
   const { subject, html, text } = tpl(args.data);
 
   // Insert pending row
-  const { data: pending } = await supabaseAdmin.from("email_send_log").insert({
-    template_name: args.template, recipient_email: recipient,
-    status: "pending", message_id: args.idempotencyKey, subject,
-    metadata: { category: args.category ?? null },
-  }).select("id").maybeSingle();
+  const { data: pending } = await supabaseAdmin
+    .from("email_send_log")
+    .insert({
+      template_name: args.template,
+      recipient_email: recipient,
+      status: "pending",
+      message_id: args.idempotencyKey,
+      subject,
+      metadata: { category: args.category ?? null },
+    })
+    .select("id")
+    .maybeSingle();
 
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -78,25 +109,38 @@ export async function sendAppEmail<T extends TemplateName>(args: SendArgs<T>): P
       const errMsg = body?.message || body?.error || `HTTP ${res.status}`;
       const backoffMin = 5; // first retry in 5 min
       await supabaseAdmin.from("email_send_log").insert({
-        template_name: args.template, recipient_email: recipient, status: "failed",
-        error_message: String(errMsg), message_id: args.idempotencyKey, subject,
-        retry_count: 0, next_retry_at: new Date(Date.now() + backoffMin * 60 * 1000).toISOString(),
+        template_name: args.template,
+        recipient_email: recipient,
+        status: "failed",
+        error_message: String(errMsg),
+        message_id: args.idempotencyKey,
+        subject,
+        retry_count: 0,
+        next_retry_at: new Date(Date.now() + backoffMin * 60 * 1000).toISOString(),
         metadata: { category: args.category ?? null, payload: args.data },
       });
       return { ok: false, error: String(errMsg) };
     }
     await supabaseAdmin.from("email_send_log").insert({
-      template_name: args.template, recipient_email: recipient, status: "sent",
-      message_id: args.idempotencyKey ?? body?.id, subject,
+      template_name: args.template,
+      recipient_email: recipient,
+      status: "sent",
+      message_id: args.idempotencyKey ?? body?.id,
+      subject,
       metadata: { category: args.category ?? null, resend_id: body?.id },
     });
     return { ok: true, id: body?.id };
   } catch (e) {
     const msg = (e as Error).message;
     await supabaseAdmin.from("email_send_log").insert({
-      template_name: args.template, recipient_email: recipient, status: "failed",
-      error_message: msg, message_id: args.idempotencyKey, subject,
-      retry_count: 0, next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      template_name: args.template,
+      recipient_email: recipient,
+      status: "failed",
+      error_message: msg,
+      message_id: args.idempotencyKey,
+      subject,
+      retry_count: 0,
+      next_retry_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
       metadata: { category: args.category ?? null, payload: args.data },
     });
     return { ok: false, error: msg };
@@ -136,9 +180,14 @@ export async function retryFailedEmails(): Promise<{ retried: number }> {
       const nextCount = (row.retry_count ?? 0) + 1;
       const minutes = [5, 15, 45, 120, 360][Math.min(nextCount, 4)];
       await supabaseAdmin.from("email_send_log").insert({
-        template_name: row.template_name, recipient_email: row.recipient_email,
-        status: "failed", error_message: result.error, message_id: row.message_id, subject: row.subject,
-        retry_count: nextCount, next_retry_at: new Date(Date.now() + minutes * 60 * 1000).toISOString(),
+        template_name: row.template_name,
+        recipient_email: row.recipient_email,
+        status: "failed",
+        error_message: result.error,
+        message_id: row.message_id,
+        subject: row.subject,
+        retry_count: nextCount,
+        next_retry_at: new Date(Date.now() + minutes * 60 * 1000).toISOString(),
         metadata: meta as never,
       });
     }

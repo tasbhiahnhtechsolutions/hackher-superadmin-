@@ -23,7 +23,10 @@ function NotFoundComponent() {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <div className="mt-6">
-          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
             Go home
           </Link>
         </div>
@@ -42,12 +45,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
           >
             Try again
           </button>
-          <Link to="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent"
+          >
             Go home
           </Link>
         </div>
@@ -62,7 +71,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "HackHer.ai Affiliate Portal" },
-      { name: "description", content: "Manage affiliates, commissions, and subscriptions for HackHer.ai." },
+      {
+        name: "description",
+        content: "Manage affiliates, commissions, and subscriptions for HackHer.ai.",
+      },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -75,7 +87,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {children}
         <Scripts />
@@ -87,9 +101,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
-    import("@/integrations/supabase/server-fn-fetch").then((m) =>
-      m.installServerFnAuthFetch(),
-    );
+    import("@/integrations/supabase/server-fn-fetch").then((m) => m.installServerFnAuthFetch());
   }, []);
   return (
     <QueryClientProvider client={queryClient}>

@@ -12,7 +12,11 @@ export const listFraudFlags = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => listSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    let q = supabase.from("fraud_flags").select("*").order("created_at", { ascending: false }).limit(data.limit);
+    let q = supabase
+      .from("fraud_flags")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
     if (data.status !== "all") q = q.eq("status", data.status);
     const { data: rows, error } = await q;
     if (error) throw error;

@@ -6,7 +6,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { sendAppEmail } from "@/lib/email/send.server";
 
 async function ensureSuperAdmin(userId: string) {
-  const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "super_admin").maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "super_admin")
+    .maybeSingle();
   if (!data) throw new Error("Forbidden");
 }
 
@@ -39,15 +44,25 @@ export const generatePayouts = createServerFn({ method: "POST" })
       byBeneficiary.set(c.beneficiary_id, e);
     }
 
-    let created = 0, totalCents = 0;
+    let created = 0,
+      totalCents = 0;
     for (const [beneficiary_id, { ids, total }] of byBeneficiary.entries()) {
-      const { data: payout, error: pErr } = await supabaseAdmin.from("payouts").insert({
-        beneficiary_id, amount_cents: total,
-        period_start: data.periodStart, period_end: data.periodEnd,
-        status: "pending",
-      }).select("id").single();
+      const { data: payout, error: pErr } = await supabaseAdmin
+        .from("payouts")
+        .insert({
+          beneficiary_id,
+          amount_cents: total,
+          period_start: data.periodStart,
+          period_end: data.periodEnd,
+          status: "pending",
+        })
+        .select("id")
+        .single();
       if (pErr || !payout) continue;
-      await supabaseAdmin.from("commissions").update({ payout_id: payout.id, status: "paid", paid_at: new Date().toISOString() }).in("id", ids);
+      await supabaseAdmin
+        .from("commissions")
+        .update({ payout_id: payout.id, status: "paid", paid_at: new Date().toISOString() })
+        .in("id", ids);
       created++;
       totalCents += total;
     }
@@ -56,7 +71,12 @@ export const generatePayouts = createServerFn({ method: "POST" })
       actor_id: context.userId,
       action: "generate_payouts",
       entity_type: "payout",
-      new_values: { period_start: data.periodStart, period_end: data.periodEnd, created, total_cents: totalCents } as never,
+      new_values: {
+        period_start: data.periodStart,
+        period_end: data.periodEnd,
+        created,
+        total_cents: totalCents,
+      } as never,
     });
 
     return { created, totalCents };
@@ -72,26 +92,52 @@ export const markPayoutPaid = createServerFn({ method: "POST" })
   .inputValidator((i) => MarkPaidSchema.parse(i))
   .handler(async ({ data, context }) => {
     await ensureSuperAdmin(context.userId);
-    const { data: payout, error } = await supabaseAdmin.from("payouts").update({
-      status: "paid", paid_at: new Date().toISOString(), notes: data.notes ?? null,
-    }).eq("id", data.payoutId).select("beneficiary_id,amount_cents,period_start,period_end").maybeSingle();
+    const { data: payout, error } = await supabaseAdmin
+      .from("payouts")
+      .update({
+        status: "paid",
+        paid_at: new Date().toISOString(),
+        notes: data.notes ?? null,
+      })
+      .eq("id", data.payoutId)
+      .select("beneficiary_id,amount_cents,period_start,period_end")
+      .maybeSingle();
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_logs").insert({
-      actor_id: context.userId, action: "mark_payout_paid", entity_type: "payout", entity_id: data.payoutId,
+      actor_id: context.userId,
+      action: "mark_payout_paid",
+      entity_type: "payout",
+      entity_id: data.payoutId,
     });
     if (payout) {
-      const { data: prof } = await supabaseAdmin.from("profiles").select("email").eq("id", payout.beneficiary_id).maybeSingle();
-      await supabaseAdmin.rpc("notify_user_with_pref" as never, {
-        _user_id: payout.beneficiary_id, _category: "payouts", _type: "payout_sent",
-        _title: "Payout sent",
-        _body: `${(payout.amount_cents / 100).toFixed(2)} USD has been sent`,
-        _link: "/affiliate/earnings",
-      } as never);
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", payout.beneficiary_id)
+        .maybeSingle();
+      await supabaseAdmin.rpc(
+        "notify_user_with_pref" as never,
+        {
+          _user_id: payout.beneficiary_id,
+          _category: "payouts",
+          _type: "payout_sent",
+          _title: "Payout sent",
+          _body: `${(payout.amount_cents / 100).toFixed(2)} USD has been sent`,
+          _link: "/affiliate/earnings",
+        } as never,
+      );
       if (prof?.email) {
         await sendAppEmail({
-          to: prof.email, template: "payout_sent",
-          data: { amountCents: payout.amount_cents, currency: "usd", periodStart: payout.period_start ?? undefined, periodEnd: payout.period_end ?? undefined },
-          category: "payouts", userId: payout.beneficiary_id,
+          to: prof.email,
+          template: "payout_sent",
+          data: {
+            amountCents: payout.amount_cents,
+            currency: "usd",
+            periodStart: payout.period_start ?? undefined,
+            periodEnd: payout.period_end ?? undefined,
+          },
+          category: "payouts",
+          userId: payout.beneficiary_id,
           idempotencyKey: `payout-${data.payoutId}`,
         });
       }

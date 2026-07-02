@@ -14,9 +14,17 @@ export const getCohortRetention = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await requireAdmin(supabase, userId);
-    const { data, error } = await supabase.rpc("report_cohort_retention" as never, { _months_back: 6 } as never);
+    const { data, error } = await supabase.rpc(
+      "report_cohort_retention" as never,
+      { _months_back: 6 } as never,
+    );
     if (error) throw error;
-    return data as Array<{ cohort: string; period_offset: number; customers: number; retained: number }>;
+    return data as Array<{
+      cohort: string;
+      period_offset: number;
+      customers: number;
+      retained: number;
+    }>;
   });
 
 export const getLtv = createServerFn({ method: "GET" })
@@ -26,7 +34,15 @@ export const getLtv = createServerFn({ method: "GET" })
     await requireAdmin(supabase, userId);
     const { data, error } = await supabase.rpc("report_ltv" as never, {} as never);
     if (error) throw error;
-    return (data as Array<{ total_customers: number; avg_ltv_cents: number; total_revenue_cents: number }>)?.[0] ?? null;
+    return (
+      (
+        data as Array<{
+          total_customers: number;
+          avg_ltv_cents: number;
+          total_revenue_cents: number;
+        }>
+      )?.[0] ?? null
+    );
   });
 
 export const getChurn = createServerFn({ method: "GET" })
@@ -36,7 +52,9 @@ export const getChurn = createServerFn({ method: "GET" })
     await requireAdmin(supabase, userId);
     const { data, error } = await supabase.rpc("report_churn" as never, { _days: 30 } as never);
     if (error) throw error;
-    return (data as Array<{ active_start: number; churned: number; churn_rate: number }>)?.[0] ?? null;
+    return (
+      (data as Array<{ active_start: number; churned: number; churn_rate: number }>)?.[0] ?? null
+    );
   });
 
 export const getSystemHealth = createServerFn({ method: "GET" })
@@ -56,9 +74,19 @@ export const getRevenueTimeseries = createServerFn({ method: "GET" })
     await requireAdmin(supabase, userId);
     const end = new Date();
     const start = new Date(end.getTime() - 90 * 24 * 60 * 60 * 1000);
-    const { data, error } = await supabase.rpc("report_revenue_timeseries" as never, {
-      _start: start.toISOString(), _end: end.toISOString(), _bucket: "day",
-    } as never);
+    const { data, error } = await supabase.rpc(
+      "report_revenue_timeseries" as never,
+      {
+        _start: start.toISOString(),
+        _end: end.toISOString(),
+        _bucket: "day",
+      } as never,
+    );
     if (error) throw error;
-    return data as Array<{ bucket: string; gross_cents: number; refunds_cents: number; net_cents: number }>;
+    return data as Array<{
+      bucket: string;
+      gross_cents: number;
+      refunds_cents: number;
+      net_cents: number;
+    }>;
   });

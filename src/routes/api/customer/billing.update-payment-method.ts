@@ -18,12 +18,17 @@ export const Route = createFileRoute("/api/customer/billing/update-payment-metho
         const key = process.env.STRIPE_SECRET_KEY;
         if (!key) return jsonError(503, "stripe_not_configured");
         let body: unknown;
-        try { body = await request.json(); } catch { return jsonError(400, "invalid_json"); }
+        try {
+          body = await request.json();
+        } catch {
+          return jsonError(400, "invalid_json");
+        }
         const parsed = Schema.safeParse(body);
         if (!parsed.success) return jsonError(400, "invalid_input", parsed.error.message);
 
         const { data: cust } = await supabaseAdmin
-          .from("customers").select("id,stripe_customer_id,email")
+          .from("customers")
+          .select("id,stripe_customer_id,email")
           .or(`id.eq.${parsed.data.customer_id},email.eq.${parsed.data.customer_id}`)
           .maybeSingle();
         if (!cust?.stripe_customer_id) return jsonError(404, "customer_not_found");

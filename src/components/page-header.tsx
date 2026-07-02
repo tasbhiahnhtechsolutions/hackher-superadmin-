@@ -1,6 +1,14 @@
 import { ReactNode } from "react";
 
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-border/60 px-6 py-5">
       <div>

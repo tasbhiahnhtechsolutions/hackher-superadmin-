@@ -2,19 +2,39 @@ import { ReactNode, useState } from "react";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth, ROLE_LABELS, type AppRole } from "@/lib/auth";
 import {
-  LayoutDashboard, Users, UserCog, Tag, CreditCard, Wallet,
-  FileBarChart, ScrollText, Settings, LogOut, ChevronDown,
-  ShieldAlert, Activity, TrendingUp, Menu,
+  LayoutDashboard,
+  Users,
+  UserCog,
+  Tag,
+  CreditCard,
+  Wallet,
+  FileBarChart,
+  ScrollText,
+  Settings,
+  LogOut,
+  ChevronDown,
+  ShieldAlert,
+  Activity,
+  TrendingUp,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { NotificationBell } from "@/components/notification-bell";
 
-interface NavItem { to: string; label: string; icon: typeof Users; }
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof Users;
+}
 
 const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
   super_admin: [
@@ -70,11 +90,16 @@ export function AppShell({ children }: { children?: ReactNode }) {
       {items.map((item) => {
         const active = pathname === item.to || pathname.startsWith(item.to + "/");
         return (
-          <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={() => setMobileOpen(false)}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-              active ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+              active
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-            }`}>
+            }`}
+          >
             <item.icon className="h-4 w-4" />
             {item.label}
           </Link>
@@ -89,7 +114,11 @@ export function AppShell({ children }: { children?: ReactNode }) {
   };
 
   const initials = (profile?.full_name || profile?.email || "?")
-    .split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -98,8 +127,12 @@ export function AppShell({ children }: { children?: ReactNode }) {
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
           <div className="h-8 w-8 rounded-lg bg-gradient-brand shadow-glow" />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold leading-none">HackHer<span className="text-primary">.ai</span></span>
-            <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">Affiliate Portal</span>
+            <span className="text-sm font-semibold leading-none">
+              HackHer<span className="text-primary">.ai</span>
+            </span>
+            <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              Affiliate Portal
+            </span>
           </div>
         </div>
         {navList}
@@ -111,8 +144,12 @@ export function AppShell({ children }: { children?: ReactNode }) {
                   {initials}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <div className="truncate text-sm font-medium">{profile?.full_name ?? profile?.email}</div>
-                  <div className="truncate text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : ""}</div>
+                  <div className="truncate text-sm font-medium">
+                    {profile?.full_name ?? profile?.email}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {role ? ROLE_LABELS[role] : ""}
+                  </div>
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -134,12 +171,16 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <div className="flex items-center gap-2 md:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon"><Menu className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-64 bg-sidebar">
                 <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
                   <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
-                  <span className="text-sm font-semibold">HackHer<span className="text-primary">.ai</span></span>
+                  <span className="text-sm font-semibold">
+                    HackHer<span className="text-primary">.ai</span>
+                  </span>
                 </div>
                 {navList}
               </SheetContent>

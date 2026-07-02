@@ -21,6 +21,7 @@ No data destruction. Add hierarchy validation trigger that only fires on INSERT/
 ## Phase 3 — Trial-paid commission logic
 
 `src/routes/api/public/webhooks/stripe.ts`:
+
 - Move commission-row creation from `checkout.session.completed` / `customer.subscription.created` into `invoice.paid` handler, gated on "first paid invoice for this subscription" (no existing commissions row for `subscription_id`).
 - Skip commissions when `invoice.billing_reason === 'subscription_cycle'` already has prior commission OR when amount_paid == 0 (trial).
 - Add `charge.refunded` → mark related commissions `voided`.
@@ -28,6 +29,7 @@ No data destruction. Add hierarchy validation trigger that only fires on INSERT/
 ## Phase 4 — Customer APIs (new endpoints + extend existing)
 
 New routes under `src/routes/api/customer/`:
+
 - `subscription.$id.ts` GET — status, renewal, plan, coupon
 - `subscription.cancel.ts` POST — `{subscription_id, immediate?}` → Stripe cancel
 - `subscription.reactivate.ts` POST

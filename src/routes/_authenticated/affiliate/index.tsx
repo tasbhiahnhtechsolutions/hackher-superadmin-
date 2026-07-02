@@ -17,14 +17,31 @@ function AffiliateDashboard() {
     enabled: !!user,
     queryFn: async () => {
       const [promos, customers, comm] = await Promise.all([
-        supabase.from("promo_codes").select("id,code,discount_percent,usage_count,campaign_label,status").eq("affiliate_id", user!.id).order("created_at", { ascending: false }),
-        supabase.from("customers").select("id", { count: "exact", head: true }).eq("affiliate_id", user!.id),
+        supabase
+          .from("promo_codes")
+          .select("id,code,discount_percent,usage_count,campaign_label,status")
+          .eq("affiliate_id", user!.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("customers")
+          .select("id", { count: "exact", head: true })
+          .eq("affiliate_id", user!.id),
         supabase.from("commissions").select("amount_cents,status").eq("beneficiary_id", user!.id),
       ]);
-      const pending = comm.data?.filter((c) => c.status === "pending").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
-      const cleared = comm.data?.filter((c) => c.status === "cleared").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
+      const pending =
+        comm.data?.filter((c) => c.status === "pending").reduce((a, c) => a + c.amount_cents, 0) ??
+        0;
+      const cleared =
+        comm.data?.filter((c) => c.status === "cleared").reduce((a, c) => a + c.amount_cents, 0) ??
+        0;
       const total = comm.data?.reduce((a, c) => a + c.amount_cents, 0) ?? 0;
-      return { promos: promos.data ?? [], customers: customers.count ?? 0, pending, cleared, total };
+      return {
+        promos: promos.data ?? [],
+        customers: customers.count ?? 0,
+        pending,
+        cleared,
+        total,
+      };
     },
   });
 
@@ -35,8 +52,16 @@ function AffiliateDashboard() {
         subtitle="Your assigned promo code, conversions, and earnings"
         kpis={[
           { label: "Subscribers", value: String(data?.customers ?? 0), tone: "primary" },
-          { label: "Pending", value: `$${((data?.pending ?? 0) / 100).toFixed(2)}`, tone: "warning" },
-          { label: "Cleared", value: `$${((data?.cleared ?? 0) / 100).toFixed(2)}`, tone: "success" },
+          {
+            label: "Pending",
+            value: `$${((data?.pending ?? 0) / 100).toFixed(2)}`,
+            tone: "warning",
+          },
+          {
+            label: "Cleared",
+            value: `$${((data?.cleared ?? 0) / 100).toFixed(2)}`,
+            tone: "success",
+          },
           { label: "Total Earnings", value: `$${((data?.total ?? 0) / 100).toFixed(2)}` },
         ]}
       />
@@ -46,7 +71,9 @@ function AffiliateDashboard() {
             <Tag className="h-3.5 w-3.5" /> Your assigned promo codes ({data?.promos.length ?? 0})
           </div>
           {(data?.promos ?? []).length === 0 && (
-            <div className="rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground">No promo codes assigned yet.</div>
+            <div className="rounded-2xl border border-border/60 bg-card p-6 text-sm text-muted-foreground">
+              No promo codes assigned yet.
+            </div>
           )}
           {(data?.promos ?? []).map((promo) => (
             <Link
@@ -56,7 +83,9 @@ function AffiliateDashboard() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-mono text-3xl font-bold tracking-tight text-primary">{promo.code}</div>
+                  <div className="font-mono text-3xl font-bold tracking-tight text-primary">
+                    {promo.code}
+                  </div>
                   <div className="mt-1 text-sm text-muted-foreground">
                     {Number(promo.discount_percent)}% off · {promo.usage_count} uses
                     {promo.campaign_label ? ` · ${promo.campaign_label}` : ""}

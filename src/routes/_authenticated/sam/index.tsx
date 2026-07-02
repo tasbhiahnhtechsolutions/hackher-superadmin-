@@ -15,8 +15,14 @@ function SamDashboard() {
     enabled: !!user,
     queryFn: async () => {
       const [m, a, comm] = await Promise.all([
-        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "manager"),
-        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "affiliate"),
+        supabase
+          .from("user_roles")
+          .select("user_id", { count: "exact", head: true })
+          .eq("role", "manager"),
+        supabase
+          .from("user_roles")
+          .select("user_id", { count: "exact", head: true })
+          .eq("role", "affiliate"),
         supabase.from("commissions").select("amount_cents").eq("beneficiary_id", user!.id),
       ]);
       const earnings = comm.data?.reduce((a, c) => a + c.amount_cents, 0) ?? 0;
@@ -31,7 +37,11 @@ function SamDashboard() {
         { label: "Managers", value: String(data?.managers ?? 0) },
         { label: "Affiliates", value: String(data?.affiliates ?? 0) },
         { label: "Subscribers", value: "0", tone: "primary" },
-        { label: "Your Earnings", value: `$${((data?.earnings ?? 0) / 100).toFixed(2)}`, tone: "success" },
+        {
+          label: "Your Earnings",
+          value: `$${((data?.earnings ?? 0) / 100).toFixed(2)}`,
+          tone: "success",
+        },
       ]}
     />
   );

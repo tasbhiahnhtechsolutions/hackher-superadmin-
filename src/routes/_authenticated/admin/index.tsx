@@ -18,14 +18,21 @@ function AdminDashboard() {
         supabase.from("commissions").select("amount_cents,status"),
       ]);
       const activeSubs = subs.data?.filter((s) => s.status === "active").length ?? 0;
-      const mrr = subs.data?.filter((s) => s.status === "active").reduce((a, s) => a + s.amount_paid_cents, 0) ?? 0;
+      const mrr =
+        subs.data
+          ?.filter((s) => s.status === "active")
+          .reduce((a, s) => a + s.amount_paid_cents, 0) ?? 0;
       const pendingPayouts = payouts.data?.reduce((a, p) => a + p.amount_cents, 0) ?? 0;
-      const cleared = comm.data?.filter((c) => c.status === "cleared" || c.status === "paid").reduce((a, c) => a + c.amount_cents, 0) ?? 0;
+      const cleared =
+        comm.data
+          ?.filter((c) => c.status === "cleared" || c.status === "paid")
+          .reduce((a, c) => a + c.amount_cents, 0) ?? 0;
       return { mrr, activeSubs, pendingPayouts, cleared, plansCount: plans.count ?? 0 };
     },
   });
 
-  const fmt = (c: number) => `$${(c / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fmt = (c: number) =>
+    `$${(c / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
   return (
     <RoleDashboard

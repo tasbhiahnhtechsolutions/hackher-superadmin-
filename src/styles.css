@@ -59,32 +59,32 @@
 
   /* Light — operational SaaS, Stripe/HubSpot dense */
   --background: oklch(0.985 0.005 250);
-  --foreground: oklch(0.20 0.04 265);
+  --foreground: oklch(0.2 0.04 265);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.04 265);
+  --card-foreground: oklch(0.2 0.04 265);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.04 265);
+  --popover-foreground: oklch(0.2 0.04 265);
 
   /* Primary — HackHer dark navy #18294F */
   --primary: oklch(0.27 0.07 265);
   --primary-foreground: oklch(0.99 0 0);
-  --primary-glow: oklch(0.40 0.09 265);
+  --primary-glow: oklch(0.4 0.09 265);
 
   --secondary: oklch(0.96 0.008 250);
   --secondary-foreground: oklch(0.22 0.04 265);
   --muted: oklch(0.96 0.008 250);
-  --muted-foreground: oklch(0.50 0.02 260);
+  --muted-foreground: oklch(0.5 0.02 260);
 
   /* Accent — HackHer signature orange #E86E3C */
   --accent: oklch(0.69 0.16 45);
   --accent-foreground: oklch(0.99 0 0);
 
-  --destructive: oklch(0.60 0.22 25);
+  --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.65 0.17 155);
   --success-foreground: oklch(0.99 0 0);
   --warning: oklch(0.78 0.15 75);
-  --warning-foreground: oklch(0.20 0.02 75);
+  --warning-foreground: oklch(0.2 0.02 75);
 
   --border: oklch(0.91 0.008 250);
   --input: oklch(0.91 0.008 250);
@@ -93,8 +93,8 @@
   --chart-1: oklch(0.27 0.07 265);
   --chart-2: oklch(0.69 0.16 45);
   --chart-3: oklch(0.65 0.17 155);
-  --chart-4: oklch(0.60 0.18 230);
-  --chart-5: oklch(0.50 0.10 300);
+  --chart-4: oklch(0.6 0.18 230);
+  --chart-5: oklch(0.5 0.1 300);
 
   --sidebar: oklch(0.18 0.05 265);
   --sidebar-foreground: oklch(0.92 0.01 250);
@@ -102,14 +102,14 @@
   --sidebar-primary-foreground: oklch(0.99 0 0);
   --sidebar-accent: oklch(0.27 0.07 265);
   --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: oklch(0.30 0.06 265);
+  --sidebar-border: oklch(0.3 0.06 265);
   --sidebar-ring: oklch(0.69 0.16 45);
 
   --gradient-brand: linear-gradient(135deg, oklch(0.27 0.07 265), oklch(0.69 0.16 45));
   --gradient-surface: linear-gradient(180deg, oklch(0.99 0.005 250), oklch(0.97 0.008 250));
-  --shadow-elegant: 0 1px 3px oklch(0.20 0.04 265 / 0.08), 0 1px 2px oklch(0.20 0.04 265 / 0.04);
+  --shadow-elegant: 0 1px 3px oklch(0.2 0.04 265 / 0.08), 0 1px 2px oklch(0.2 0.04 265 / 0.04);
   --shadow-glow: 0 0 0 4px oklch(0.69 0.16 45 / 0.15);
-  --shadow-card: 0 1px 2px oklch(0.20 0 0 / 0.04), 0 1px 3px oklch(0.20 0 0 / 0.04);
+  --shadow-card: 0 1px 2px oklch(0.2 0 0 / 0.04), 0 1px 3px oklch(0.2 0 0 / 0.04);
 }
 
 .dark {
@@ -133,7 +133,7 @@
 
   --destructive: oklch(0.65 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.70 0.17 155);
+  --success: oklch(0.7 0.17 155);
   --success-foreground: oklch(0.13 0.02 265);
   --warning: oklch(0.78 0.16 75);
   --warning-foreground: oklch(0.13 0.02 265);
@@ -143,12 +143,12 @@
   --ring: oklch(0.69 0.16 45);
 
   --chart-1: oklch(0.69 0.16 45);
-  --chart-2: oklch(0.65 0.10 250);
+  --chart-2: oklch(0.65 0.1 250);
   --chart-3: oklch(0.72 0.17 155);
   --chart-4: oklch(0.78 0.16 75);
-  --chart-5: oklch(0.70 0.20 280);
+  --chart-5: oklch(0.7 0.2 280);
 
-  --sidebar: oklch(0.10 0.03 265);
+  --sidebar: oklch(0.1 0.03 265);
   --sidebar-foreground: oklch(0.92 0.01 250);
   --sidebar-primary: oklch(0.69 0.16 45);
   --sidebar-primary-foreground: oklch(0.99 0 0);
@@ -158,15 +158,19 @@
   --sidebar-ring: oklch(0.69 0.16 45);
 
   --gradient-brand: linear-gradient(135deg, oklch(0.27 0.07 265), oklch(0.69 0.16 45));
-  --gradient-surface: linear-gradient(180deg, oklch(0.13 0.02 265), oklch(0.10 0.03 265));
+  --gradient-surface: linear-gradient(180deg, oklch(0.13 0.02 265), oklch(0.1 0.03 265));
   --shadow-elegant: 0 1px 3px oklch(0 0 0 / 0.3);
   --shadow-glow: 0 0 0 4px oklch(0.69 0.16 45 / 0.25);
   --shadow-card: 0 1px 2px oklch(0 0 0 / 0.3), 0 1px 3px oklch(0 0 0 / 0.25);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { font-family: var(--font-sans); }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    font-family: var(--font-sans);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -176,11 +180,21 @@
 }
 
 @layer utilities {
-  .bg-gradient-brand { background-image: var(--gradient-brand); }
-  .bg-gradient-surface { background-image: var(--gradient-surface); }
-  .shadow-elegant { box-shadow: var(--shadow-elegant); }
-  .shadow-glow { box-shadow: var(--shadow-glow); }
-  .shadow-card { box-shadow: var(--shadow-card); }
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+  .bg-gradient-surface {
+    background-image: var(--gradient-surface);
+  }
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
   .glass {
     background-color: color-mix(in oklch, var(--card) 70%, transparent);
     backdrop-filter: blur(12px);

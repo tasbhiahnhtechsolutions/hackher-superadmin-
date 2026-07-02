@@ -1,0 +1,267 @@
+{
+  "info": {
+    "_postman_id": "8b5f39d1-3fb3-4f9e-a89e-2dc32e3a1f88",
+    "name": "HackHer Affiliate Portal API Collection",
+    "description": "Collection of all API endpoints for the HackHer Affiliate Portal client checkout flow and cron hooks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "supabaseKey",
+      "value": "YOUR_SUPABASE_PUBLISHABLE_KEY",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Customer Portal",
+      "item": [
+        {
+          "name": "Get Active Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "plans"]
+            },
+            "description": "Retrieves the list of active subscription plans from the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"coupon\": \"TASBI123\",\n  \"planId\": \"d290f1ee-6c54-4b01-90e6-d701748f0851\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/coupon/validate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "coupon", "validate"]
+            },
+            "description": "Validates if a promotional coupon code is active and calculates the final discount price."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Subscription Checkout Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJpZCI6IjYzYjc3NGE3LTQwNDYtNGRiMS05MTY4LTdiYjkyZTZjMjUzNCIsImVtYWlsIjoicGF3ZWc1MjM3NkBjZXhjaC5jb20iLCJpYXQiOjE3ODI5Mzc0MTUsImV4cCI6MTc4Mjk0NDYxNX0.HLONFbMx1P0txBQsvhXr2xanUSCQiKY4XuTeVU3-hbI\",\n  \"role\": \"guest\",\n  \"stripePriceId\": \"price_1Oxxxxxxxxxxxxxx\",\n  \"packageName\": \"squad_plan\",\n  \"packageId\": \"63b774a7-4046-4db1-9168-7bb92e6c2534\",\n  \"coupon\": \"TASBI123\",\n  \"success_url\": \"https://hackherapp.ai/success\",\n  \"cancel_url\": \"https://hackherapp.ai/cancel\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/subscription/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "subscription", "create"]
+            },
+            "description": "Verifies the JWT token, registers/updates the affiliate customer, and returns a Stripe checkout session URL."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Subscription Status by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/subscription/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "subscription", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "sub_1Oxxxxxxxxxxxxxx"
+                }
+              ]
+            },
+            "description": "Fetches current subscription status, period ends date, price plan, and coupon discount details."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscription_id\": \"sub_1Oxxxxxxxxxxxxxx\",\n  \"immediate\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/subscription/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "subscription", "cancel"]
+            },
+            "description": "Cancels a subscription. If 'immediate' is true, it terminates immediately in Stripe, otherwise it sets cancel_at_period_end."
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivate Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscription_id\": \"sub_1Oxxxxxxxxxxxxxx\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/subscription/reactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "subscription", "reactivate"]
+            },
+            "description": "Removes the cancel_at_period_end flag from an active Stripe subscription to reactivate automatic renewals."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/invoices/:customerId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "invoices", ":customerId"],
+              "variable": [
+                {
+                  "key": "customerId",
+                  "value": "cust_uuid_or_email"
+                }
+              ]
+            },
+            "description": "Retrieves the list of Stripe invoices for a specific customer."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Update Payment Method Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": \"customer-uuid-or-email\",\n  \"return_url\": \"https://hackherapp.ai/account/billing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customer/billing/update-payment-method",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customer", "billing", "update-payment-method"]
+            },
+            "description": "Creates a secure Stripe Customer Billing Portal session for the user to manage their payment methods."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "System Cron Hooks",
+      "item": [
+        {
+          "name": "Clear Due Commissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/hooks/clear-commissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "public", "hooks", "clear-commissions"]
+            },
+            "description": "Executed daily by scheduler to clear due pending commissions and notify users."
+          },
+          "response": []
+        },
+        {
+          "name": "Retry Failed Emails",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/hooks/retry-emails",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "public", "hooks", "retry-emails"]
+            },
+            "description": "Executed every 5 minutes by cron scheduler to retry sending failed emails from log queue."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stripe Webhook",
+      "item": [
+        {
+          "name": "Receive Stripe Webhook Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "stripe-signature",
+                "value": "t=123456,v1=xxxxxxxx"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_event\",\n  \"object\": \"event\",\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_session\",\n      \"customer\": \"cus_test\",\n      \"subscription\": \"sub_test\",\n      \"amount_total\": 10000,\n      \"currency\": \"usd\",\n      \"metadata\": {\n        \"user_id\": \"django-user-uuid\",\n        \"email\": \"user@example.com\",\n        \"role\": \"host\",\n        \"package_id\": \"django-package-uuid\",\n        \"package_name\": \"squad_plan\",\n        \"affiliate_id\": \"\"\n      }\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/public/webhooks/stripe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "public", "webhooks", "stripe"]
+            },
+            "description": "Endpoint to consume Stripe webhooks events (signature verification enabled)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

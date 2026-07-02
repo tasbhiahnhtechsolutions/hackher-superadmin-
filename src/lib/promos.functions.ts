@@ -8,8 +8,8 @@ import Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const MAX_TOTAL = 0.30;
-const COMM_AFFILIATE = 0.10;
+const MAX_TOTAL = 0.3;
+const COMM_AFFILIATE = 0.1;
 const COMM_MANAGER = 0.04;
 const COMM_SAM = 0.01;
 const MAX_DISCOUNT_PCT = Math.round((MAX_TOTAL - (COMM_AFFILIATE + COMM_MANAGER + COMM_SAM)) * 100); // 15
@@ -27,7 +27,10 @@ const CreateSchema = z.object({
 
 const UpdateSchema = z.object({
   id: z.string().uuid(),
-  code: z.string().regex(/^[A-Za-z0-9]{3,30}$/).optional(),
+  code: z
+    .string()
+    .regex(/^[A-Za-z0-9]{3,30}$/)
+    .optional(),
   discountPercent: z.number().min(1).max(MAX_DISCOUNT_PCT).optional(),
   status: z.enum(["active", "inactive"]).optional(),
   campaignLabel: z.string().min(1).max(60).nullable().optional(),
@@ -39,19 +42,30 @@ const UpdateSchema = z.object({
 });
 
 async function callerRole(userId: string) {
-  const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
   return data?.role as "super_admin" | "sam" | "manager" | "affiliate" | "customer" | undefined;
 }
 
 async function isAncestorOf(ancestorId: string, descendantId: string) {
-  const { data } = await supabaseAdmin.rpc("is_ancestor_of", { _ancestor: ancestorId, _descendant: descendantId });
+  const { data } = await supabaseAdmin.rpc("is_ancestor_of", {
+    _ancestor: ancestorId,
+    _descendant: descendantId,
+  });
   return !!data;
 }
 
 async function syncToStripe(promoId: string) {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return;
-  const { data: promo } = await supabaseAdmin.from("promo_codes").select("*").eq("id", promoId).maybeSingle();
+  const { data: promo } = await supabaseAdmin
+    .from("promo_codes")
+    .select("*")
+    .eq("id", promoId)
+    .maybeSingle();
   if (!promo) return;
   const stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" as never });
   try {
@@ -68,20 +82,25 @@ async function syncToStripe(promoId: string) {
     let stripePromoId = promo.stripe_promo_id;
     if (!stripePromoId) {
       const sp = await stripe.promotionCodes.create({
-        promotion: { coupon: couponId, type: "coupon" },
+        coupon: couponId,
         code: promo.code,
         max_redemptions: promo.usage_limit ?? undefined,
-        expires_at: promo.ends_at ? Math.floor(new Date(promo.ends_at).getTime() / 1000) : undefined,
+        expires_at: promo.ends_at
+          ? Math.floor(new Date(promo.ends_at).getTime() / 1000)
+          : undefined,
         metadata: { promo_id: promo.id },
-      } as never);
+      });
       stripePromoId = sp.id;
     } else {
       await stripe.promotionCodes.update(stripePromoId, { active: promo.status === "active" });
     }
-    await supabaseAdmin.from("promo_codes").update({
-      stripe_coupon_id: couponId,
-      stripe_promo_id: stripePromoId,
-    }).eq("id", promoId);
+    await supabaseAdmin
+      .from("promo_codes")
+      .update({
+        stripe_coupon_id: couponId,
+        stripe_promo_id: stripePromoId,
+      })
+      .eq("id", promoId);
   } catch (e) {
     console.error("[promo stripe sync]", e);
   }
@@ -106,20 +125,28 @@ export const createPromoCode = createServerFn({ method: "POST" })
     // super_admin: any affiliate
 
     const upperCode = data.code.toUpperCase();
-    const { data: existing } = await supabaseAdmin.from("promo_codes").select("id").ilike("code", upperCode).maybeSingle();
+    const { data: existing } = await supabaseAdmin
+      .from("promo_codes")
+      .select("id")
+      .ilike("code", upperCode)
+      .maybeSingle();
     if (existing) throw new Error("That code is already taken");
 
-    const { data: created, error } = await supabaseAdmin.from("promo_codes").insert({
-      code: upperCode,
-      discount_percent: data.discountPercent,
-      affiliate_id: affiliateId,
-      campaign_label: data.campaignLabel ?? null,
-      plan_id: data.planId ?? null,
-      starts_at: data.startsAt ?? null,
-      ends_at: data.endsAt ?? null,
-      usage_limit: data.usageLimit ?? null,
-      status: "active",
-    } as never).select("id").single();
+    const { data: created, error } = await supabaseAdmin
+      .from("promo_codes")
+      .insert({
+        code: upperCode,
+        discount_percent: data.discountPercent,
+        affiliate_id: affiliateId,
+        campaign_label: data.campaignLabel ?? null,
+        plan_id: data.planId ?? null,
+        starts_at: data.startsAt ?? null,
+        ends_at: data.endsAt ?? null,
+        usage_limit: data.usageLimit ?? null,
+        status: "active",
+      } as never)
+      .select("id")
+      .single();
     if (error || !created) throw new Error(error?.message ?? "Failed to create");
 
     await syncToStripe(created.id);
@@ -134,12 +161,17 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     const role = await callerRole(userId);
     if (!role) throw new Error("Unauthorized");
 
-    const { data: promo } = await supabaseAdmin.from("promo_codes").select("*").eq("id", data.id).maybeSingle();
+    const { data: promo } = await supabaseAdmin
+      .from("promo_codes")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
     if (!promo) throw new Error("Not found");
 
     if (role === "affiliate" || role === "customer") throw new Error("Forbidden");
     if (role === "sam" || role === "manager") {
-      if (!promo.affiliate_id || !(await isAncestorOf(userId, promo.affiliate_id))) throw new Error("Forbidden");
+      if (!promo.affiliate_id || !(await isAncestorOf(userId, promo.affiliate_id)))
+        throw new Error("Forbidden");
     }
 
     const patch: {
@@ -166,7 +198,10 @@ export const updatePromoCode = createServerFn({ method: "POST" })
       if (data.usageCount !== undefined) patch.usage_count = data.usageCount;
     }
 
-    const { error } = await supabaseAdmin.from("promo_codes").update(patch as never).eq("id", data.id);
+    const { error } = await supabaseAdmin
+      .from("promo_codes")
+      .update(patch as never)
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
 
     await syncToStripe(data.id);

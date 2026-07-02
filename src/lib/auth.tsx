@@ -1,4 +1,12 @@
-import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -60,10 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!force && loadedFor.current === uid) return loadedRole.current;
     setLoading(true);
     try {
-      const [{ data: profileData, error: profileError }, { data: roleRows, error: roleError }] = await Promise.all([
-        supabase.from("profiles").select("id,email,full_name,avatar_url,status").eq("id", uid).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", uid),
-      ]);
+      const [{ data: profileData, error: profileError }, { data: roleRows, error: roleError }] =
+        await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id,email,full_name,avatar_url,status")
+            .eq("id", uid)
+            .maybeSingle(),
+          supabase.from("user_roles").select("role").eq("user_id", uid),
+        ]);
       if (profileError) throw profileError;
       if (roleError) throw roleError;
       const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
@@ -127,7 +140,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const loadedRole = await loadUserData(data.user.id, true);
       if (!loadedRole) {
         await clearLocalSession();
-        return { error: "This account is missing a dashboard role. Ask the Super Admin to recreate or reassign the user." };
+        return {
+          error:
+            "This account is missing a dashboard role. Ask the Super Admin to recreate or reassign the user.",
+        };
       }
       return { role: loadedRole };
     } else {
@@ -168,7 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, role, loading, signIn, signUp, signOut, refresh }}>
+    <AuthContext.Provider
+      value={{ session, user, profile, role, loading, signIn, signUp, signOut, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );

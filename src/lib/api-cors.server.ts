@@ -15,6 +15,7 @@ export function jsonOk(body: unknown, status = 200) {
 }
 export function jsonError(status: number, code: string, message?: string) {
   return new Response(JSON.stringify({ error: { code, message: message ?? code } }), {
-    status, headers: corsJsonHeaders(),
+    status,
+    headers: corsJsonHeaders(),
   });
 }

@@ -13,7 +13,8 @@ export const Route = createFileRoute("/api/customer/invoices/$customerId")({
         if (!key) return jsonError(503, "stripe_not_configured");
 
         const { data: cust } = await supabaseAdmin
-          .from("customers").select("stripe_customer_id")
+          .from("customers")
+          .select("stripe_customer_id")
           .or(`id.eq.${params.customerId},email.eq.${params.customerId}`)
           .maybeSingle();
         if (!cust?.stripe_customer_id) return jsonError(404, "customer_not_found");

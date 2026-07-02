@@ -8,7 +8,9 @@ export const Route = createFileRoute("/checkout/success")({
 });
 
 function SuccessPage() {
-  useEffect(() => { localStorage.removeItem("hh_ref"); }, []);
+  useEffect(() => {
+    localStorage.removeItem("hh_ref");
+  }, []);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="max-w-md text-center">
@@ -17,7 +19,10 @@ function SuccessPage() {
         <p className="mt-3 text-muted-foreground">
           Your subscription is being activated. You'll receive a confirmation email shortly.
         </p>
-        <Link to="/" className="mt-8 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90">
+        <Link
+          to="/"
+          className="mt-8 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
           Back to home
         </Link>
       </div>

@@ -13,8 +13,8 @@ export function installServerFnAuthFetch() {
         typeof input === "string"
           ? input
           : input instanceof URL
-          ? input.toString()
-          : (input as Request).url;
+            ? input.toString()
+            : (input as Request).url;
       if (url && url.includes("/_serverFn/")) {
         const { data } = await supabase.auth.getSession();
         const token = data.session?.access_token;

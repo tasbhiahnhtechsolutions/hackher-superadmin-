@@ -55,10 +55,17 @@ function layout(opts: {
 </table></body></html>`;
 }
 
-const stripHtml = (s: string) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const stripHtml = (s: string) =>
+  s
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 function fmtMoney(cents: number, currency = "usd") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format((cents ?? 0) / 100);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format((cents ?? 0) / 100);
 }
 
 function summaryRow(label: string, value: string) {
@@ -75,52 +82,107 @@ export const TEMPLATES = {
   welcome: (d: { name?: string; appUrl: string }): EmailContent => {
     const subject = `Welcome to ${BRAND.name}`;
     const body = `<p>Hi ${d.name || "there"},</p><p>Welcome aboard. Your account is ready — start exploring your dashboard, generate a promo code, and watch your earnings grow in real time.</p>`;
-    const html = layout({ heading: subject, body, cta: { label: "Open dashboard", href: d.appUrl }, preheader: "Your account is ready." });
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "Open dashboard", href: d.appUrl },
+      preheader: "Your account is ready.",
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
   password_reset: (d: { resetUrl: string }): EmailContent => {
     const subject = `Reset your ${BRAND.name} password`;
     const body = `<p>We received a request to reset your password. Click the button below to choose a new one. This link expires in 1 hour.</p>`;
-    const html = layout({ heading: subject, body, cta: { label: "Reset password", href: d.resetUrl }, footerNote: "If you didn't request this, you can safely ignore this email." });
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "Reset password", href: d.resetUrl },
+      footerNote: "If you didn't request this, you can safely ignore this email.",
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
   email_verification: (d: { verifyUrl: string }): EmailContent => {
     const subject = `Verify your email`;
     const body = `<p>Confirm your email address to activate your account.</p>`;
-    const html = layout({ heading: subject, body, cta: { label: "Verify email", href: d.verifyUrl } });
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "Verify email", href: d.verifyUrl },
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
   login_alert: (d: { ip?: string; ua?: string; when: string }): EmailContent => {
     const subject = `New sign-in to your account`;
-    const body = `<p>We detected a new sign-in to your ${BRAND.name} account.</p>` +
-      summaryTable([["When", d.when], ["IP address", d.ip || "unknown"], ["Device", d.ua || "unknown"]]);
-    const html = layout({ heading: subject, body, footerNote: "If this wasn't you, please reset your password immediately." });
+    const body =
+      `<p>We detected a new sign-in to your ${BRAND.name} account.</p>` +
+      summaryTable([
+        ["When", d.when],
+        ["IP address", d.ip || "unknown"],
+        ["Device", d.ua || "unknown"],
+      ]);
+    const html = layout({
+      heading: subject,
+      body,
+      footerNote: "If this wasn't you, please reset your password immediately.",
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
-  subscription_created: (d: { planName: string; amountCents: number; currency: string; appUrl: string }): EmailContent => {
+  subscription_created: (d: {
+    planName: string;
+    amountCents: number;
+    currency: string;
+    appUrl: string;
+  }): EmailContent => {
     const subject = `Subscription confirmed — ${d.planName}`;
-    const body = `<p>Thanks for subscribing! Here's a summary of your subscription.</p>` +
-      summaryTable([["Plan", d.planName], ["Amount", fmtMoney(d.amountCents, d.currency)], ["Status", "Active"]]);
+    const body =
+      `<p>Thanks for subscribing! Here's a summary of your subscription.</p>` +
+      summaryTable([
+        ["Plan", d.planName],
+        ["Amount", fmtMoney(d.amountCents, d.currency)],
+        ["Status", "Active"],
+      ]);
     const html = layout({ heading: subject, body, cta: { label: "View account", href: d.appUrl } });
     return { subject, html, text: stripHtml(body) };
   },
 
-  payment_success: (d: { amountCents: number; currency: string; planName?: string; invoiceUrl?: string }): EmailContent => {
+  payment_success: (d: {
+    amountCents: number;
+    currency: string;
+    planName?: string;
+    invoiceUrl?: string;
+  }): EmailContent => {
     const subject = `Payment received — ${fmtMoney(d.amountCents, d.currency)}`;
-    const body = `<p>We've received your payment. Thanks!</p>` +
-      summaryTable([["Plan", d.planName || "Subscription"], ["Amount", fmtMoney(d.amountCents, d.currency)], ["Date", new Date().toLocaleDateString()]]);
-    const html = layout({ heading: subject, body, ...(d.invoiceUrl ? { cta: { label: "View invoice", href: d.invoiceUrl } } : {}) });
+    const body =
+      `<p>We've received your payment. Thanks!</p>` +
+      summaryTable([
+        ["Plan", d.planName || "Subscription"],
+        ["Amount", fmtMoney(d.amountCents, d.currency)],
+        ["Date", new Date().toLocaleDateString()],
+      ]);
+    const html = layout({
+      heading: subject,
+      body,
+      ...(d.invoiceUrl ? { cta: { label: "View invoice", href: d.invoiceUrl } } : {}),
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
-  payment_failed: (d: { amountCents: number; currency: string; updateUrl: string }): EmailContent => {
+  payment_failed: (d: {
+    amountCents: number;
+    currency: string;
+    updateUrl: string;
+  }): EmailContent => {
     const subject = `Payment failed`;
     const body = `<p>We couldn't process your latest payment of ${fmtMoney(d.amountCents, d.currency)}. Please update your payment method to avoid service interruption.</p>`;
-    const html = layout({ heading: subject, body, cta: { label: "Update payment method", href: d.updateUrl } });
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "Update payment method", href: d.updateUrl },
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
@@ -130,7 +192,11 @@ export const TEMPLATES = {
     return { subject, html: layout({ heading: subject, body }), text: stripHtml(body) };
   },
 
-  subscription_renewed: (d: { planName: string; amountCents: number; currency: string }): EmailContent => {
+  subscription_renewed: (d: {
+    planName: string;
+    amountCents: number;
+    currency: string;
+  }): EmailContent => {
     const subject = `Your subscription was renewed`;
     const body = `<p>Your <b>${d.planName}</b> subscription was renewed for ${fmtMoney(d.amountCents, d.currency)}.</p>`;
     return { subject, html: layout({ heading: subject, body }), text: stripHtml(body) };
@@ -139,7 +205,11 @@ export const TEMPLATES = {
   trial_ending: (d: { planName: string; endsAt: string; updateUrl: string }): EmailContent => {
     const subject = `Your trial ends ${d.endsAt}`;
     const body = `<p>Your free trial of <b>${d.planName}</b> ends on <b>${d.endsAt}</b>. Add a payment method to continue without interruption.</p>`;
-    const html = layout({ heading: subject, body, cta: { label: "Add payment method", href: d.updateUrl } });
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "Add payment method", href: d.updateUrl },
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
@@ -167,29 +237,64 @@ export const TEMPLATES = {
       (d.tempPassword
         ? `<p style="font-size:13px;color:${BRAND.muted};">Please sign in and change your password from your account settings.</p>`
         : "");
-    const html = layout({ heading: subject, body, cta: { label: "Open affiliate dashboard", href: d.dashboardUrl } });
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "Open affiliate dashboard", href: d.dashboardUrl },
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
-  promo_approved: (d: { code: string; discountPct: number; dashboardUrl: string }): EmailContent => {
+  promo_approved: (d: {
+    code: string;
+    discountPct: number;
+    dashboardUrl: string;
+  }): EmailContent => {
     const subject = `Your promo code "${d.code}" is live`;
-    const body = `<p>Your promo code is approved and active.</p>` +
-      summaryTable([["Code", d.code], ["Discount", `${d.discountPct}%`], ["Status", "Active"]]);
-    const html = layout({ heading: subject, body, cta: { label: "View promo codes", href: d.dashboardUrl } });
+    const body =
+      `<p>Your promo code is approved and active.</p>` +
+      summaryTable([
+        ["Code", d.code],
+        ["Discount", `${d.discountPct}%`],
+        ["Status", "Active"],
+      ]);
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "View promo codes", href: d.dashboardUrl },
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
-  commission_cleared: (d: { amountCents: number; currency: string; dashboardUrl: string }): EmailContent => {
+  commission_cleared: (d: {
+    amountCents: number;
+    currency: string;
+    dashboardUrl: string;
+  }): EmailContent => {
     const subject = `Commission cleared — ${fmtMoney(d.amountCents, d.currency)}`;
-    const body = `<p>Good news! A commission has cleared and is now eligible for payout.</p>` +
-      summaryTable([["Amount", fmtMoney(d.amountCents, d.currency)], ["Status", "Cleared"]]);
-    const html = layout({ heading: subject, body, cta: { label: "View earnings", href: d.dashboardUrl } });
+    const body =
+      `<p>Good news! A commission has cleared and is now eligible for payout.</p>` +
+      summaryTable([
+        ["Amount", fmtMoney(d.amountCents, d.currency)],
+        ["Status", "Cleared"],
+      ]);
+    const html = layout({
+      heading: subject,
+      body,
+      cta: { label: "View earnings", href: d.dashboardUrl },
+    });
     return { subject, html, text: stripHtml(body) };
   },
 
-  payout_sent: (d: { amountCents: number; currency: string; periodStart?: string; periodEnd?: string }): EmailContent => {
+  payout_sent: (d: {
+    amountCents: number;
+    currency: string;
+    periodStart?: string;
+    periodEnd?: string;
+  }): EmailContent => {
     const subject = `Payout sent — ${fmtMoney(d.amountCents, d.currency)}`;
-    const body = `<p>Your payout has been processed. Funds should arrive in your account shortly.</p>` +
+    const body =
+      `<p>Your payout has been processed. Funds should arrive in your account shortly.</p>` +
       summaryTable([
         ["Amount", fmtMoney(d.amountCents, d.currency)],
         ["Period", `${d.periodStart || "—"} → ${d.periodEnd || "—"}`],
@@ -204,10 +309,22 @@ export const TEMPLATES = {
     return { subject, html: layout({ heading: subject, body }), text: stripHtml(body) };
   },
 
-  admin_alert: (d: { title: string; message: string; severity?: "info" | "warning" | "critical" }): EmailContent => {
+  admin_alert: (d: {
+    title: string;
+    message: string;
+    severity?: "info" | "warning" | "critical";
+  }): EmailContent => {
     const subject = `[${(d.severity || "info").toUpperCase()}] ${d.title}`;
     const body = `<p>${d.message}</p>`;
-    return { subject, html: layout({ heading: d.title, body, footerNote: "Admin alert from your platform monitor." }), text: stripHtml(body) };
+    return {
+      subject,
+      html: layout({
+        heading: d.title,
+        body,
+        footerNote: "Admin alert from your platform monitor.",
+      }),
+      text: stripHtml(body),
+    };
   },
 } as const;
 

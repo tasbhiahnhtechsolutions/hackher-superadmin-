@@ -7,6 +7,7 @@ export const Route = createFileRoute("/_authenticated/manager")({
 
 function ManagerLayout() {
   const { role } = useAuth();
-  if (role && !["manager", "sam", "super_admin"].includes(role)) return <Navigate to={ROLE_HOME[role]} />;
+  if (role && !["manager", "sam", "super_admin"].includes(role))
+    return <Navigate to={ROLE_HOME[role]} />;
   return <Outlet />;
 }
