@@ -82,7 +82,7 @@ export const syncPromoToStripe = createServerFn({ method: "POST" })
     if (!couponId) {
       const coupon = await stripe.coupons.create({
         percent_off: Number(promo.discount_percent),
-        duration: "forever",
+        duration: "once",
         name: promo.code,
         metadata: { promo_id: promo.id, affiliate_id: promo.affiliate_id ?? "" },
       });
@@ -257,8 +257,14 @@ export const deletePlanServerFn = createServerFn({ method: "POST" })
       (djangoApiUrl ? `${djangoApiUrl.replace(/\/$/, "")}/internal/v1/sync-package/` : null);
 
     if (syncUrl) {
+      const featuresObj = plan.features as any;
       const payload = {
+        id: plan.id,
+        package_id: plan.id,
         action: "delete",
+        package_name:
+          (featuresObj && featuresObj.package_name) ||
+          plan.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
         stripe_product_id: plan.stripe_product_id || null,
         stripe_default_price_id: plan.stripe_price_id || null,
       };

@@ -1,7 +1,8 @@
 // POST /api/customer/subscription/create
 // Django sends a signed JWT in the Authorization header.
-// Token payload must include: id, email, role, stripe_price_id, package_id, package_name
-// Body (optional): { coupon?, success_url, cancel_url }
+// Token payload includes: id, email (role is inferred from which secret verifies the token)
+// Body (required): { stripePriceId, packageId, packageName, role? }
+// Also accepts snake_case: { stripe_price_id, package_id, package_name, role? }
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import Stripe from "stripe";
@@ -9,73 +10,145 @@ import * as jose from "jose";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { jsonOk, jsonError, corsPreflight } from "@/lib/api-cors.server";
 
-// Only optional/redirect fields come from body — everything else is in the token
-const BodySchema = z.object({
-  coupon: z
-    .string()
-    .min(3)
-    .max(30)
-    .regex(/^[A-Za-z0-9]+$/)
-    .optional(),
-  success_url: z.string().url().max(500),
-  cancel_url: z.string().url().max(500),
-});
+const SUCCESS_URL = "https://hackherapp.ai/checkout/success";
+const CANCEL_URL = "https://hackherapp.ai/checkout/cancel";
 
-// Shape of the JWT payload Django encodes
-interface DjangoTokenPayload {
-  id: string; // Django user UUID
+const BodySchema = z
+  .object({
+    // camelCase (client payload)
+    stripePriceId: z.string().min(1).optional(),
+    packageId: z.string().uuid().optional(),
+    packageName: z.string().min(1).max(50).optional(),
+    // snake_case (optional alternate)
+    stripe_price_id: z.string().min(1).optional(),
+    package_id: z.string().uuid().optional(),
+    package_name: z.string().min(1).max(50).optional(),
+    role: z.enum(["host", "guest"]).optional(),
+  })
+  .transform((data) => ({
+    stripe_price_id: data.stripe_price_id ?? data.stripePriceId,
+    package_id: data.package_id ?? data.packageId,
+    package_name: data.package_name ?? data.packageName,
+    role: data.role,
+  }))
+  .superRefine((data, ctx) => {
+    if (!data.stripe_price_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["stripePriceId"],
+        message: "stripePriceId is required",
+      });
+    }
+    if (!data.package_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["packageId"],
+        message: "packageId is required",
+      });
+    }
+    if (!data.package_name) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["packageName"],
+        message: "packageName is required",
+      });
+    }
+  });
+
+export type DjangoTokenPayload = {
+  id: string;
   email: string;
   role: "host" | "guest";
-  stripe_price_id: string; // Stripe Price ID for the chosen plan
-  package_id: string; // Django Package UUID
-  package_name: string; // e.g. "founders_circle"
+  exp?: number;
+  iat?: number;
+};
+
+type VerifiedPayload = {
+  id: string;
+  email: string;
+  exp?: number;
+  iat?: number;
+};
+
+function normalizeToken(token: string): string {
+  return token.startsWith("Bearer ") ? token.slice(7).trim() : token.trim();
 }
 
-async function verifyAndDecodeToken(token: string): Promise<DjangoTokenPayload> {
-  // Try host secret first, then guest secret
-  const secrets = [
-    process.env.DJANGO_HOST_JWT_SECRET,
-    process.env.DJANGO_GUEST_JWT_SECRET,
-  ].filter(Boolean) as string[];
+export async function verifyAndDecodeToken(
+  token: string,
+): Promise<DjangoTokenPayload> {
+  const rawToken = normalizeToken(token);
 
-  if (!secrets.length) throw new Error("No JWT secrets configured");
+  if (!rawToken) {
+    throw new Error("Token is required");
+  }
+
+  console.log("========== JWT VERIFY START ==========");
+  console.log("Raw token (first 40 chars):", rawToken.slice(0, 40) + "...");
+
+  const secretConfigs: Array<{
+    role: "host" | "guest";
+    secret?: string;
+  }> = [
+      { role: "host", secret: process.env.DJANGO_HOST_JWT_SECRET },
+      { role: "guest", secret: process.env.DJANGO_GUEST_JWT_SECRET },
+    ];
+
+  const configuredSecrets = secretConfigs.filter((item) => item.secret);
+
+  console.log(
+    "Configured secrets:",
+    configuredSecrets.map((s) => s.role),
+  );
+
+  if (!configuredSecrets.length) {
+    throw new Error("No JWT secrets configured");
+  }
 
   let lastError: Error | null = null;
-  for (const secret of secrets) {
+
+  for (const { role, secret } of configuredSecrets) {
     try {
-      const encodedSecret = new TextEncoder().encode(secret);
-      const { payload } = await jose.jwtVerify(token, encodedSecret, {
+      const encodedSecret = new TextEncoder().encode(secret!);
+      const { payload } = await jose.jwtVerify(rawToken, encodedSecret, {
         algorithms: ["HS256"],
       });
 
-      // Validate required fields inside token
-      const { id, email, role, stripe_price_id, package_id, package_name } =
-        payload as Record<string, unknown>;
+      const verified = payload as VerifiedPayload;
 
-      if (!id || !email || !role || !stripe_price_id || !package_id || !package_name) {
-        throw new Error(
-          "Token payload is missing required fields: id, email, role, stripe_price_id, package_id, package_name",
-        );
+      console.log("JWT verified with role secret:", role);
+      console.log("Token payload from Django:", {
+        id: verified.id,
+        email: verified.email,
+        exp: verified.exp,
+        iat: verified.iat,
+        full_payload: verified,
+      });
+
+      if (!verified.id || !verified.email) {
+        throw new Error("Token payload is missing required fields: id, email");
       }
 
-      if (role !== "host" && role !== "guest") {
-        throw new Error(`Invalid role in token: ${role}`);
-      }
-
-      return {
-        id: id as string,
-        email: email as string,
-        role: role as "host" | "guest",
-        stripe_price_id: stripe_price_id as string,
-        package_id: package_id as string,
-        package_name: package_name as string,
+      const decoded: DjangoTokenPayload = {
+        id: String(verified.id),
+        email: String(verified.email),
+        role,
+        exp: verified.exp,
+        iat: verified.iat,
       };
+
+      console.log("Final decoded token values:", decoded);
+      console.log("========== JWT VERIFY SUCCESS ==========");
+
+      return decoded;
     } catch (err) {
+      console.error(`JWT verify failed with ${role} secret:`, err);
       lastError = err as Error;
     }
   }
 
   console.error("JWT validation failed:", lastError);
+  console.log("========== JWT VERIFY FAILED ==========");
   throw new Error("Invalid or expired authentication token");
 }
 
@@ -89,13 +162,22 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
         if (!stripeKey) return jsonError(503, "stripe_not_configured");
 
         // ── 1. Extract token from Authorization header ──────────────────────
-        const authHeader = request.headers.get("Authorization") || request.headers.get("authorization");
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          return jsonError(401, "missing_token", "Authorization: Bearer <token> header is required");
-        }
-        const token = authHeader.slice(7).trim();
+        const authHeader =
+          request.headers.get("Authorization") ||
+          request.headers.get("authorization");
 
-        // ── 2. Decode & verify token — all plan details come from here ───────
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          return jsonError(
+            401,
+            "missing_token",
+            "Authorization: Bearer <token> header is required",
+          );
+        }
+
+        const token = authHeader.slice(7).trim();
+        console.log("Authorization header received: Bearer <token>");
+
+        // ── 2. Decode & verify token — user identity only ───────────────────
         let decoded: DjangoTokenPayload;
         try {
           decoded = await verifyAndDecodeToken(token);
@@ -103,9 +185,15 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
           return jsonError(401, "unauthorized", (err as Error).message);
         }
 
-        const { id: djangoUserId, email, role, stripe_price_id: stripePriceId, package_id: packageId, package_name: packageName } = decoded;
+        const { id: djangoUserId, email, role: tokenRole } = decoded;
 
-        // ── 3. Parse optional body fields ────────────────────────────────────
+        console.log("Token values used in request:", {
+          djangoUserId,
+          email,
+          tokenRole,
+        });
+
+        // ── 3. Parse body (plan details & optional role) ─────────────────────
         let body: unknown = {};
         try {
           const text = await request.text();
@@ -114,33 +202,32 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
           return jsonError(400, "invalid_json");
         }
 
+        console.log("Request body received:", body);
+
         const parsed = BodySchema.safeParse(body);
-        if (!parsed.success) return jsonError(400, "invalid_input", parsed.error.message);
-        const { coupon, success_url, cancel_url } = parsed.data;
-
-        // ── 4. Resolve coupon / affiliate attribution ─────────────────────────
-        let affiliateId: string | null = null;
-        let stripePromoId: string | null = null;
-        if (coupon) {
-          const { data: promo } = await supabaseAdmin
-            .from("promo_codes")
-            .select("*")
-            .ilike("code", coupon)
-            .maybeSingle();
-
-          if (
-            promo &&
-            promo.status === "active" &&
-            (!promo.usage_limit || promo.usage_count < promo.usage_limit)
-          ) {
-            affiliateId = promo.affiliate_id;
-            stripePromoId = promo.stripe_promo_id;
-          } else {
-            return jsonError(400, "invalid_coupon", "Coupon is invalid or expired");
-          }
+        if (!parsed.success) {
+          console.error("Body validation failed:", parsed.error.message);
+          return jsonError(400, "invalid_input", parsed.error.message);
         }
 
-        // ── 5. Find or create Supabase customer ───────────────────────────────
+        const {
+          stripe_price_id: stripePriceId,
+          package_id: packageId,
+          package_name: packageName,
+          role: bodyRole,
+        } = parsed.data;
+
+        const finalRole = bodyRole || tokenRole;
+
+        console.log("Normalized body values:", {
+          stripePriceId,
+          packageId,
+          packageName,
+          bodyRole,
+          finalRole,
+        });
+
+        // ── 4. Find or create Supabase customer ───────────────────────────────
         let { data: customer } = await supabaseAdmin
           .from("customers")
           .select("*")
@@ -153,7 +240,6 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
             .insert({
               email,
               django_user_id: djangoUserId,
-              affiliate_id: affiliateId,
             } as never)
             .select("*")
             .single();
@@ -163,7 +249,6 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
             .from("customers")
             .update({
               django_user_id: djangoUserId,
-              ...(affiliateId ? { affiliate_id: affiliateId } : {}),
             } as never)
             .eq("id", customer.id)
             .select("*")
@@ -173,60 +258,120 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
 
         if (!customer) return jsonError(500, "customer_create_failed");
 
-        // ── 6. Find or create Stripe customer ─────────────────────────────────
-        const stripe = new Stripe(stripeKey, { apiVersion: "2025-03-31.basil" as never });
+        console.log("Supabase customer:", {
+          id: customer.id,
+          email: customer.email,
+          django_user_id: customer.django_user_id,
+          stripe_customer_id: customer.stripe_customer_id,
+        });
 
-        let stripeCustomerId = customer.stripe_customer_id;
-        if (!stripeCustomerId) {
-          const sc = await stripe.customers.create({
-            email,
-            metadata: {
-              customer_id: customer.id,
-              django_user_id: djangoUserId,
-              affiliate_id: affiliateId ?? "",
-            },
+        // ── 4.5 Check for existing active/trialing subscription for this specific plan ──
+        const { data: existingActiveSubs } = await supabaseAdmin
+          .from("subscriptions")
+          .select("id")
+          .eq("customer_id", customer.id)
+          .eq("plan_id", packageId)
+          .in("status", ["active", "trialing"])
+          .limit(1);
+
+        if (existingActiveSubs && existingActiveSubs.length > 0) {
+          console.warn(`Customer ${customer.id} already has an active subscription for plan ${packageId}`);
+          return jsonOk({
+            success: false,
+            message: "You already have an active subscription for this plan.",
           });
-          stripeCustomerId = sc.id;
-          await supabaseAdmin
-            .from("customers")
-            .update({ stripe_customer_id: stripeCustomerId } as never)
-            .eq("id", customer.id);
         }
 
-        // ── 7. Create Stripe Checkout Session ─────────────────────────────────
-        const session = await stripe.checkout.sessions.create({
-          mode: "subscription",
-          customer: stripeCustomerId,
-          line_items: [{ price: stripePriceId, quantity: 1 }],
-          discounts: stripePromoId ? [{ promotion_code: stripePromoId }] : undefined,
-          success_url,
-          cancel_url,
-          metadata: {
-            user_id: djangoUserId,
-            email,
-            role,
-            package_name: packageName,
-            package_id: packageId,
-            affiliate_id: affiliateId ?? "",
-          },
-          subscription_data: {
+
+
+        // ── 5. Find or create Stripe customer ─────────────────────────────────
+        const stripe = new Stripe(stripeKey, {
+          apiVersion: "2025-03-31.basil" as never,
+        });
+
+        let stripeCustomerId = customer.stripe_customer_id;
+        try {
+          if (!stripeCustomerId) {
+            const sc = await stripe.customers.create({
+              email,
+              metadata: {
+                customer_id: customer.id,
+                django_user_id: djangoUserId,
+              },
+            });
+            stripeCustomerId = sc.id;
+            await supabaseAdmin
+              .from("customers")
+              .update({ stripe_customer_id: stripeCustomerId } as never)
+              .eq("id", customer.id);
+          }
+
+          console.log("Stripe customer id:", stripeCustomerId);
+
+          // Retrieve plan details to check if it has a free trial
+          let trialPeriodDays: number | undefined = undefined;
+          if (packageId) {
+            const { data: plan } = await supabaseAdmin
+              .from("plans")
+              .select("trial_days")
+              .eq("id", packageId)
+              .maybeSingle();
+            if (plan && plan.trial_days > 0) {
+              trialPeriodDays = plan.trial_days;
+              console.log(`Setting trial_period_days to ${trialPeriodDays} for checkout session`);
+            }
+          }
+
+          // ── 6. Create Stripe Checkout Session ─────────────────────────────────
+          const session = await stripe.checkout.sessions.create({
+            mode: "subscription",
+            customer: stripeCustomerId,
+            line_items: [{ price: stripePriceId, quantity: 1 }],
+            allow_promotion_codes: true,
+            success_url: SUCCESS_URL,
+            cancel_url: CANCEL_URL,
             metadata: {
               user_id: djangoUserId,
               email,
-              role,
+              role: finalRole,
               package_name: packageName,
               package_id: packageId,
-              affiliate_id: affiliateId ?? "",
             },
-          },
-        });
+            subscription_data: {
+              metadata: {
+                user_id: djangoUserId,
+                email,
+                role: finalRole,
+                package_name: packageName,
+                package_id: packageId,
+              },
+              ...(trialPeriodDays ? { trial_period_days: trialPeriodDays } : {}),
+            },
+          });
 
-        // ── 8. Return checkout URL ─────────────────────────────────────────────
-        return jsonOk({
-          checkout_url: session.url,
-          customer_id: customer.id,
-          session_id: session.id,
-        });
+          console.log("Checkout session created:", {
+            session_id: session.id,
+            checkout_url: session.url,
+          });
+
+          // ── 7. Return checkout URL ─────────────────────────────────────────────
+          return jsonOk({
+            success: true,
+            checkout_url: session.url,
+            customer_id: customer.id,
+            session_id: session.id,
+          });
+        } catch (err: any) {
+          console.error("Stripe Checkout creation error:", err);
+          if (err.type === "StripeInvalidRequestError" || err.statusCode === 400) {
+            const msg = err.message || "";
+            if (msg.includes("Price") || msg.includes("product") || msg.includes("not available")) {
+              return jsonError(404, "package_not_found", "The requested subscription package price or product is not available in Stripe.");
+            }
+            return jsonError(400, "invalid_checkout_request", msg);
+          }
+          return jsonError(500, "checkout_failed", err.message || "Failed to initiate checkout session.");
+        }
       },
     },
   },

@@ -75,7 +75,12 @@ async function attributeCommissions(opts: {
   invoiceId: string;
   amountCents: number;
   affiliateId: string | null;
+  promoCodeId: string | null;
 }) {
+  if (!opts.promoCodeId) {
+    console.log("No active promo code for this invoice payment. Skipping commission.");
+    return;
+  }
   if (!opts.affiliateId || opts.amountCents <= 0) return;
 
   const { data: settings } = await supabaseAdmin
@@ -162,6 +167,7 @@ async function syncSubscriptionToDjango(opts: {
   startDate: string | null;
   endDate: string | null;
   cancelAtPeriodEnd: boolean;
+  stripeRaw?: any;
 }) {
   const djangoApiUrl = process.env.DJANGO_API_URL;
   const s2sSecret = process.env.SUPABASE_S2S_API_KEY || process.env.DJANGO_S2S_SECRET;
@@ -182,11 +188,15 @@ async function syncSubscriptionToDjango(opts: {
     start_date: opts.startDate || new Date().toISOString(),
     end_date: opts.endDate,
     cancel_at_period_end: opts.cancelAtPeriodEnd,
+    stripe_raw: opts.stripeRaw || null,
   };
 
   try {
     const url = `${djangoApiUrl.replace(/\/$/, "")}/internal/v1/sync-subscription/`;
-    console.log(`Sending S2S sync to Django: ${url}`, payload);
+    console.log("==================================================");
+    console.log("🚀 [Django S2S Sync] STARTING SYNC TO DJANGO");
+    console.log(`🔗 Target URL: ${url}`);
+    console.log("📦 Payload:", JSON.stringify(payload, null, 2));
 
     const response = await fetch(url, {
       method: "POST",
@@ -194,9 +204,9 @@ async function syncSubscriptionToDjango(opts: {
         "Content-Type": "application/json",
         ...(s2sSecret
           ? {
-              Authorization: `Bearer ${s2sSecret}`,
-              "X-API-Key": s2sSecret,
-            }
+            Authorization: `Bearer ${s2sSecret}`,
+            "X-API-Key": s2sSecret,
+          }
           : {}),
       },
       body: JSON.stringify(payload),
@@ -204,13 +214,50 @@ async function syncSubscriptionToDjango(opts: {
 
     if (!response.ok) {
       const text = await response.text();
-      console.error(`Django S2S sync failed: ${response.status} ${response.statusText} - ${text}`);
+      console.error("❌ [Django S2S Sync] FAILED ❌");
+      console.error(`Status: ${response.status} ${response.statusText}`);
+      console.error(`Response details: ${text}`);
     } else {
-      console.log(`Django S2S sync succeeded: ${response.status}`);
+      const text = await response.text();
+      console.log("✅ [Django S2S Sync] SUCCESS ✅");
+      console.log(`Status: ${response.status}`);
+      console.log(`Response details: ${text}`);
     }
+    console.log("==================================================");
   } catch (error) {
-    console.error("Django S2S sync error:", error);
+    console.error("❌ [Django S2S Sync] ERROR OCCURRED ❌");
+    console.error("Error details:", error);
+    console.log("==================================================");
   }
+}
+
+function extractSubscriptionIdFromInvoice(inv: Stripe.Invoice): string | null {
+  let subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id;
+  if (!subId && inv.lines?.data?.[0]) {
+    const line = inv.lines.data[0] as any;
+    subId = line.subscription || line.parent?.subscription_item_details?.subscription;
+  }
+  return subId || null;
+}
+
+function getSubscriptionPeriodEnd(sub: Stripe.Subscription): number | null {
+  if ((sub as any).current_period_end) {
+    return (sub as any).current_period_end;
+  }
+  if (sub.items?.data?.[0]?.current_period_end) {
+    return sub.items.data[0].current_period_end;
+  }
+  return sub.billing_cycle_anchor || sub.trial_end || null;
+}
+
+function getSubscriptionPeriodStart(sub: Stripe.Subscription): number | null {
+  if ((sub as any).current_period_start) {
+    return (sub as any).current_period_start;
+  }
+  if (sub.items?.data?.[0]?.current_period_start) {
+    return sub.items.data[0].current_period_start;
+  }
+  return sub.start_date || null;
 }
 
 export const Route = createFileRoute("/api/public/webhooks/stripe")({
@@ -256,7 +303,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               const subscriptionId =
                 typeof s.subscription === "string" ? s.subscription : s.subscription?.id;
               const meta = s.metadata ?? {};
-              const affiliateId = meta.affiliate_id || null;
+              let affiliateId = meta.affiliate_id || null;
 
               // Find or map Supabase Customer ID
               let customerId = meta.customer_id;
@@ -267,6 +314,50 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   .or(`django_user_id.eq.${meta.user_id},email.eq.${meta.email}`)
                   .maybeSingle();
                 if (cust) customerId = cust.id;
+              }
+
+              // Retrieve subscription to check for discount / promo codes
+              let planId = meta.plan_id;
+              let fullSub: Stripe.Subscription | null = null;
+              let stripePromoId: string | null = null;
+              let promoCodeDbId: string | null = null;
+
+              if (subscriptionId) {
+                fullSub = await stripe.subscriptions.retrieve(subscriptionId);
+                if (fullSub && fullSub.discount) {
+                  const pVal = fullSub.discount.promotion_code;
+                  if (typeof pVal === "string") {
+                    stripePromoId = pVal;
+                  } else if (pVal && typeof pVal === "object") {
+                    stripePromoId = pVal.id;
+                  }
+                }
+              }
+
+              // Fallback to checkout session object's discounts if not found on subscription
+              if (!stripePromoId) {
+                const discounts = (s as any).total_details?.breakdown?.discounts;
+                const pVal = discounts?.[0]?.discount?.promotion_code;
+                if (typeof pVal === "string") {
+                  stripePromoId = pVal;
+                } else if (pVal && typeof pVal === "object") {
+                  stripePromoId = pVal.id;
+                }
+              }
+
+              // If a promotion code was used, resolve affiliate and promo code ID
+              if (stripePromoId) {
+                const { data: promo } = await supabaseAdmin
+                  .from("promo_codes")
+                  .select("id, affiliate_id")
+                  .eq("stripe_promo_id", stripePromoId)
+                  .maybeSingle();
+                if (promo) {
+                  promoCodeDbId = promo.id;
+                  if (!affiliateId) {
+                    affiliateId = promo.affiliate_id;
+                  }
+                }
               }
 
               if (customerStripeId && customerId) {
@@ -281,10 +372,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
 
               // Find or auto-create local Plan stub to satisfy FK constraint
-              let planId = meta.plan_id;
-              let fullSub: Stripe.Subscription | null = null;
-              if (subscriptionId) {
-                fullSub = await stripe.subscriptions.retrieve(subscriptionId);
+              if (subscriptionId && fullSub) {
                 if (!planId) {
                   const priceId = fullSub.items.data[0]?.price?.id;
                   if (priceId) {
@@ -316,19 +404,20 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               }
 
               if (subscriptionId && customerId && planId) {
-                const periodEnd = fullSub
-                  ? (fullSub as unknown as { current_period_end?: number }).current_period_end
-                  : undefined;
+                const rawPeriodEnd = fullSub ? getSubscriptionPeriodEnd(fullSub) : null;
+                const trialEndsAt = (fullSub && fullSub.trial_end) ? new Date(fullSub.trial_end * 1000).toISOString() : null;
                 await supabaseAdmin.from("subscriptions").upsert(
                   {
                     customer_id: customerId,
                     plan_id: planId,
                     stripe_subscription_id: subscriptionId,
                     status: (fullSub ? fullSub.status : "active") as never,
-                    current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+                    current_period_end: rawPeriodEnd ? new Date(rawPeriodEnd * 1000).toISOString() : null,
+                    trial_ends_at: trialEndsAt,
                     amount_paid_cents: s.amount_total ?? 0,
                     django_package_id: meta.package_id || null,
                     django_package_name: meta.package_name || null,
+                    promo_code_id: promoCodeDbId,
                   } as never,
                   { onConflict: "stripe_subscription_id" } as never,
                 );
@@ -364,26 +453,39 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 }
               ).total_details?.breakdown?.discounts;
               const promoCodeId = discounts?.[0]?.discount?.promotion_code;
-              if (promoCodeId) {
+              if (promoCodeId && subscriptionId) {
                 const { data: pc } = await supabaseAdmin
                   .from("promo_codes")
                   .select("id,usage_count")
                   .eq("stripe_promo_id", promoCodeId)
                   .maybeSingle();
-                if (pc)
-                  await supabaseAdmin
-                    .from("promo_codes")
-                    .update({ usage_count: (pc.usage_count ?? 0) + 1 })
-                    .eq("id", pc.id);
+                if (pc) {
+                  // Prevent double counting if invoice.paid already processed it
+                  const { data: dupSub } = await supabaseAdmin
+                    .from("subscriptions")
+                    .select("id")
+                    .eq("stripe_subscription_id", subscriptionId)
+                    .eq("promo_code_id", pc.id)
+                    .maybeSingle();
+
+                  if (!dupSub) {
+                    await supabaseAdmin
+                      .from("promo_codes")
+                      .update({ usage_count: (pc.usage_count ?? 0) + 1 })
+                      .eq("id", pc.id);
+                  }
+                }
               }
 
               // Trigger S2S sync to Django immediately
               if (meta.user_id && subscriptionId) {
-                const periodEnd = fullSub?.current_period_end
-                  ? new Date(fullSub.current_period_end * 1000).toISOString()
+                const rawPeriodEnd = fullSub ? getSubscriptionPeriodEnd(fullSub) : null;
+                const rawPeriodStart = fullSub ? getSubscriptionPeriodStart(fullSub) : null;
+                const periodEnd = rawPeriodEnd
+                  ? new Date(rawPeriodEnd * 1000).toISOString()
                   : null;
-                const startDate = fullSub?.start_date
-                  ? new Date(fullSub.start_date * 1000).toISOString()
+                const startDate = rawPeriodStart
+                  ? new Date(rawPeriodStart * 1000).toISOString()
                   : null;
                 const cancelAtPeriodEnd = fullSub?.cancel_at_period_end || false;
                 await syncSubscriptionToDjango({
@@ -395,8 +497,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   stripeSubscriptionId: subscriptionId,
                   status: fullSub ? fullSub.status : "active",
                   startDate,
-                  endDate: periodEnd,
+                  endDate: periodEnd || new Date().toISOString(), // Fallback to satisfy Django field constraint
                   cancelAtPeriodEnd,
+                  stripeRaw: fullSub,
                 });
               }
               break;
@@ -404,22 +507,27 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             case "customer.subscription.updated":
             case "customer.subscription.created": {
               const sub = event.data.object as Stripe.Subscription;
-              const periodEnd = (sub as unknown as { current_period_end?: number })
-                .current_period_end;
+              const rawPeriodEnd = getSubscriptionPeriodEnd(sub);
+              const rawPeriodStart = getSubscriptionPeriodStart(sub);
+              const periodEnd = rawPeriodEnd
+                ? new Date(rawPeriodEnd * 1000).toISOString()
+                : null;
               const meta = sub.metadata ?? {};
 
+              const trialEndsAt = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
               await supabaseAdmin
                 .from("subscriptions")
                 .update({
                   status: sub.status as never,
-                  current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+                  current_period_end: periodEnd,
+                  trial_ends_at: trialEndsAt,
                 } as never)
                 .eq("stripe_subscription_id", sub.id);
 
               // Trigger S2S sync to Django on status / period updates
               if (meta.user_id) {
-                const startDate = sub.start_date
-                  ? new Date(sub.start_date * 1000).toISOString()
+                const startDate = rawPeriodStart
+                  ? new Date(rawPeriodStart * 1000).toISOString()
                   : null;
                 const cancelAtPeriodEnd = sub.cancel_at_period_end || false;
                 await syncSubscriptionToDjango({
@@ -431,41 +539,110 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   stripeSubscriptionId: sub.id,
                   status: sub.status,
                   startDate,
-                  endDate: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+                  endDate: periodEnd || new Date().toISOString(), // Fallback to satisfy Django field constraint
                   cancelAtPeriodEnd,
+                  stripeRaw: sub,
                 });
               }
               break;
             }
             case "invoice.paid": {
               const inv = event.data.object as Stripe.Invoice;
-              const subId = (inv as unknown as { subscription?: string | null }).subscription;
-              await supabaseAdmin.from("transactions").insert({
-                stripe_event_id: event.id,
-                type: "invoice_paid",
-                amount_cents: inv.amount_paid,
-                currency: inv.currency,
-                raw: inv as never,
-              });
+              const subId = extractSubscriptionIdFromInvoice(inv);
+              let subRowId: string | null = null;
               if (subId) {
+                const fullSub = await stripe.subscriptions.retrieve(subId);
+                const meta = fullSub.metadata ?? {};
+                const customerStripeId =
+                  typeof inv.customer === "string" ? inv.customer : inv.customer?.id;
+                const customerEmail = meta.email || inv.customer_email || null;
+                let affiliateId = meta.affiliate_id || null;
+
+                let stripePromoId: string | null = null;
+                let promoCodeDbId: string | null = null;
+
+                // 1. Retrieve invoice with expanded discounts to find promotion code
+                if (inv.discounts && inv.discounts.length > 0) {
+                  try {
+                    const expandedInv = await stripe.invoices.retrieve(inv.id, {
+                      expand: ["discounts"],
+                    });
+                    if (expandedInv.discounts && expandedInv.discounts.length > 0) {
+                      for (const discount of expandedInv.discounts) {
+                        if (typeof discount === "object" && discount.promotion_code) {
+                          stripePromoId = typeof discount.promotion_code === "string"
+                            ? discount.promotion_code
+                            : discount.promotion_code.id;
+                          break;
+                        }
+                      }
+                    }
+                  } catch (err) {
+                    console.error("Failed to retrieve expanded invoice discounts:", err);
+                  }
+                }
+
+                // 2. Fallback to fullSub.discount if not found on invoice
+                if (!stripePromoId && fullSub && fullSub.discount) {
+                  const pVal = fullSub.discount.promotion_code;
+                  if (typeof pVal === "string") {
+                    stripePromoId = pVal;
+                  } else if (pVal && typeof pVal === "object") {
+                    stripePromoId = pVal.id;
+                  }
+                }
+
+                if (stripePromoId) {
+                  const { data: promo } = await supabaseAdmin
+                    .from("promo_codes")
+                    .select("id, affiliate_id, usage_count")
+                    .eq("stripe_promo_id", stripePromoId)
+                    .maybeSingle();
+                  if (promo) {
+                    promoCodeDbId = promo.id;
+                    if (!affiliateId) {
+                      affiliateId = promo.affiliate_id;
+                    }
+
+                    // Increment usage count only for initial subscription creation, and ensure no double counting
+                    if (inv.billing_reason === "subscription_create") {
+                      const { data: dupSub } = await supabaseAdmin
+                        .from("subscriptions")
+                        .select("id")
+                        .eq("stripe_subscription_id", subId)
+                        .eq("promo_code_id", promo.id)
+                        .maybeSingle();
+
+                      if (!dupSub) {
+                        const { error: promoUpdErr } = await supabaseAdmin
+                          .from("promo_codes")
+                          .update({ usage_count: (promo.usage_count ?? 0) + 1 })
+                          .eq("id", promo.id);
+                        if (promoUpdErr) {
+                          console.error("Failed to increment promo code usage count:", promoUpdErr);
+                        } else {
+                          console.log(`Incremented usage count for promo code ${promo.id}`);
+                        }
+                      }
+                    }
+                  }
+                }
+
                 let { data: subRow } = await supabaseAdmin
                   .from("subscriptions")
                   .select("id,customer_id,plan_id")
                   .eq("stripe_subscription_id", subId)
                   .maybeSingle();
 
+                if (subRow) {
+                  subRowId = subRow.id;
+                }
+
                 // If subscription doesn't exist yet in our DB, let's auto-create it using Stripe data
                 if (!subRow) {
                   console.log(
                     `Subscription ${subId} not found locally during invoice.paid, creating it now...`,
                   );
-                  const fullSub = await stripe.subscriptions.retrieve(subId);
-                  const meta = fullSub.metadata ?? {};
-                  const customerStripeId =
-                    typeof inv.customer === "string" ? inv.customer : inv.customer?.id;
-                  const customerEmail = meta.email || inv.customer_email || null;
-                  const affiliateId = meta.affiliate_id || null;
-
                   // Find local customer
                   let customerId = meta.customer_id;
                   if (!customerId && (meta.user_id || customerEmail)) {
@@ -543,9 +720,13 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   }
 
                   if (customerId && planId) {
-                    const periodEnd = (fullSub as unknown as { current_period_end?: number })
-                      .current_period_end;
-                    const { data: newSub, error: subErr } = await supabaseAdmin
+                    const rawPeriodEnd = getSubscriptionPeriodEnd(fullSub);
+                    const rawPeriodStart = getSubscriptionPeriodStart(fullSub);
+                    const periodEnd = rawPeriodEnd
+                      ? new Date(rawPeriodEnd * 1000).toISOString()
+                      : null;
+                     const trialEndsAt = (fullSub && fullSub.trial_end) ? new Date(fullSub.trial_end * 1000).toISOString() : null;
+                     const { data: newSub, error: subErr } = await supabaseAdmin
                       .from("subscriptions")
                       .upsert(
                         {
@@ -553,12 +734,12 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                           plan_id: planId,
                           stripe_subscription_id: subId,
                           status: fullSub.status as never,
-                          current_period_end: periodEnd
-                            ? new Date(periodEnd * 1000).toISOString()
-                            : null,
+                          current_period_end: periodEnd,
+                          trial_ends_at: trialEndsAt,
                           amount_paid_cents: inv.amount_paid ?? 0,
                           django_package_id: meta.package_id || null,
                           django_package_name: meta.package_name || null,
+                          promo_code_id: promoCodeDbId,
                         } as never,
                         { onConflict: "stripe_subscription_id" } as never,
                       )
@@ -568,12 +749,13 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     if (subErr) throw subErr;
                     if (newSub) {
                       subRow = newSub;
+                      subRowId = newSub.id;
                     }
 
                     // Trigger S2S sync to Django immediately
                     if (meta.user_id) {
-                      const startDate = fullSub.start_date
-                        ? new Date(fullSub.start_date * 1000).toISOString()
+                      const startDate = rawPeriodStart
+                        ? new Date(rawPeriodStart * 1000).toISOString()
                         : null;
                       const cancelAtPeriodEnd = fullSub.cancel_at_period_end || false;
                       await syncSubscriptionToDjango({
@@ -585,8 +767,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                         stripeSubscriptionId: subId,
                         status: fullSub.status,
                         startDate,
-                        endDate: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+                        endDate: periodEnd || new Date().toISOString(), // Fallback to satisfy Django field constraint
                         cancelAtPeriodEnd,
+                        stripeRaw: { subscription: fullSub, invoice: inv },
                       });
                     }
                   }
@@ -600,10 +783,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     .maybeSingle();
                   const { data: plan } = subRow.plan_id
                     ? await supabaseAdmin
-                        .from("plans")
-                        .select("name")
-                        .eq("id", subRow.plan_id)
-                        .maybeSingle()
+                      .from("plans")
+                      .select("name")
+                      .eq("id", subRow.plan_id)
+                      .maybeSingle()
                     : { data: null };
                   if (cust?.email) {
                     await sendAppEmail({
@@ -624,14 +807,26 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     invoiceId: inv.id ?? "",
                     amountCents: inv.amount_paid,
                     affiliateId: cust?.affiliate_id ?? null,
+                    promoCodeId: promoCodeDbId,
                   });
                 }
               }
+
+              // Log the transaction
+              await supabaseAdmin.from("transactions").insert({
+                stripe_event_id: event.id,
+                type: "invoice_paid",
+                amount_cents: inv.amount_paid,
+                currency: inv.currency,
+                raw: inv as never,
+                subscription_id: subRowId,
+              });
+
               break;
             }
             case "invoice.payment_failed": {
               const inv = event.data.object as Stripe.Invoice;
-              const subId = (inv as unknown as { subscription?: string | null }).subscription;
+              const subId = extractSubscriptionIdFromInvoice(inv);
               if (subId) {
                 const { data: subRow } = await supabaseAdmin
                   .from("subscriptions")
@@ -667,32 +862,45 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               );
               break;
             }
-            case "charge.refunded": {
-              const charge = event.data.object as Stripe.Charge;
-              await supabaseAdmin.from("transactions").insert({
-                stripe_event_id: event.id,
-                type: "refund",
-                amount_cents: -(charge.amount_refunded ?? 0),
-                currency: charge.currency,
-                raw: charge as never,
-              });
-              const subId = (charge as unknown as { subscription?: string | null }).subscription;
-              if (subId) {
-                const { data: subRow } = await supabaseAdmin
-                  .from("subscriptions")
-                  .select("id")
-                  .eq("stripe_subscription_id", subId)
-                  .maybeSingle();
-                if (subRow) {
-                  // Void any pending commissions tied to this subscription so refunded sales don't pay out.
-                  await supabaseAdmin
-                    .from("commissions")
-                    .update({ status: "voided" } as never)
-                    .eq("subscription_id", subRow.id)
-                    .eq("status", "pending");
+             case "charge.refunded": {
+                const charge = event.data.object as Stripe.Charge;
+                let subId = (charge as any).subscription;
+                if (!subId && charge.invoice && typeof charge.invoice === "string") {
+                  try {
+                    const inv = await stripe.invoices.retrieve(charge.invoice);
+                    subId = extractSubscriptionIdFromInvoice(inv);
+                  } catch (e) {
+                    console.error("Failed to retrieve invoice in charge.refunded:", e);
+                  }
                 }
-                await detectRapidRefund(subId, charge.amount_refunded ?? 0);
-              }
+                let subRowId: string | null = null;
+                if (subId) {
+                  const { data: subRow } = await supabaseAdmin
+                    .from("subscriptions")
+                    .select("id")
+                    .eq("stripe_subscription_id", subId)
+                    .maybeSingle();
+                  if (subRow) {
+                    subRowId = subRow.id;
+                    // Void any pending commissions tied to this subscription so refunded sales don't pay out.
+                    await supabaseAdmin
+                      .from("commissions")
+                      .update({ status: "voided" } as never)
+                      .eq("subscription_id", subRow.id)
+                      .eq("status", "pending");
+                  }
+                  await detectRapidRefund(subId, charge.amount_refunded ?? 0);
+                }
+
+                await supabaseAdmin.from("transactions").insert({
+                  stripe_event_id: event.id,
+                  type: "refund",
+                  amount_cents: -(charge.amount_refunded ?? 0),
+                  currency: charge.currency,
+                  raw: charge as never,
+                  subscription_id: subRowId,
+                });
+              
               await notifyAdmins(
                 "admin_alerts",
                 "Refund issued",
@@ -732,10 +940,10 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   .maybeSingle();
                 const { data: plan } = subRow.plan_id
                   ? await supabaseAdmin
-                      .from("plans")
-                      .select("name")
-                      .eq("id", subRow.plan_id)
-                      .maybeSingle()
+                    .from("plans")
+                    .select("name")
+                    .eq("id", subRow.plan_id)
+                    .maybeSingle()
                   : { data: null };
                 if (cust?.email) {
                   await sendAppEmail({
@@ -765,6 +973,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   startDate,
                   endDate: null,
                   cancelAtPeriodEnd,
+                  stripeRaw: sub,
                 });
               }
               break;

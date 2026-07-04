@@ -69,6 +69,20 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     }
     if (!customer) throw new Error("Failed to create customer");
 
+    // Check for existing active or trialing subscription to prevent duplicate subscriptions
+    const { data: existingActiveSubs } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id")
+      .eq("customer_id", customer.id)
+      .in("status", ["active", "trialing"])
+      .limit(1);
+
+    if (existingActiveSubs && existingActiveSubs.length > 0) {
+      throw new Error("You already have an active subscription.");
+    }
+
+
+
     const stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" as never });
 
     let stripeCustomerId = customer.stripe_customer_id;

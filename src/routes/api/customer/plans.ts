@@ -184,6 +184,8 @@ export const Route = createFileRoute("/api/customer/plans")({
           }
 
           // 2. Sync to Stripe
+          let stripeProductRaw: any = null;
+          let stripePriceRaw: any = null;
           const stripeKey = process.env.STRIPE_SECRET_KEY;
           if (stripeKey) {
             try {
@@ -193,6 +195,7 @@ export const Route = createFileRoute("/api/customer/plans")({
                 description: plan.description ?? undefined,
                 metadata: { plan_id: plan.id },
               });
+              stripeProductRaw = product;
 
               const price = await stripe.prices.create({
                 product: product.id,
@@ -201,6 +204,7 @@ export const Route = createFileRoute("/api/customer/plans")({
                 recurring: getStripeRecurring(plan.interval),
                 metadata: { plan_id: plan.id },
               });
+              stripePriceRaw = price;
 
               await supabaseAdmin
                 .from("plans")
@@ -220,6 +224,7 @@ export const Route = createFileRoute("/api/customer/plans")({
           const featuresObj = plan.features as any;
           const djangoPayload = {
             id: plan.id,
+            package_id: plan.id,
             action: "create",
             package_name:
               featuresObj.package_name || plan.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
@@ -242,6 +247,8 @@ export const Route = createFileRoute("/api/customer/plans")({
             billing_subtext: featuresObj.billing_subtext || null,
             features: featuresObj.features_list || [],
             is_active: plan.is_active,
+            stripe_product_raw: stripeProductRaw,
+            stripe_price_raw: stripePriceRaw,
           };
 
           // Sync to Django
@@ -339,6 +346,8 @@ export const Route = createFileRoute("/api/customer/plans")({
             return jsonError(500, "database_error", `Failed to update plan: ${updErr?.message}`);
           }
 
+          let stripeProductRaw: any = null;
+          let stripePriceRaw: any = null;
           const stripeKey = process.env.STRIPE_SECRET_KEY;
           if (stripeKey) {
             try {
@@ -351,8 +360,9 @@ export const Route = createFileRoute("/api/customer/plans")({
                   metadata: { plan_id: plan.id },
                 });
                 prodId = product.id;
+                stripeProductRaw = product;
               } else {
-                await stripe.products.update(prodId, {
+                stripeProductRaw = await stripe.products.update(prodId, {
                   name: plan.name,
                   description: plan.description ?? undefined,
                 });
@@ -365,6 +375,7 @@ export const Route = createFileRoute("/api/customer/plans")({
                 recurring: getStripeRecurring(plan.interval),
                 metadata: { plan_id: plan.id },
               });
+              stripePriceRaw = price;
 
               if (plan.stripe_price_id && plan.stripe_price_id !== price.id) {
                 try {
@@ -392,6 +403,7 @@ export const Route = createFileRoute("/api/customer/plans")({
           const finalFeatures = plan.features as any;
           const djangoPayload = {
             id: plan.id,
+            package_id: plan.id,
             action: "update",
             package_name:
               finalFeatures.package_name || plan.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
@@ -414,6 +426,8 @@ export const Route = createFileRoute("/api/customer/plans")({
             billing_subtext: finalFeatures.billing_subtext || null,
             features: finalFeatures.features_list || [],
             is_active: plan.is_active,
+            stripe_product_raw: stripeProductRaw,
+            stripe_price_raw: stripePriceRaw,
           };
 
           // Sync to Django
@@ -466,8 +480,14 @@ export const Route = createFileRoute("/api/customer/plans")({
             }
           }
 
+          const featuresObj = plan.features as any;
           const djangoPayload = {
+            id: plan.id,
+            package_id: plan.id,
             action: "delete",
+            package_name:
+              (featuresObj && featuresObj.package_name) ||
+              plan.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
             stripe_product_id: plan.stripe_product_id || null,
             stripe_default_price_id: plan.stripe_price_id || null,
           };
