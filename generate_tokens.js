@@ -10,15 +10,19 @@
 import * as jose from "jose";
 
 // ─── Secrets (.env se match karte hain) ──────────────────────────────────────
-const HOST_SECRET =
-  "zikhfc@razhik088888c@@jsddfhwgf!baig!hwgfh33@@@@@@@76&cxcx&&&&khizar!!!!!";
-const GUEST_SECRET =
-  "zikhfc@razhik0guest8@@jsddfhwgf!baig!hwgfh33@@@@@@@76&cxcx&&&&khizar!!!!!b";
+const HOST_SECRET = process.env.DJANGO_HOST_JWT_SECRET;
+const GUEST_SECRET = process.env.DJANGO_GUEST_JWT_SECRET;
 
 const BASE_URL = "http://localhost:8080";
 
 // ─── Helper: Token Generate ───────────────────────────────────────────────────
 async function generateToken(payload, role) {
+  if (!HOST_SECRET || !GUEST_SECRET) {
+    throw new Error(
+      "DJANGO_HOST_JWT_SECRET and DJANGO_GUEST_JWT_SECRET must be set in the environment.",
+    );
+  }
+
   const secret = new TextEncoder().encode(role === "host" ? HOST_SECRET : GUEST_SECRET);
   return new jose.SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
