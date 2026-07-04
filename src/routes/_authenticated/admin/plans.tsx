@@ -168,19 +168,21 @@ function PlansPage() {
         if (updatedPlan) {
           toast.info("Syncing plan to Django…");
           const djSync = await syncDjango({
-            action: isNew ? "create" : "update",
-            planData: {
-              id: updatedPlan.id,
-              name: updatedPlan.name,
-              description: updatedPlan.description,
-              price_cents: updatedPlan.price_cents,
-              currency: updatedPlan.currency,
-              interval: updatedPlan.interval,
-              trial_days: updatedPlan.trial_days,
-              features: updatedPlan.features,
-              is_active: updatedPlan.is_active,
-              stripe_product_id: updatedPlan.stripe_product_id,
-              stripe_price_id: updatedPlan.stripe_price_id,
+            data: {
+              action: isNew ? "create" : "update",
+              planData: {
+                id: updatedPlan.id,
+                name: updatedPlan.name,
+                description: updatedPlan.description,
+                price_cents: updatedPlan.price_cents,
+                currency: updatedPlan.currency,
+                interval: updatedPlan.interval,
+                trial_days: updatedPlan.trial_days,
+                features: updatedPlan.features,
+                is_active: updatedPlan.is_active,
+                stripe_product_id: updatedPlan.stripe_product_id,
+                stripe_price_id: updatedPlan.stripe_price_id,
+              },
             },
           });
           if (djSync.success) toast.success("Synced to Django");
@@ -232,19 +234,21 @@ function PlansPage() {
       if (updatedPlan) {
         toast.info("Re-syncing plan to Django…");
         const djSync = await syncDjango({
-          action: "update",
-          planData: {
-            id: updatedPlan.id,
-            name: updatedPlan.name,
-            description: updatedPlan.description,
-            price_cents: updatedPlan.price_cents,
-            currency: updatedPlan.currency,
-            interval: updatedPlan.interval,
-            trial_days: updatedPlan.trial_days,
-            features: updatedPlan.features,
-            is_active: updatedPlan.is_active,
-            stripe_product_id: updatedPlan.stripe_product_id,
-            stripe_price_id: updatedPlan.stripe_price_id,
+          data: {
+            action: "update",
+            planData: {
+              id: updatedPlan.id,
+              name: updatedPlan.name,
+              description: updatedPlan.description,
+              price_cents: updatedPlan.price_cents,
+              currency: updatedPlan.currency,
+              interval: updatedPlan.interval,
+              trial_days: updatedPlan.trial_days,
+              features: updatedPlan.features,
+              is_active: updatedPlan.is_active,
+              stripe_product_id: updatedPlan.stripe_product_id,
+              stripe_price_id: updatedPlan.stripe_price_id,
+            },
           },
         });
         if (djSync.success) toast.success("Re-synced to Django");
