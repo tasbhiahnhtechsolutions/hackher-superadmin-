@@ -18,7 +18,7 @@ const Schema = z.object({
 });
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
-  .inputValidator((input) => Schema.parse(input))
+  .validator((input) => Schema.parse(input))
   .handler(async ({ data }) => {
     const key = process.env.STRIPE_SECRET_KEY;
     if (!key) throw new Error("Stripe is not configured");

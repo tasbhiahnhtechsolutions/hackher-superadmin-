@@ -127,7 +127,7 @@ async function syncToStripe(promoId: string) {
 
 export const createPromoCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => CreateSchema.parse(input))
+  .validator((input) => CreateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const role = await callerRole(userId);
@@ -175,7 +175,7 @@ export const createPromoCode = createServerFn({ method: "POST" })
 
 export const updatePromoCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => UpdateSchema.parse(input))
+  .validator((input) => UpdateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const role = await callerRole(userId);

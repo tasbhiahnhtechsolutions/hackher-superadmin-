@@ -22,7 +22,7 @@ const GenerateSchema = z.object({
 
 export const generatePayouts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => GenerateSchema.parse(i))
+  .validator((i) => GenerateSchema.parse(i))
   .handler(async ({ data, context }) => {
     await ensureSuperAdmin(context.userId);
 
@@ -89,7 +89,7 @@ const MarkPaidSchema = z.object({
 
 export const markPayoutPaid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => MarkPaidSchema.parse(i))
+  .validator((i) => MarkPaidSchema.parse(i))
   .handler(async ({ data, context }) => {
     await ensureSuperAdmin(context.userId);
     const { data: payout, error } = await supabaseAdmin
