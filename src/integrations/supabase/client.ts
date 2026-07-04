@@ -2,9 +2,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-// Conditionally load ws on server side to avoid bundling in browser
-const ws = typeof window === "undefined" ? (await import("ws")).default : undefined;
-
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
@@ -28,7 +25,6 @@ function createSupabaseClient() {
       persistSession: true,
       autoRefreshToken: true,
     },
-    realtime: ws ? { transport: ws } : undefined,
   });
 }
 

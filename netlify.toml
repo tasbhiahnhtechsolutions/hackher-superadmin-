@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "dist/client"
 
+[functions]
+  directory = "dist/server"
+  node_bundler = "nft"
+
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
