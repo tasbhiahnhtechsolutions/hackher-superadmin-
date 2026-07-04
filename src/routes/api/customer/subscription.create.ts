@@ -324,11 +324,14 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
             }
           }
 
-          const successUrl = `https://api.hackherapp.ai/${finalRole}/payment/success/${finalRoute}/${token}`;
-          const cancelUrl = `https://api.hackherapp.ai/${finalRole}/payment/cancel/${finalRoute}/${token}`;
+          const djangoApiUrl = process.env.DJANGO_API_URL;
+          if (!djangoApiUrl) {
+            return jsonError(500, "django_api_url_not_configured");
+          }
 
-          console.log("Success URL:", successUrl);
-          console.log("Cancel URL:", cancelUrl);
+          const djangoOrigin = djangoApiUrl.replace(/\/$/, "");
+          const successUrl = `${djangoOrigin}/${finalRole}/payment/success/${finalRoute}/${token}`;
+          const cancelUrl = `${djangoOrigin}/${finalRole}/payment/cancel/${finalRoute}/${token}`;
 
           // ── 6. Create Stripe Checkout Session ─────────────────────────────────
           const session = await stripe.checkout.sessions.create({
