@@ -549,102 +549,100 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             case "invoice.paid": {
               const inv = event.data.object as Stripe.Invoice;
               const subId = extractSubscriptionIdFromInvoice(inv);
-              await supabaseAdmin.from("transactions").insert({
-                stripe_event_id: event.id,
-                type: "invoice_paid",
-                amount_cents: inv.amount_paid,
-                currency: inv.currency,
-                raw: inv as never,
-              });
+              let subRowId: string | null = null;
               if (subId) {
+                const fullSub = await stripe.subscriptions.retrieve(subId);
+                const meta = fullSub.metadata ?? {};
+                const customerStripeId =
+                  typeof inv.customer === "string" ? inv.customer : inv.customer?.id;
+                const customerEmail = meta.email || inv.customer_email || null;
+                let affiliateId = meta.affiliate_id || null;
+
+                let stripePromoId: string | null = null;
+                let promoCodeDbId: string | null = null;
+
+                // 1. Retrieve invoice with expanded discounts to find promotion code
+                if (inv.discounts && inv.discounts.length > 0) {
+                  try {
+                    const expandedInv = await stripe.invoices.retrieve(inv.id, {
+                      expand: ["discounts"],
+                    });
+                    if (expandedInv.discounts && expandedInv.discounts.length > 0) {
+                      for (const discount of expandedInv.discounts) {
+                        if (typeof discount === "object" && discount.promotion_code) {
+                          stripePromoId = typeof discount.promotion_code === "string"
+                            ? discount.promotion_code
+                            : discount.promotion_code.id;
+                          break;
+                        }
+                      }
+                    }
+                  } catch (err) {
+                    console.error("Failed to retrieve expanded invoice discounts:", err);
+                  }
+                }
+
+                // 2. Fallback to fullSub.discount if not found on invoice
+                if (!stripePromoId && fullSub && fullSub.discount) {
+                  const pVal = fullSub.discount.promotion_code;
+                  if (typeof pVal === "string") {
+                    stripePromoId = pVal;
+                  } else if (pVal && typeof pVal === "object") {
+                    stripePromoId = pVal.id;
+                  }
+                }
+
+                if (stripePromoId) {
+                  const { data: promo } = await supabaseAdmin
+                    .from("promo_codes")
+                    .select("id, affiliate_id, usage_count")
+                    .eq("stripe_promo_id", stripePromoId)
+                    .maybeSingle();
+                  if (promo) {
+                    promoCodeDbId = promo.id;
+                    if (!affiliateId) {
+                      affiliateId = promo.affiliate_id;
+                    }
+
+                    // Increment usage count only for initial subscription creation, and ensure no double counting
+                    if (inv.billing_reason === "subscription_create") {
+                      const { data: dupSub } = await supabaseAdmin
+                        .from("subscriptions")
+                        .select("id")
+                        .eq("stripe_subscription_id", subId)
+                        .eq("promo_code_id", promo.id)
+                        .maybeSingle();
+
+                      if (!dupSub) {
+                        const { error: promoUpdErr } = await supabaseAdmin
+                          .from("promo_codes")
+                          .update({ usage_count: (promo.usage_count ?? 0) + 1 })
+                          .eq("id", promo.id);
+                        if (promoUpdErr) {
+                          console.error("Failed to increment promo code usage count:", promoUpdErr);
+                        } else {
+                          console.log(`Incremented usage count for promo code ${promo.id}`);
+                        }
+                      }
+                    }
+                  }
+                }
+
                 let { data: subRow } = await supabaseAdmin
                   .from("subscriptions")
                   .select("id,customer_id,plan_id")
                   .eq("stripe_subscription_id", subId)
                   .maybeSingle();
 
+                if (subRow) {
+                  subRowId = subRow.id;
+                }
+
                 // If subscription doesn't exist yet in our DB, let's auto-create it using Stripe data
                 if (!subRow) {
                   console.log(
                     `Subscription ${subId} not found locally during invoice.paid, creating it now...`,
                   );
-                  const fullSub = await stripe.subscriptions.retrieve(subId);
-                  const meta = fullSub.metadata ?? {};
-                  const customerStripeId =
-                    typeof inv.customer === "string" ? inv.customer : inv.customer?.id;
-                  const customerEmail = meta.email || inv.customer_email || null;
-                  let affiliateId = meta.affiliate_id || null;
-
-                  let stripePromoId: string | null = null;
-                  let promoCodeDbId: string | null = null;
-
-                  // 1. Retrieve invoice with expanded discounts to find promotion code
-                  if (inv.discounts && inv.discounts.length > 0) {
-                    try {
-                      const expandedInv = await stripe.invoices.retrieve(inv.id, {
-                        expand: ["discounts"],
-                      });
-                      if (expandedInv.discounts && expandedInv.discounts.length > 0) {
-                        for (const discount of expandedInv.discounts) {
-                          if (typeof discount === "object" && discount.promotion_code) {
-                            stripePromoId = typeof discount.promotion_code === "string"
-                              ? discount.promotion_code
-                              : discount.promotion_code.id;
-                            break;
-                          }
-                        }
-                      }
-                    } catch (err) {
-                      console.error("Failed to retrieve expanded invoice discounts:", err);
-                    }
-                  }
-
-                  // 2. Fallback to fullSub.discount if not found on invoice
-                  if (!stripePromoId && fullSub && fullSub.discount) {
-                    const pVal = fullSub.discount.promotion_code;
-                    if (typeof pVal === "string") {
-                      stripePromoId = pVal;
-                    } else if (pVal && typeof pVal === "object") {
-                      stripePromoId = pVal.id;
-                    }
-                  }
-
-                  if (stripePromoId) {
-                    const { data: promo } = await supabaseAdmin
-                      .from("promo_codes")
-                      .select("id, affiliate_id, usage_count")
-                      .eq("stripe_promo_id", stripePromoId)
-                      .maybeSingle();
-                    if (promo) {
-                      promoCodeDbId = promo.id;
-                      if (!affiliateId) {
-                        affiliateId = promo.affiliate_id;
-                      }
-
-                      // Increment usage count only for initial subscription creation, and ensure no double counting
-                      if (inv.billing_reason === "subscription_create") {
-                        const { data: dupSub } = await supabaseAdmin
-                          .from("subscriptions")
-                          .select("id")
-                          .eq("stripe_subscription_id", subId)
-                          .eq("promo_code_id", promo.id)
-                          .maybeSingle();
-
-                        if (!dupSub) {
-                          const { error: promoUpdErr } = await supabaseAdmin
-                            .from("promo_codes")
-                            .update({ usage_count: (promo.usage_count ?? 0) + 1 })
-                            .eq("id", promo.id);
-                          if (promoUpdErr) {
-                            console.error("Failed to increment promo code usage count:", promoUpdErr);
-                          } else {
-                            console.log(`Incremented usage count for promo code ${promo.id}`);
-                          }
-                        }
-                      }
-                    }
-                  }
-
                   // Find local customer
                   let customerId = meta.customer_id;
                   if (!customerId && (meta.user_id || customerEmail)) {
@@ -751,6 +749,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     if (subErr) throw subErr;
                     if (newSub) {
                       subRow = newSub;
+                      subRowId = newSub.id;
                     }
 
                     // Trigger S2S sync to Django immediately
@@ -812,6 +811,17 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   });
                 }
               }
+
+              // Log the transaction
+              await supabaseAdmin.from("transactions").insert({
+                stripe_event_id: event.id,
+                type: "invoice_paid",
+                amount_cents: inv.amount_paid,
+                currency: inv.currency,
+                raw: inv as never,
+                subscription_id: subRowId,
+              });
+
               break;
             }
             case "invoice.payment_failed": {
@@ -853,39 +863,44 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               break;
             }
              case "charge.refunded": {
-               const charge = event.data.object as Stripe.Charge;
-               await supabaseAdmin.from("transactions").insert({
-                 stripe_event_id: event.id,
-                 type: "refund",
-                 amount_cents: -(charge.amount_refunded ?? 0),
-                 currency: charge.currency,
-                 raw: charge as never,
-               });
-               let subId = (charge as any).subscription;
-               if (!subId && charge.invoice && typeof charge.invoice === "string") {
-                 try {
-                   const inv = await stripe.invoices.retrieve(charge.invoice);
-                   subId = extractSubscriptionIdFromInvoice(inv);
-                 } catch (e) {
-                   console.error("Failed to retrieve invoice in charge.refunded:", e);
-                 }
-               }
-               if (subId) {
-                const { data: subRow } = await supabaseAdmin
-                  .from("subscriptions")
-                  .select("id")
-                  .eq("stripe_subscription_id", subId)
-                  .maybeSingle();
-                if (subRow) {
-                  // Void any pending commissions tied to this subscription so refunded sales don't pay out.
-                  await supabaseAdmin
-                    .from("commissions")
-                    .update({ status: "voided" } as never)
-                    .eq("subscription_id", subRow.id)
-                    .eq("status", "pending");
+                const charge = event.data.object as Stripe.Charge;
+                let subId = (charge as any).subscription;
+                if (!subId && charge.invoice && typeof charge.invoice === "string") {
+                  try {
+                    const inv = await stripe.invoices.retrieve(charge.invoice);
+                    subId = extractSubscriptionIdFromInvoice(inv);
+                  } catch (e) {
+                    console.error("Failed to retrieve invoice in charge.refunded:", e);
+                  }
                 }
-                await detectRapidRefund(subId, charge.amount_refunded ?? 0);
-              }
+                let subRowId: string | null = null;
+                if (subId) {
+                  const { data: subRow } = await supabaseAdmin
+                    .from("subscriptions")
+                    .select("id")
+                    .eq("stripe_subscription_id", subId)
+                    .maybeSingle();
+                  if (subRow) {
+                    subRowId = subRow.id;
+                    // Void any pending commissions tied to this subscription so refunded sales don't pay out.
+                    await supabaseAdmin
+                      .from("commissions")
+                      .update({ status: "voided" } as never)
+                      .eq("subscription_id", subRow.id)
+                      .eq("status", "pending");
+                  }
+                  await detectRapidRefund(subId, charge.amount_refunded ?? 0);
+                }
+
+                await supabaseAdmin.from("transactions").insert({
+                  stripe_event_id: event.id,
+                  type: "refund",
+                  amount_cents: -(charge.amount_refunded ?? 0),
+                  currency: charge.currency,
+                  raw: charge as never,
+                  subscription_id: subRowId,
+                });
+              
               await notifyAdmins(
                 "admin_alerts",
                 "Refund issued",
