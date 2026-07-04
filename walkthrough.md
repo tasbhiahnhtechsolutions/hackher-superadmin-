@@ -97,9 +97,9 @@ We updated the Stripe webhook endpoint to capture checkout completion, subscript
 
 ## 4. Environment Variables Configured
 
-We have configured the following values in `.env`:
+Configure the following values in the local environment and in Netlify:
 
-- `DJANGO_HOST_JWT_SECRET`: Signing secret for host user tokens (`zikhfc@razhik088888c@@jsddfhwgf!baig!hwgfh33@@@@@@@76&cxcx&&&&khizar!!!!!`).
-- `DJANGO_GUEST_JWT_SECRET`: Signing secret for guest user tokens (`zikhfc@razhik0guest8@@jsddfhwgf!baig!hwgfh33@@@@@@@76&cxcx&&&&khizar!!!!!b`).
-- `DJANGO_API_URL`: Root URL of the Django production backend (`https://api.hackherapp.ai`).
-- `DJANGO_S2S_SECRET`: Bearer token to authorize S2S requests (`f4SCgbng7HgsPfGRfY4XpIPSR7Ln8OwGtYAR0FXzc_hQiYnXiwWEcO3RxJhCaa1FAl0WguribA`).
+- `DJANGO_HOST_JWT_SECRET`: Signing secret for host user tokens.
+- `DJANGO_GUEST_JWT_SECRET`: Signing secret for guest user tokens.
+- `DJANGO_API_URL`: Root URL of the Django production backend.
+- `DJANGO_S2S_SECRET`: Bearer token to authorize S2S requests.
