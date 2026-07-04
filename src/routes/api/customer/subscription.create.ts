@@ -10,15 +10,13 @@ import * as jose from "jose";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { jsonOk, jsonError, corsPreflight } from "@/lib/api-cors.server";
 
-const SUCCESS_URL = "https://hackherapp.ai/checkout/success";
-const CANCEL_URL = "https://hackherapp.ai/checkout/cancel";
-
 const BodySchema = z
   .object({
     // camelCase (client payload)
     stripePriceId: z.string().min(1).optional(),
     packageId: z.string().uuid().optional(),
     packageName: z.string().min(1).max(50).optional(),
+    route: z.string().optional(),
     // snake_case (optional alternate)
     stripe_price_id: z.string().min(1).optional(),
     package_id: z.string().uuid().optional(),
@@ -30,6 +28,7 @@ const BodySchema = z
     package_id: data.package_id ?? data.packageId,
     package_name: data.package_name ?? data.packageName,
     role: data.role,
+    route: data.route,
   }))
   .superRefine((data, ctx) => {
     if (!data.stripe_price_id) {
@@ -215,9 +214,11 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
           package_id: packageId,
           package_name: packageName,
           role: bodyRole,
+          route: bodyRoute,
         } = parsed.data;
 
         const finalRole = bodyRole || tokenRole;
+        const finalRoute = bodyRoute || "dashboard";
 
         console.log("Normalized body values:", {
           stripePriceId,
@@ -225,6 +226,7 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
           packageName,
           bodyRole,
           finalRole,
+          finalRoute,
         });
 
         // ── 4. Find or create Supabase customer ───────────────────────────────
@@ -322,14 +324,17 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
             }
           }
 
+          const successUrl = `https://api.hackherapp.ai/${finalRole}/payment/success/${finalRoute}/${token}`;
+          const cancelUrl = `https://api.hackherapp.ai/${finalRole}/payment/cancel/${finalRoute}/${token}`;
+
           // ── 6. Create Stripe Checkout Session ─────────────────────────────────
           const session = await stripe.checkout.sessions.create({
             mode: "subscription",
             customer: stripeCustomerId,
             line_items: [{ price: stripePriceId, quantity: 1 }],
             allow_promotion_codes: true,
-            success_url: SUCCESS_URL,
-            cancel_url: CANCEL_URL,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             metadata: {
               user_id: djangoUserId,
               email,
