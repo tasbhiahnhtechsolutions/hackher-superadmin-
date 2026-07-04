@@ -18,7 +18,7 @@ async function assertAdmin(userId: string) {
 
 export const adminRetryEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ logId: z.string().uuid() }).parse(i))
+  .validator((i) => z.object({ logId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { data: row } = await supabaseAdmin
@@ -48,7 +48,7 @@ export const adminRunRetryWorker = createServerFn({ method: "POST" })
 
 export const adminSendTestEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ to: z.string().email() }).parse(i))
+  .validator((i) => z.object({ to: z.string().email() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     return sendAppEmail({

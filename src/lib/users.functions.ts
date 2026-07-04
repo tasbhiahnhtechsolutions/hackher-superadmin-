@@ -21,7 +21,7 @@ const CreateSubordinateSchema = z.object({
 
 export const createSubordinate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => CreateSubordinateSchema.parse(input))
+  .validator((input) => CreateSubordinateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
 
@@ -116,7 +116,7 @@ const UpdateCommissionSchema = z.object({
 // - affiliate / customer: forbidden
 export const updateSubordinateCommission = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => UpdateCommissionSchema.parse(input))
+  .validator((input) => UpdateCommissionSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     if (data.userId === userId) {

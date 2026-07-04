@@ -12,7 +12,7 @@ function getStripe(): Stripe | null {
 }
 
 export const syncPlanToStripe = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ planId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ planId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const stripe = getStripe();
     if (!stripe) return { synced: false, reason: "STRIPE_SECRET_KEY not configured" };
@@ -66,7 +66,7 @@ export const syncPlanToStripe = createServerFn({ method: "POST" })
   });
 
 export const syncPromoToStripe = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ promoId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ promoId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const stripe = getStripe();
     if (!stripe) return { synced: false, reason: "STRIPE_SECRET_KEY not configured" };
@@ -117,7 +117,7 @@ export const syncPromoToStripe = createServerFn({ method: "POST" })
   });
 
 export const syncPlanActionToDjango = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         action: z.enum(["create", "update", "delete"]),
@@ -210,7 +210,7 @@ export const syncPlanActionToDjango = createServerFn({ method: "POST" })
   });
 
 export const deletePlanServerFn = createServerFn({ method: "POST" })
-  .inputValidator((input) => z.object({ planId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ planId: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     // 1. Fetch the plan first to have its data
     const { data: plan, error: fetchErr } = await supabaseAdmin

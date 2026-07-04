@@ -9,7 +9,7 @@ const listSchema = z.object({
 
 export const listFraudFlags = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => listSchema.parse(d))
+  .validator((d: unknown) => listSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     let q = supabase
@@ -31,7 +31,7 @@ const updateSchema = z.object({
 
 export const updateFraudFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => updateSchema.parse(d))
+  .validator((d: unknown) => updateSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase

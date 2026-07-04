@@ -327,6 +327,9 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
           const successUrl = `https://api.hackherapp.ai/${finalRole}/payment/success/${finalRoute}/${token}`;
           const cancelUrl = `https://api.hackherapp.ai/${finalRole}/payment/cancel/${finalRoute}/${token}`;
 
+          console.log("Success URL:", successUrl);
+          console.log("Cancel URL:", cancelUrl);
+
           // ── 6. Create Stripe Checkout Session ─────────────────────────────────
           const session = await stripe.checkout.sessions.create({
             mode: "subscription",
