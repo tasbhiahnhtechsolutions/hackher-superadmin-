@@ -2,6 +2,7 @@
 // Body: { coupon: string, planId?: string } -> { valid, discount, affiliate, finalPrice }
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { verifyAndDecodeToken } from "./subscription.create";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { jsonOk, jsonError, corsPreflight } from "@/lib/api-cors.server";
 
@@ -12,6 +13,7 @@ const Schema = z.object({
     .max(30)
     .regex(/^[A-Za-z0-9]+$/),
   planId: z.string().uuid().optional(),
+  token: z.string().optional(),
 });
 
 export const Route = createFileRoute("/api/customer/coupon/validate")({
@@ -40,6 +42,33 @@ export const Route = createFileRoute("/api/customer/coupon/validate")({
           return jsonOk({ valid: false, reason: "expired" });
         if (promo.usage_limit && promo.usage_count >= promo.usage_limit)
           return jsonOk({ valid: false, reason: "limit_reached" });
+
+        // Check per-customer limit if token is passed
+        if (promo.limit_per_customer && parsed.data.token) {
+          try {
+            const decoded = await verifyAndDecodeToken(parsed.data.token);
+            const { data: customer } = await supabaseAdmin
+              .from("customers")
+              .select("id")
+              .or(`django_user_id.eq.${decoded.id},email.eq.${decoded.email}`)
+              .maybeSingle();
+
+            if (customer) {
+              const { count } = await supabaseAdmin
+                .from("subscriptions")
+                .select("*", { count: "exact", head: true })
+                .eq("customer_id", customer.id)
+                .eq("promo_code_id", promo.id);
+
+              if (count && count >= promo.limit_per_customer) {
+                return jsonOk({ valid: false, reason: "limit_per_customer_reached" });
+              }
+            }
+          } catch (err) {
+            console.error("[coupon validate token verify fail]", err);
+            return jsonError(401, "unauthorized", (err as Error).message);
+          }
+        }
 
         let affiliateName: string | null = null;
         if (promo.affiliate_id) {

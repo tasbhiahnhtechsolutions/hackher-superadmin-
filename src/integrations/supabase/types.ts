@@ -623,6 +623,7 @@ export type Database = {
           discount_percent: number;
           ends_at: string | null;
           id: string;
+          limit_per_customer: number | null;
           plan_id: string | null;
           starts_at: string | null;
           status: Database["public"]["Enums"]["promo_status"];
@@ -640,6 +641,7 @@ export type Database = {
           discount_percent: number;
           ends_at?: string | null;
           id?: string;
+          limit_per_customer?: number | null;
           plan_id?: string | null;
           starts_at?: string | null;
           status?: Database["public"]["Enums"]["promo_status"];
@@ -657,6 +659,7 @@ export type Database = {
           discount_percent?: number;
           ends_at?: string | null;
           id?: string;
+          limit_per_customer?: number | null;
           plan_id?: string | null;
           starts_at?: string | null;
           status?: Database["public"]["Enums"]["promo_status"];

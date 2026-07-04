@@ -23,6 +23,7 @@ const CreateSchema = z.object({
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
   usageLimit: z.number().int().positive().optional(),
+  limitPerCustomer: z.number().int().positive().nullable().optional(),
 });
 
 const UpdateSchema = z.object({
@@ -39,6 +40,7 @@ const UpdateSchema = z.object({
   endsAt: z.string().datetime().nullable().optional(),
   usageLimit: z.number().int().positive().nullable().optional(),
   usageCount: z.number().int().min(0).optional(),
+  limitPerCustomer: z.number().int().positive().nullable().optional(),
 });
 
 async function callerRole(userId: string) {
@@ -69,31 +71,48 @@ async function syncToStripe(promoId: string) {
   if (!promo) return;
   const stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" as never });
   try {
-    let couponId = promo.stripe_coupon_id;
-    if (!couponId) {
-      const coupon = await stripe.coupons.create({
-        percent_off: Number(promo.discount_percent),
-        duration: "forever",
-        name: promo.code,
-        metadata: { promo_id: promo.id, affiliate_id: promo.affiliate_id ?? "" },
-      });
-      couponId = coupon.id;
-    }
     let stripePromoId = promo.stripe_promo_id;
-    if (!stripePromoId) {
-      const sp = await stripe.promotionCodes.create({
-        coupon: couponId,
-        code: promo.code,
-        max_redemptions: promo.usage_limit ?? undefined,
-        expires_at: promo.ends_at
-          ? Math.floor(new Date(promo.ends_at).getTime() / 1000)
-          : undefined,
-        metadata: { promo_id: promo.id },
-      });
-      stripePromoId = sp.id;
-    } else {
-      await stripe.promotionCodes.update(stripePromoId, { active: promo.status === "active" });
+
+    // If stripePromoId already exists, we deactivate it first to recreate with updated fields (Stripe restricts updating max_redemptions, expires_at, etc.)
+    if (stripePromoId) {
+      try {
+        await stripe.promotionCodes.update(stripePromoId, { active: false });
+      } catch (err) {
+        console.error("[promo stripe deactivate error]", err);
+      }
     }
+
+    // Create a new Coupon since discount/redemptions are immutable on Stripe Coupons
+    const coupon = await stripe.coupons.create({
+      percent_off: Number(promo.discount_percent),
+      duration: "forever",
+      name: promo.code,
+      max_redemptions: promo.usage_limit ?? undefined,
+      redeem_by: promo.ends_at
+        ? Math.floor(new Date(promo.ends_at).getTime() / 1000)
+        : undefined,
+      metadata: { promo_id: promo.id, affiliate_id: promo.affiliate_id ?? "" },
+    });
+    const couponId = coupon.id;
+
+    // Create new Promotion Code
+    const restrictions: Stripe.PromotionCodeCreateParams.Restrictions = {};
+    if (promo.limit_per_customer === 1) {
+      restrictions.first_time_transaction = true;
+    }
+    const sp = await stripe.promotionCodes.create({
+      coupon: couponId,
+      code: promo.code,
+      max_redemptions: promo.usage_limit ?? undefined,
+      expires_at: promo.ends_at
+        ? Math.floor(new Date(promo.ends_at).getTime() / 1000)
+        : undefined,
+      restrictions,
+      active: promo.status === "active",
+      metadata: { promo_id: promo.id },
+    });
+    stripePromoId = sp.id;
+
     await supabaseAdmin
       .from("promo_codes")
       .update({
@@ -143,6 +162,7 @@ export const createPromoCode = createServerFn({ method: "POST" })
         starts_at: data.startsAt ?? null,
         ends_at: data.endsAt ?? null,
         usage_limit: data.usageLimit ?? null,
+        limit_per_customer: data.limitPerCustomer ?? null,
         status: "active",
       } as never)
       .select("id")
@@ -184,6 +204,7 @@ export const updatePromoCode = createServerFn({ method: "POST" })
       ends_at?: string | null;
       usage_limit?: number | null;
       usage_count?: number;
+      limit_per_customer?: number | null;
     } = {};
     if (data.discountPercent !== undefined) patch.discount_percent = data.discountPercent;
     if (data.status !== undefined) patch.status = data.status;
@@ -192,6 +213,7 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     if (data.startsAt !== undefined) patch.starts_at = data.startsAt;
     if (data.endsAt !== undefined) patch.ends_at = data.endsAt;
     if (data.usageLimit !== undefined) patch.usage_limit = data.usageLimit;
+    if (data.limitPerCustomer !== undefined) patch.limit_per_customer = data.limitPerCustomer;
     // Only super_admin can rewrite the code or override usage_count
     if (role === "super_admin") {
       if (data.code !== undefined) patch.code = data.code.toUpperCase();

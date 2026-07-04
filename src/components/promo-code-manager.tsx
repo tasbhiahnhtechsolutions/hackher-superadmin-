@@ -78,6 +78,7 @@ export function PromoCodeManager({
     startsAt: "",
     endsAt: "",
     usageLimit: "",
+    limitPerCustomer: "",
   });
   const [editing, setEditing] = useState<null | {
     id: string;
@@ -89,6 +90,7 @@ export function PromoCodeManager({
     campaign: string;
     startsAt: string;
     endsAt: string;
+    limitPerCustomer: string;
   }>(null);
   const [campaignFilter, setCampaignFilter] = useState<string>("");
 
@@ -229,6 +231,7 @@ export function PromoCodeManager({
           startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
           endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
           usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
+          limitPerCustomer: form.limitPerCustomer ? Number(form.limitPerCustomer) : undefined,
         },
       });
     },
@@ -245,6 +248,7 @@ export function PromoCodeManager({
         startsAt: "",
         endsAt: "",
         usageLimit: "",
+        limitPerCustomer: "",
       });
       qc.invalidateQueries({ queryKey: ["promo-codes"] });
     },
@@ -274,6 +278,7 @@ export function PromoCodeManager({
           campaignLabel: editing.campaign.trim() === "" ? null : editing.campaign.trim(),
           startsAt: editing.startsAt ? new Date(editing.startsAt).toISOString() : null,
           endsAt: editing.endsAt ? new Date(editing.endsAt).toISOString() : null,
+          limitPerCustomer: editing.limitPerCustomer === "" ? null : Number(editing.limitPerCustomer),
           ...(canEditAll ? { usageCount: editing.usageCount } : {}),
         },
       });
@@ -463,6 +468,7 @@ export function PromoCodeManager({
                                         campaign: c.campaign_label ?? "",
                                         startsAt: toLocalInput(c.starts_at),
                                         endsAt: toLocalInput(c.ends_at),
+                                        limitPerCustomer: c.limit_per_customer?.toString() ?? "",
                                       })
                                     }
                                   >
@@ -643,6 +649,18 @@ export function PromoCodeManager({
                 onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
               />
             </div>
+            <div>
+              <Label>
+                Limit per customer <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                placeholder="Unlimited"
+                value={form.limitPerCustomer}
+                onChange={(e) => setForm({ ...form, limitPerCustomer: e.target.value })}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
@@ -728,6 +746,18 @@ export function PromoCodeManager({
                   />
                 </div>
                 <div>
+                  <Label>Limit per customer</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="∞"
+                    value={editing.limitPerCustomer}
+                    onChange={(e) => setEditing({ ...editing, limitPerCustomer: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <Label>Usage count</Label>
                   <Input
                     type="number"
@@ -740,23 +770,23 @@ export function PromoCodeManager({
                     <p className="mt-1 text-xs text-muted-foreground">Super admin only.</p>
                   )}
                 </div>
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select
-                  value={editing.status}
-                  onValueChange={(v) =>
-                    setEditing({ ...editing, status: v as "active" | "inactive" })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label>Status</Label>
+                  <Select
+                    value={editing.status}
+                    onValueChange={(v) =>
+                      setEditing({ ...editing, status: v as "active" | "inactive" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}

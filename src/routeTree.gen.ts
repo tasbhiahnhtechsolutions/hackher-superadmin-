@@ -52,6 +52,7 @@ import { Route as AuthenticatedAdminFraudRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminEmailsRouteImport } from './routes/_authenticated/admin/emails'
 import { Route as AuthenticatedAdminAuditLogsRouteImport } from './routes/_authenticated/admin/audit-logs'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin/analytics'
+import { Route as ApiV1PaymentsWebhookRouteImport } from './routes/api/v1/payments/webhook'
 import { Route as ApiPublicWebhooksStripeRouteImport } from './routes/api/public/webhooks/stripe'
 import { Route as ApiPublicHooksRetryEmailsRouteImport } from './routes/api/public/hooks/retry-emails'
 import { Route as ApiPublicHooksClearCommissionsRouteImport } from './routes/api/public/hooks/clear-commissions'
@@ -300,6 +301,11 @@ const AuthenticatedAdminAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiV1PaymentsWebhookRoute = ApiV1PaymentsWebhookRouteImport.update({
+  id: '/api/v1/payments/webhook',
+  path: '/api/v1/payments/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksStripeRoute = ApiPublicWebhooksStripeRouteImport.update({
   id: '/api/public/webhooks/stripe',
   path: '/api/public/webhooks/stripe',
@@ -413,6 +419,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/v1/payments/webhook': typeof ApiV1PaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -463,6 +470,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/v1/payments/webhook': typeof ApiV1PaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -519,6 +527,7 @@ export interface FileRoutesById {
   '/api/public/hooks/clear-commissions': typeof ApiPublicHooksClearCommissionsRoute
   '/api/public/hooks/retry-emails': typeof ApiPublicHooksRetryEmailsRoute
   '/api/public/webhooks/stripe': typeof ApiPublicWebhooksStripeRoute
+  '/api/v1/payments/webhook': typeof ApiV1PaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -575,6 +584,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
+    | '/api/v1/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -625,6 +635,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
+    | '/api/v1/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -680,6 +691,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/clear-commissions'
     | '/api/public/hooks/retry-emails'
     | '/api/public/webhooks/stripe'
+    | '/api/v1/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -701,6 +713,7 @@ export interface RootRouteChildren {
   ApiPublicHooksClearCommissionsRoute: typeof ApiPublicHooksClearCommissionsRoute
   ApiPublicHooksRetryEmailsRoute: typeof ApiPublicHooksRetryEmailsRoute
   ApiPublicWebhooksStripeRoute: typeof ApiPublicWebhooksStripeRoute
+  ApiV1PaymentsWebhookRoute: typeof ApiV1PaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1006,6 +1019,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAnalyticsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/v1/payments/webhook': {
+      id: '/api/v1/payments/webhook'
+      path: '/api/v1/payments/webhook'
+      fullPath: '/api/v1/payments/webhook'
+      preLoaderRoute: typeof ApiV1PaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/stripe': {
       id: '/api/public/webhooks/stripe'
       path: '/api/public/webhooks/stripe'
@@ -1221,6 +1241,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksClearCommissionsRoute: ApiPublicHooksClearCommissionsRoute,
   ApiPublicHooksRetryEmailsRoute: ApiPublicHooksRetryEmailsRoute,
   ApiPublicWebhooksStripeRoute: ApiPublicWebhooksStripeRoute,
+  ApiV1PaymentsWebhookRoute: ApiV1PaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
