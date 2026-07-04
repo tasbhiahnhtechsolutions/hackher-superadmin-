@@ -85,7 +85,7 @@ async function syncToStripe(promoId: string) {
     // Create a new Coupon since discount/redemptions are immutable on Stripe Coupons
     const coupon = await stripe.coupons.create({
       percent_off: Number(promo.discount_percent),
-      duration: "forever",
+      duration: "once",
       name: promo.code,
       max_redemptions: promo.usage_limit ?? undefined,
       redeem_by: promo.ends_at
