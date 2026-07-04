@@ -12,7 +12,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: {
-    preset: "netlify",
+    preset: process.env.NETLIFY ? "netlify" : "node-server",
   },
   vite: {
     server: {
