@@ -246,7 +246,7 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
             .select("*")
             .single();
           customer = created;
-        } else if (!customer.django_user_id) {
+        } else if (!(customer as any).django_user_id) {
           const { data: updated } = await supabaseAdmin
             .from("customers")
             .update({
@@ -263,7 +263,7 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
         console.log("Supabase customer:", {
           id: customer.id,
           email: customer.email,
-          django_user_id: customer.django_user_id,
+          django_user_id: (customer as any).django_user_id,
           stripe_customer_id: customer.stripe_customer_id,
         });
 
@@ -271,8 +271,8 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
         const { data: existingActiveSubs } = await supabaseAdmin
           .from("subscriptions")
           .select("id")
-          .eq("customer_id", customer.id)
-          .eq("plan_id", packageId)
+          .eq("customer_id", customer?.id as string)
+          .eq("plan_id", packageId as string)
           .in("status", ["active", "trialing"])
           .limit(1);
 
@@ -342,19 +342,19 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
             success_url: successUrl,
             cancel_url: cancelUrl,
             metadata: {
-              user_id: djangoUserId,
-              email,
-              role: finalRole,
-              package_name: packageName,
-              package_id: packageId,
+              user_id: djangoUserId as string,
+              email: email as string,
+              role: finalRole as string,
+              package_name: packageName as string,
+              package_id: packageId as string,
             },
             subscription_data: {
               metadata: {
-                user_id: djangoUserId,
-                email,
-                role: finalRole,
-                package_name: packageName,
-                package_id: packageId,
+                user_id: djangoUserId as string,
+                email: email as string,
+                role: finalRole as string,
+                package_name: packageName as string,
+                package_id: packageId as string,
               },
               ...(trialPeriodDays ? { trial_period_days: trialPeriodDays } : {}),
             },

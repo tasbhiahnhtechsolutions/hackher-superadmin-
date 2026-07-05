@@ -53,7 +53,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
         persistSession: false,
         autoRefreshToken: false,
       },
-      realtime: ws ? { transport: ws } : undefined,
+      realtime: ws ? { transport: ws as any } : undefined,
     });
 
     const { data, error } = await supabase.auth.getClaims(token);

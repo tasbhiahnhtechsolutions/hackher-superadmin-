@@ -45,7 +45,7 @@ interface Props {
    * - "sam+manager+affiliate" — pick SAM → Manager → Affiliate (Super Admin flow)
    */
   affiliatePicker?:
-    "self" | "affiliate" | "manager+affiliate" | "sam+manager+affiliate" | "descendants" | "all";
+  "self" | "affiliate" | "manager+affiliate" | "sam+manager+affiliate" | "descendants" | "all";
   /** Hide create/edit/disable controls — show codes for sharing only. */
   readOnly?: boolean;
 }
@@ -55,6 +55,7 @@ interface PersonOpt {
   full_name: string | null;
   email: string;
   parent_user_id?: string | null;
+  commission_rate?: number | null;
 }
 
 export function PromoCodeManager({
@@ -79,6 +80,7 @@ export function PromoCodeManager({
     endsAt: "",
     usageLimit: "",
     limitPerCustomer: "",
+    affiliateComm: 10,
   });
   const [editing, setEditing] = useState<null | {
     id: string;
@@ -91,6 +93,8 @@ export function PromoCodeManager({
     startsAt: string;
     endsAt: string;
     limitPerCustomer: string;
+    affiliateId?: string | null;
+    affiliateComm?: number;
   }>(null);
   const [campaignFilter, setCampaignFilter] = useState<string>("");
 
@@ -108,16 +112,45 @@ export function PromoCodeManager({
   const showManagerPicker = picker === "manager+affiliate" || picker === "sam+manager+affiliate";
   const showAffiliatePicker = picker !== "self";
 
-  const canEdit = !readOnly && (role === "super_admin" || role === "sam" || role === "manager");
+  const canEdit = !readOnly;
   const canEditAll = role === "super_admin";
 
-  // Promo codes — RLS scopes per role
+  // Promo codes
   const { data: codes, isLoading } = useQuery({
     queryKey: ["promo-codes", user?.id, picker],
     enabled: !!user,
     queryFn: async () => {
       let q = supabase.from("promo_codes").select("*").order("created_at", { ascending: false });
-      if (picker === "self") q = q.eq("affiliate_id", user!.id);
+
+      // Enforce strict tree scoping
+      if (picker === "self") {
+        q = q.eq("affiliate_id", user!.id);
+      } else if (picker === "manager+affiliate") {
+        // SAM flow: restrict to SAM's downstream affiliates
+        const { data: mgrs } = await supabase.from("profiles").select("id").eq("parent_user_id", user!.id);
+        const mgrIds = mgrs?.map(m => m.id) || [];
+        if (mgrIds.length > 0) {
+          const { data: affs } = await supabase.from("profiles").select("id").in("parent_user_id", mgrIds);
+          const affIds = affs?.map(a => a.id) || [];
+          if (affIds.length > 0) {
+            q = q.in("affiliate_id", affIds);
+          } else {
+            return [];
+          }
+        } else {
+          return [];
+        }
+      } else if (picker === "affiliate") {
+        // Manager flow: restrict to Manager's downstream affiliates
+        const { data: affs } = await supabase.from("profiles").select("id").eq("parent_user_id", user!.id);
+        const affIds = affs?.map(a => a.id) || [];
+        if (affIds.length > 0) {
+          q = q.in("affiliate_id", affIds);
+        } else {
+          return [];
+        }
+      }
+
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
@@ -137,7 +170,7 @@ export function PromoCodeManager({
       if (!ids.length) return [];
       const { data } = await supabase
         .from("profiles")
-        .select("id,full_name,email,parent_user_id")
+        .select("id,full_name,email,parent_user_id,commission_rate")
         .in("id", ids);
       return (data ?? []) as PersonOpt[];
     },
@@ -156,7 +189,7 @@ export function PromoCodeManager({
       if (!ids.length) return [];
       const { data } = await supabase
         .from("profiles")
-        .select("id,full_name,email,parent_user_id")
+        .select("id,full_name,email,parent_user_id,commission_rate")
         .in("id", ids);
       return (data ?? []) as PersonOpt[];
     },
@@ -175,7 +208,7 @@ export function PromoCodeManager({
       if (!ids.length) return [];
       const { data } = await supabase
         .from("profiles")
-        .select("id,full_name,email,parent_user_id")
+        .select("id,full_name,email,parent_user_id,commission_rate")
         .in("id", ids);
       return (data ?? []) as PersonOpt[];
     },
@@ -210,6 +243,12 @@ export function PromoCodeManager({
     return base.filter((a) => a.parent_user_id === user?.id);
   }, [affiliates, form.managerId, showManagerPicker, user?.id]);
 
+  const selectedSam = useMemo(() => (sams ?? []).find(s => s.id === form.samId), [sams, form.samId]);
+  const selectedMgr = useMemo(() => (managers ?? []).find(m => m.id === form.managerId), [managers, form.managerId]);
+
+  const samRate = selectedSam?.commission_rate !== undefined && selectedSam?.commission_rate !== null ? selectedSam.commission_rate * 100 : 1;
+  const mgrRate = selectedMgr?.commission_rate !== undefined && selectedMgr?.commission_rate !== null ? selectedMgr.commission_rate * 100 : 4;
+
   // Reset cascading selections when parent changes
   useEffect(() => {
     setForm((f) => ({ ...f, managerId: "", affiliateId: "" }));
@@ -221,7 +260,17 @@ export function PromoCodeManager({
   const createMut = useMutation({
     mutationFn: async () => {
       if (showAffiliatePicker && !form.affiliateId) throw new Error("Pick an affiliate");
+
       const affiliateId = showAffiliatePicker ? form.affiliateId : user!.id;
+
+      if (canEditAll && form.affiliateComm && affiliateId) {
+        const selectedAff = affMap.get(affiliateId);
+        const originalRate = selectedAff?.commission_rate !== undefined && selectedAff?.commission_rate !== null ? selectedAff.commission_rate * 100 : 10;
+        if (originalRate !== form.affiliateComm) {
+          await supabase.from("profiles").update({ commission_rate: form.affiliateComm / 100 }).eq("id", affiliateId);
+        }
+      }
+
       return create({
         data: {
           code: form.code,
@@ -249,6 +298,7 @@ export function PromoCodeManager({
         endsAt: "",
         usageLimit: "",
         limitPerCustomer: "",
+        affiliateComm: 10,
       });
       qc.invalidateQueries({ queryKey: ["promo-codes"] });
     },
@@ -317,10 +367,10 @@ export function PromoCodeManager({
           ).sort();
           const filtered = campaignFilter
             ? all.filter((c) =>
-                campaignFilter === "__none__"
-                  ? !c.campaign_label
-                  : c.campaign_label === campaignFilter,
-              )
+              campaignFilter === "__none__"
+                ? !c.campaign_label
+                : c.campaign_label === campaignFilter,
+            )
             : all;
           const colSpan = showHierarchy ? 10 : 8;
           return (
@@ -357,17 +407,12 @@ export function PromoCodeManager({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Code</TableHead>
+                      <TableHead>Affiliate</TableHead>
                       <TableHead>Campaign</TableHead>
                       <TableHead>Discount</TableHead>
-                      {showHierarchy && (
-                        <>
-                          <TableHead>Affiliate</TableHead>
-                          <TableHead>Manager</TableHead>
-                        </>
-                      )}
+                      <TableHead>Start Date</TableHead>
+                      <TableHead>End Date</TableHead>
                       <TableHead>Uses</TableHead>
-                      <TableHead>Window</TableHead>
-                      <TableHead>Stripe</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -419,6 +464,7 @@ export function PromoCodeManager({
                                 <Copy className="h-3 w-3" />
                               </Button>
                             </TableCell>
+                            <TableCell>{labelFor(aff) || "—"}</TableCell>
                             <TableCell>
                               {c.campaign_label ? (
                                 <Badge variant="outline">{c.campaign_label}</Badge>
@@ -427,24 +473,14 @@ export function PromoCodeManager({
                               )}
                             </TableCell>
                             <TableCell>{Number(c.discount_percent)}%</TableCell>
-                            {showHierarchy && (
-                              <>
-                                <TableCell>{labelFor(aff)}</TableCell>
-                                <TableCell>{labelFor(mgr)}</TableCell>
-                              </>
-                            )}
-                            <TableCell>
-                              {c.usage_count} / {c.usage_limit ?? "∞"}
+                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                              {c.starts_at ? new Date(c.starts_at).toLocaleDateString() : "—"}
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                              {window}
+                              {c.ends_at ? new Date(c.ends_at).toLocaleDateString() : "∞"}
                             </TableCell>
                             <TableCell>
-                              {c.stripe_promo_id ? (
-                                <Badge variant="outline">Synced</Badge>
-                              ) : (
-                                <Badge variant="secondary">Pending</Badge>
-                              )}
+                              {c.usage_count} / {c.usage_limit ?? "∞"}
                             </TableCell>
                             <TableCell>
                               <Badge variant={c.status === "active" ? "default" : "secondary"}>
@@ -469,6 +505,8 @@ export function PromoCodeManager({
                                         startsAt: toLocalInput(c.starts_at),
                                         endsAt: toLocalInput(c.ends_at),
                                         limitPerCustomer: c.limit_per_customer?.toString() ?? "",
+                                        affiliateId: c.affiliate_id,
+                                        affiliateComm: (aff?.commission_rate ?? 0.10) * 100,
                                       })
                                     }
                                   >
@@ -507,159 +545,204 @@ export function PromoCodeManager({
             <DialogTitle>New promo code</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {showSamPicker && (
-              <div>
-                <Label>Super Admin Manager (SAM)</Label>
-                <Select value={form.samId} onValueChange={(v) => setForm({ ...form, samId: v })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select SAM…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(sams ?? []).map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {labelFor(s)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {showManagerPicker && (
-              <div>
-                <Label>Manager</Label>
-                <Select
-                  value={form.managerId}
-                  onValueChange={(v) => setForm({ ...form, managerId: v })}
-                  disabled={showSamPicker && !form.samId}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        showSamPicker && !form.samId ? "Select a SAM first" : "Select manager…"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {managerOptions.length === 0 ? (
-                      <div className="px-2 py-3 text-sm text-muted-foreground">
-                        No managers in scope.
-                      </div>
-                    ) : (
-                      managerOptions.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {labelFor(m)}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {showAffiliatePicker && (
-              <div>
-                <Label>Affiliate</Label>
-                <Select
-                  value={form.affiliateId}
-                  onValueChange={(v) => setForm({ ...form, affiliateId: v })}
-                  disabled={showManagerPicker && !form.managerId}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        showManagerPicker && !form.managerId
-                          ? "Select a manager first"
-                          : "Select affiliate…"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredAffiliates.length === 0 ? (
-                      <div className="px-2 py-3 text-sm text-muted-foreground">
-                        No affiliates available.
-                      </div>
-                    ) : (
-                      filteredAffiliates.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {labelFor(a)}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div>
-              <Label>Campaign label</Label>
-              <Input
-                value={form.campaign}
-                onChange={(e) => setForm({ ...form, campaign: e.target.value })}
-                placeholder="e.g. TikTok, Instagram, Podcast Q4"
-                maxLength={60}
-              />
-            </div>
-            <div>
-              <Label>Code</Label>
+              <Label>PROMO CODE</Label>
               <Input
                 value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                placeholder="e.g. KEVINTIKTOK"
+                placeholder="e.g. SPECIAL-20"
+                style={{ textTransform: "uppercase", fontFamily: "monospace" }}
               />
-              <p className="mt-1 text-xs text-muted-foreground">3–30 letters/numbers only.</p>
             </div>
             <div>
-              <Label>Customer discount %</Label>
+              <Label>CAMPAIGN</Label>
               <Input
-                type="number"
-                min={1}
-                max={15}
-                value={form.discount}
-                onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })}
+                value={form.campaign}
+                onChange={(e) => setForm({ ...form, campaign: e.target.value })}
+                placeholder="e.g. TikTok Launch"
+                maxLength={60}
               />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Maximum 15% (30% rule: discount + commissions ≤ 30%).
-              </p>
+              <div className="text-[11px] text-muted-foreground mt-1">Enter the campaign this code belongs to</div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Start date</Label>
+                <Label>START DATE</Label>
                 <Input
-                  type="datetime-local"
-                  value={form.startsAt}
-                  onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+                  type="date"
+                  value={form.startsAt?.slice(0, 10) || ""}
+                  onChange={(e) => setForm({ ...form, startsAt: e.target.value + "T00:00" })}
                 />
               </div>
               <div>
-                <Label>Expiration date</Label>
+                <Label>END DATE</Label>
                 <Input
-                  type="datetime-local"
-                  value={form.endsAt}
-                  onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+                  type="date"
+                  value={form.endsAt?.slice(0, 10) || ""}
+                  onChange={(e) => setForm({ ...form, endsAt: e.target.value + "T23:59" })}
                 />
               </div>
             </div>
             <div>
-              <Label>
-                Usage limit <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
+              <Label>DISCOUNT %</Label>
               <Input
                 type="number"
                 min={1}
-                placeholder="Unlimited"
-                value={form.usageLimit}
-                onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
+                max={picker === "manager+affiliate" ? 29 : 30}
+                value={form.discount}
+                disabled={role === "affiliate"}
+                onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })}
               />
+              {picker === "manager+affiliate" && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Max 29% (SAM's 1% already allocated from 30% cap)
+                </p>
+              )}
             </div>
-            <div>
-              <Label>
-                Limit per customer <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <Input
-                type="number"
-                min={1}
-                placeholder="Unlimited"
-                value={form.limitPerCustomer}
-                onChange={(e) => setForm({ ...form, limitPerCustomer: e.target.value })}
-              />
+
+            {showSamPicker && (
+              <>
+                <div>
+                  <Label>SELECT SAM</Label>
+                  <Select value={form.samId} onValueChange={(v) => setForm({ ...form, samId: v })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select SAM…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(sams ?? []).map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {labelFor(s)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {form.samId && (
+                  <div>
+                    <Label>SAM COMMISSION %</Label>
+                    <Input readOnly disabled value={samRate} className="bg-muted cursor-not-allowed" />
+                  </div>
+                )}
+              </>
+            )}
+
+            {showManagerPicker && (
+              <>
+                <div>
+                  <Label>SELECT MANAGER</Label>
+                  <Select
+                    value={form.managerId}
+                    onValueChange={(v) => setForm({ ...form, managerId: v })}
+                    disabled={showSamPicker && !form.samId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          showSamPicker && !form.samId ? "Select a SAM first" : "Select manager…"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {managerOptions.length === 0 ? (
+                        <div className="px-2 py-3 text-sm text-muted-foreground">
+                          No managers in scope.
+                        </div>
+                      ) : (
+                        managerOptions.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {labelFor(m)}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {form.managerId && (
+                  <div>
+                    <Label>MANAGER COMMISSION %</Label>
+                    <Input readOnly disabled value={mgrRate} className="bg-muted cursor-not-allowed" />
+                  </div>
+                )}
+              </>
+            )}
+
+            {showAffiliatePicker && (
+              <>
+                <div>
+                  <Label>ASSIGN TO AFFILIATE</Label>
+                  <Select
+                    value={form.affiliateId}
+                    onValueChange={(v) => setForm({ ...form, affiliateId: v, affiliateComm: (affMap.get(v)?.commission_rate ?? 0.10) * 100 })}
+                    disabled={showManagerPicker && !form.managerId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          showManagerPicker && !form.managerId
+                            ? "Select a manager first"
+                            : "Select affiliate…"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredAffiliates.length === 0 ? (
+                        <div className="px-2 py-3 text-sm text-muted-foreground">
+                          No affiliates available.
+                        </div>
+                      ) : (
+                        filteredAffiliates.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {labelFor(a)}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {form.affiliateId && (
+                  <div>
+                    <Label>AFFILIATE COMMISSION %</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={30}
+                      value={form.affiliateComm}
+                      onChange={(e) => setForm({ ...form, affiliateComm: Number(e.target.value) })}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>USAGE LIMIT <span className="text-muted-foreground font-normal lowercase">(optional)</span></Label>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="Unlimited"
+                  value={form.usageLimit}
+                  onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>LIMIT PER CUSTOMER <span className="text-muted-foreground font-normal lowercase">(optional)</span></Label>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="Unlimited"
+                  value={form.limitPerCustomer}
+                  onChange={(e) => setForm({ ...form, limitPerCustomer: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg text-xs text-primary mt-2">
+              <strong>Max discount (subscriber + affiliate + SAM/Mgr):</strong> {showAffiliatePicker ? "30%" : "30%"}
+              <div className="mt-1">Current total: {(form.discount + (form.samId ? samRate : 0) + (form.managerId ? mgrRate : 0) + form.affiliateComm).toFixed(1)}%. Must be ≤ 30%.</div>
+            </div>
+
+            <div className="p-3 bg-green-50/80 rounded-lg text-xs text-emerald-800 mt-2">
+              <strong>Note:</strong> Commission is calculated on the <strong>discounted amount</strong>, not the full price. Code is case-insensitive.
             </div>
           </div>
           <DialogFooter>
@@ -669,7 +752,10 @@ export function PromoCodeManager({
             <Button
               onClick={() => createMut.mutate()}
               disabled={
-                createMut.isPending || !form.code || (showAffiliatePicker && !form.affiliateId)
+                createMut.isPending ||
+                !form.code ||
+                (showAffiliatePicker && !form.affiliateId) ||
+                (form.discount + (form.samId ? samRate : 0) + (form.managerId ? mgrRate : 0) + form.affiliateComm > 30)
               }
             >
               {createMut.isPending ? "Creating…" : "Create & sync"}
@@ -686,11 +772,13 @@ export function PromoCodeManager({
           {editing && (
             <div className="space-y-3">
               <div>
-                <Label>Code</Label>
+                <Label>PROMO CODE</Label>
                 <Input
                   value={editing.code}
                   disabled={!canEditAll}
                   onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })}
+                  placeholder="e.g. SPECIAL-20"
+                  style={{ textTransform: "uppercase", fontFamily: "monospace" }}
                 />
                 {!canEditAll && (
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -699,66 +787,104 @@ export function PromoCodeManager({
                 )}
               </div>
               <div>
-                <Label>Discount %</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={15}
-                  value={editing.discount}
-                  onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })}
-                />
-              </div>
-              <div>
-                <Label>Campaign label</Label>
+                <Label>CAMPAIGN</Label>
                 <Input
                   value={editing.campaign}
                   maxLength={60}
+                  placeholder="e.g. TikTok Launch"
                   onChange={(e) => setEditing({ ...editing, campaign: e.target.value })}
                 />
+                <div className="text-[11px] text-muted-foreground mt-1">The campaign this code belongs to</div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Start date</Label>
+                  <Label>START DATE</Label>
                   <Input
-                    type="datetime-local"
-                    value={editing.startsAt}
-                    onChange={(e) => setEditing({ ...editing, startsAt: e.target.value })}
+                    type="date"
+                    value={editing.startsAt?.slice(0, 10) || ""}
+                    onChange={(e) => setEditing({ ...editing, startsAt: e.target.value + "T00:00" })}
                   />
                 </div>
                 <div>
-                  <Label>Expiration date</Label>
+                  <Label>END DATE</Label>
                   <Input
-                    type="datetime-local"
-                    value={editing.endsAt}
-                    onChange={(e) => setEditing({ ...editing, endsAt: e.target.value })}
+                    type="date"
+                    value={editing.endsAt?.slice(0, 10) || ""}
+                    onChange={(e) => setEditing({ ...editing, endsAt: e.target.value + "T23:59" })}
                   />
                 </div>
               </div>
+              <div>
+                <Label>DISCOUNT %</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={picker === "manager+affiliate" ? 29 : 30}
+                  value={editing.discount}
+                  disabled={role === "affiliate"}
+                  onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })}
+                />
+                {picker === "manager+affiliate" && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Max 29% (SAM's 1% already allocated from 30% cap)
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Usage limit</Label>
+                  <Label>ASSIGNED AFFILIATE</Label>
+                  <Select value={editing.affiliateId || ""} disabled>
+                    <SelectTrigger className="bg-muted text-muted-foreground">
+                      <SelectValue placeholder="No Affiliate" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {editing.affiliateId && (
+                        <SelectItem value={editing.affiliateId}>
+                          {labelFor(affMap.get(editing.affiliateId))}
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>AFFILIATE COMMISSION %</Label>
+                  <Input
+                    type="number"
+                    value={editing.affiliateComm}
+                    disabled
+                    readOnly
+                    className="bg-muted cursor-not-allowed text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>USAGE LIMIT <span className="text-muted-foreground font-normal lowercase">(optional)</span></Label>
                   <Input
                     type="number"
                     min={1}
-                    placeholder="∞"
+                    placeholder="Unlimited"
                     value={editing.usageLimit}
                     onChange={(e) => setEditing({ ...editing, usageLimit: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label>Limit per customer</Label>
+                  <Label>LIMIT PER CUSTOMER <span className="text-muted-foreground font-normal lowercase">(optional)</span></Label>
                   <Input
                     type="number"
                     min={1}
-                    placeholder="∞"
+                    placeholder="Unlimited"
                     value={editing.limitPerCustomer}
                     onChange={(e) => setEditing({ ...editing, limitPerCustomer: e.target.value })}
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Usage count</Label>
+                  <Label>USAGE COUNT</Label>
                   <Input
                     type="number"
                     min={0}
@@ -771,7 +897,7 @@ export function PromoCodeManager({
                   )}
                 </div>
                 <div>
-                  <Label>Status</Label>
+                  <Label>STATUS</Label>
                   <Select
                     value={editing.status}
                     onValueChange={(v) =>
@@ -786,7 +912,15 @@ export function PromoCodeManager({
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
+                  <div className="text-[11px] text-muted-foreground mt-1">Set to Inactive to disable this promo code</div>
                 </div>
+              </div>
+
+              <div className="p-3 bg-indigo-50/50 border border-indigo-100 rounded-lg text-xs text-primary mt-2">
+                <strong>Max discount (subscriber + affiliate + SAM/Mgr):</strong> 30%
+              </div>
+              <div className="p-3 bg-green-50/80 rounded-lg text-xs text-emerald-800 mt-2">
+                <strong>Note:</strong> Commission is calculated on the <strong>discounted amount</strong>, not the full price. Code is case-insensitive.
               </div>
             </div>
           )}

@@ -232,7 +232,7 @@ async function syncSubscriptionToDjango(opts: {
 }
 
 function extractSubscriptionIdFromInvoice(inv: Stripe.Invoice): string | null {
-  let subId = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id;
+  let subId = typeof (inv as any).subscription === "string" ? (inv as any).subscription : (inv as any).subscription?.id;
   if (!subId && inv.lines?.data?.[0]) {
     const line = inv.lines.data[0] as any;
     subId = line.subscription || line.parent?.subscription_item_details?.subscription;
@@ -324,8 +324,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
 
               if (subscriptionId) {
                 fullSub = await stripe.subscriptions.retrieve(subscriptionId);
-                if (fullSub && fullSub.discount) {
-                  const pVal = fullSub.discount.promotion_code;
+                if (fullSub && (fullSub as any).discount) {
+                  const pVal = (fullSub as any).discount.promotion_code;
                   if (typeof pVal === "string") {
                     stripePromoId = pVal;
                   } else if (pVal && typeof pVal === "object") {
@@ -583,8 +583,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 }
 
                 // 2. Fallback to fullSub.discount if not found on invoice
-                if (!stripePromoId && fullSub && fullSub.discount) {
-                  const pVal = fullSub.discount.promotion_code;
+                if (!stripePromoId && fullSub && (fullSub as any).discount) {
+                  const pVal = (fullSub as any).discount.promotion_code;
                   if (typeof pVal === "string") {
                     stripePromoId = pVal;
                   } else if (pVal && typeof pVal === "object") {
@@ -725,8 +725,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     const periodEnd = rawPeriodEnd
                       ? new Date(rawPeriodEnd * 1000).toISOString()
                       : null;
-                     const trialEndsAt = (fullSub && fullSub.trial_end) ? new Date(fullSub.trial_end * 1000).toISOString() : null;
-                     const { data: newSub, error: subErr } = await supabaseAdmin
+                    const trialEndsAt = (fullSub && fullSub.trial_end) ? new Date(fullSub.trial_end * 1000).toISOString() : null;
+                    const { data: newSub, error: subErr } = await supabaseAdmin
                       .from("subscriptions")
                       .upsert(
                         {
@@ -760,7 +760,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       const cancelAtPeriodEnd = fullSub.cancel_at_period_end || false;
                       await syncSubscriptionToDjango({
                         djangoUserId: meta.user_id,
-                        email: meta.email || customerEmail,
+                        email: (meta.email || customerEmail) as string,
                         role: meta.role || "guest",
                         packageId: meta.package_id || null,
                         packageName: meta.package_name || "Subscription Plan",
@@ -862,45 +862,45 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
               );
               break;
             }
-             case "charge.refunded": {
-                const charge = event.data.object as Stripe.Charge;
-                let subId = (charge as any).subscription;
-                if (!subId && charge.invoice && typeof charge.invoice === "string") {
-                  try {
-                    const inv = await stripe.invoices.retrieve(charge.invoice);
-                    subId = extractSubscriptionIdFromInvoice(inv);
-                  } catch (e) {
-                    console.error("Failed to retrieve invoice in charge.refunded:", e);
-                  }
+            case "charge.refunded": {
+              const charge = event.data.object as Stripe.Charge;
+              let subId = (charge as any).subscription;
+              if (!subId && (charge as any).invoice && typeof (charge as any).invoice === "string") {
+                try {
+                  const inv = await stripe.invoices.retrieve((charge as any).invoice);
+                  subId = extractSubscriptionIdFromInvoice(inv);
+                } catch (e) {
+                  console.error("Failed to retrieve invoice in charge.refunded:", e);
                 }
-                let subRowId: string | null = null;
-                if (subId) {
-                  const { data: subRow } = await supabaseAdmin
-                    .from("subscriptions")
-                    .select("id")
-                    .eq("stripe_subscription_id", subId)
-                    .maybeSingle();
-                  if (subRow) {
-                    subRowId = subRow.id;
-                    // Void any pending commissions tied to this subscription so refunded sales don't pay out.
-                    await supabaseAdmin
-                      .from("commissions")
-                      .update({ status: "voided" } as never)
-                      .eq("subscription_id", subRow.id)
-                      .eq("status", "pending");
-                  }
-                  await detectRapidRefund(subId, charge.amount_refunded ?? 0);
+              }
+              let subRowId: string | null = null;
+              if (subId) {
+                const { data: subRow } = await supabaseAdmin
+                  .from("subscriptions")
+                  .select("id")
+                  .eq("stripe_subscription_id", subId)
+                  .maybeSingle();
+                if (subRow) {
+                  subRowId = subRow.id;
+                  // Void any pending commissions tied to this subscription so refunded sales don't pay out.
+                  await supabaseAdmin
+                    .from("commissions")
+                    .update({ status: "voided" } as never)
+                    .eq("subscription_id", subRow.id)
+                    .eq("status", "pending");
                 }
+                await detectRapidRefund(subId, charge.amount_refunded ?? 0);
+              }
 
-                await supabaseAdmin.from("transactions").insert({
-                  stripe_event_id: event.id,
-                  type: "refund",
-                  amount_cents: -(charge.amount_refunded ?? 0),
-                  currency: charge.currency,
-                  raw: charge as never,
-                  subscription_id: subRowId,
-                });
-              
+              await supabaseAdmin.from("transactions").insert({
+                stripe_event_id: event.id,
+                type: "refund",
+                amount_cents: -(charge.amount_refunded ?? 0),
+                currency: charge.currency,
+                raw: charge as never,
+                subscription_id: subRowId,
+              });
+
               await notifyAdmins(
                 "admin_alerts",
                 "Refund issued",
