@@ -255,6 +255,14 @@ export const updateSubordinate = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "update_subordinate",
+      entity_type: "profile",
+      entity_id: data.userId,
+      new_values: updates,
+    });
+
     return { ok: true };
   });
 

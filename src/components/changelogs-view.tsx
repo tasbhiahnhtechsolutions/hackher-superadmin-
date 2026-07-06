@@ -98,6 +98,25 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
       targetRole = rawRole === "sam" ? "SAM" : rawRole === "manager" ? "Manager" : "Affiliate";
       changeDesc = `Created new subordinate <strong>${targetName}</strong> (${targetRole})`;
     } 
+    else if (log.action === "update_subordinate") {
+      type = "Member";
+      targetUserId = log.entity_id || "";
+      const targetProfile = profiles.find(p => p.id === log.entity_id);
+      targetName = targetProfile?.full_name || targetProfile?.email || "User";
+      const rawRole = targetProfile?.role || "affiliate";
+      targetRole = rawRole === "sam" ? "SAM" : rawRole === "manager" ? "Manager" : "Affiliate";
+      
+      const changes = [];
+      if (newValues.commission_rate !== undefined) changes.push(`Commission: ${(newValues.commission_rate * 100).toFixed(1)}%`);
+      if (newValues.status !== undefined) changes.push(`Status: ${newValues.status}`);
+      if (newValues.metadata?.phone_number !== undefined) changes.push(`Phone`);
+      if (newValues.metadata?.payment_method !== undefined) changes.push(`Payment Method`);
+      if (newValues.full_name !== undefined) changes.push(`Name`);
+      if (newValues.email !== undefined) changes.push(`Email`);
+      
+      const changesStr = changes.length > 0 ? changes.join(", ") : "details";
+      changeDesc = `Updated ${targetRole} <strong>${targetName}</strong> (${changesStr})`;
+    }
     else if (log.action === "update_commission_rate") {
       type = "Commission";
       targetUserId = log.entity_id || "";

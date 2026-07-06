@@ -407,7 +407,7 @@ export function PromoCodeManager({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Code</TableHead>
-                      <TableHead>Affiliate</TableHead>
+                      {showHierarchy && <TableHead>Affiliate</TableHead>}
                       <TableHead>Campaign</TableHead>
                       <TableHead>Discount</TableHead>
                       <TableHead>Start Date</TableHead>
@@ -464,7 +464,7 @@ export function PromoCodeManager({
                                 <Copy className="h-3 w-3" />
                               </Button>
                             </TableCell>
-                            <TableCell>{labelFor(aff) || "—"}</TableCell>
+                            {showHierarchy && <TableCell>{labelFor(aff) || "—"}</TableCell>}
                             <TableCell>
                               {c.campaign_label ? (
                                 <Badge variant="outline">{c.campaign_label}</Badge>

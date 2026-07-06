@@ -697,7 +697,7 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                       .eq("id", planId)
                       .maybeSingle();
                     if (!existingPlan) {
-                      planId = undefined; // invalid or deleted plan_id in metadata
+                      planId = undefined as any; // invalid or deleted plan_id in metadata
                     }
                   }
 
