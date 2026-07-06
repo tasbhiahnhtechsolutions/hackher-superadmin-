@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HackHer.ai — Affiliate Dashboard Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* HackHer.ai brand palette */
+    --primary: #18294F;        /* HackHer dark navy */
+    --primary-light: #2E4473;  /* Lighter navy */
+    --primary-dark: #0F1A33;   /* Deeper navy */
+    --accent: #E86E3C;         /* HackHer signature orange */
+    --accent-light: #F29470;
+    --accent-dark: #C4541E;
+    --green: #10B981; --red: #EF4444; --blue: #3B82F6;
+    --g50: #F9FAFB; --g100: #F3F4F6; --g200: #E5E7EB; --g300: #D1D5DB;
+    --g500: #6B7280; --g700: #374151; --g900: #111827;
+    --sidebar-w: 240px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--g100); color: var(--g900); -webkit-font-smoothing: antialiased; }
+
+  /* ROLE SWITCHER */
+  .role-switcher { background: var(--primary-dark); color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 52px; font-size: 13px; position: sticky; top: 0; z-index: 200; border-bottom: 2px solid var(--accent); }
+  .role-switcher .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; font-size: 13px; }
+  .role-switcher .brand::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(232,110,60,0.3); }
+  .role-switcher span.label { opacity: 0.65; }
+  .role-btns { display: flex; gap: 8px; }
+  .role-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .role-btn:hover { background: rgba(255,255,255,0.1); }
+  .role-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: calc(100vh - 48px); }
+  .sidebar { width: var(--sidebar-w); background: white; border-right: 1px solid var(--g200); padding: 24px 0; flex-shrink: 0; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 20px 20px; font-size: 18px; font-weight: 800; color: var(--primary-dark); border-bottom: 1px solid var(--g200); margin-bottom: 12px; letter-spacing: -0.01em; }
+  .sidebar-logo::before { content: ''; width: 8px; height: 24px; border-radius: 2px; background: linear-gradient(180deg, var(--accent) 0%, var(--primary) 100%); }
+  .sidebar-section { padding: 8px 20px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--g500); font-weight: 700; margin-top: 8px; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; font-size: 13px; color: var(--g700); cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+  .sidebar-item:hover { background: var(--g50); color: var(--primary); }
+  .sidebar-item.active { background: #FCE5D7; color: var(--accent-dark); border-left-color: var(--accent); font-weight: 600; }
+  .sidebar-item .icon { width: 18px; text-align: center; font-size: 15px; }
+
+  /* MAIN */
+  .main { flex: 1; padding: 28px 32px; max-width: 1100px; }
+  .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--g500); margin-bottom: 24px; }
+
+  /* CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid var(--g200); }
+  .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--g500); font-weight: 600; }
+  .stat-card .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .stat-card .change { font-size: 12px; margin-top: 4px; }
+  .stat-card .change.up { color: var(--green); }
+  .stat-card .change.down { color: var(--red); }
+
+  /* TABLE */
+  .card { background: white; border-radius: 12px; border: 1px solid var(--g200); margin-bottom: 24px; overflow: hidden; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--g200); display: flex; justify-content: space-between; align-items: center; }
+  .card-header h3 { font-size: 15px; }
+  .card-body { padding: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--g50); text-align: left; padding: 10px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--g500); font-weight: 700; border-bottom: 1px solid var(--g200); }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--g100); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--g50); }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #D1FAE5; color: #065F46; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+  .badge-red { background: #FEE2E2; color: #991B1B; }
+  .badge-purple { background: #E0E6F2; color: var(--primary-dark); }
+  .badge-navy { background: #E0E6F2; color: var(--primary-dark); }
+  .badge-orange { background: #FCE5D7; color: var(--accent-dark); }
+  .badge-blue { background: #DBEAFE; color: #1E40AF; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-navy { background: var(--primary); color: white; }
+  .btn-navy:hover { background: var(--primary-dark); }
+  .btn-outline { background: white; color: var(--g700); border: 1px solid var(--g300); }
+  .btn-outline:hover { background: var(--g50); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+  /* CHART PLACEHOLDER */
+  .chart-container { padding: 20px; }
+  .chart { height: 240px; display: flex; align-items: flex-end; gap: 6px; padding: 0 8px; }
+  .chart-bar { flex: 1; border-radius: 4px 4px 0 0; transition: all 0.3s; cursor: pointer; position: relative; min-width: 20px; }
+  .chart-bar:hover { opacity: 0.8; }
+  .chart-bar .tooltip { display: none; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: var(--g900); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
+  .chart-bar:hover .tooltip { display: block; }
+  .chart-labels { display: flex; gap: 6px; padding: 8px 8px 0; }
+  .chart-labels span { flex: 1; text-align: center; font-size: 10px; color: var(--g500); min-width: 20px; }
+  .chart-tabs { display: flex; gap: 4px; }
+  .chart-tab { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--g300); background: white; color: var(--g700); }
+  .chart-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 16px; width: 520px; max-height: 90vh; overflow-y: auto; padding: 28px; }
+  .modal h2 { font-size: 18px; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--g500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--g300); border-radius: 8px; font-size: 14px; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,110,60,0.15); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
+
+  /* HIDDEN */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* FILTER BAR (generic) */
+  .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--g200); background: var(--g50); align-items: center; }
+  .filter-bar .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+  .filter-bar .search-wrap .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--g500); font-size: 13px; pointer-events: none; }
+  .filter-bar input[type="text"], .filter-bar input[type="search"] { width: 100%; padding: 8px 12px 8px 30px; border: 1px solid var(--g300); border-radius: 8px; font-size: 13px; background: white; }
+  .filter-bar select { padding: 8px 12px; border: 1px solid var(--g300); border-radius: 8px; font-size: 13px; background: white; cursor: pointer; }
+  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,110,60,0.15); }
+  .filter-bar .reset-btn { display: inline-flex; align-items: center; gap: 4px; padding: 7px 12px; border: 1px solid transparent; background: transparent; color: var(--accent-dark); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 6px; text-decoration: none; }
+  .filter-bar .reset-btn:hover { background: #FCE5D7; }
+
+  /* SORTABLE TABLE HEADERS */
+  th.sortable { cursor: pointer; user-select: none; position: relative; padding-right: 24px; }
+  th.sortable::after { content: '↕'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--g300); font-size: 11px; }
+  th.sortable:hover { color: var(--accent-dark); background: #FCE5D7; }
+  th.sortable:hover::after { color: var(--accent-dark); }
+  th.sortable.sort-asc::after { content: '▲'; color: var(--accent); font-size: 9px; }
+  th.sortable.sort-desc::after { content: '▼'; color: var(--accent); font-size: 9px; }
+
+  /* EMPTY STATE */
+  .empty-row td { text-align: center; padding: 32px 16px; color: var(--g500); font-style: italic; }
+
+  /* SOCIAL HANDLES +/- WIDGET */
+  .social-list { display: flex; flex-direction: column; gap: 8px; }
+  .social-row { display: flex; gap: 6px; align-items: center; }
+  .social-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--g300); border-radius: 8px; font-size: 13px; }
+  .social-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,110,60,0.15); }
+  .icon-btn { width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--g300); background: white; color: var(--g700); font-size: 15px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .icon-btn:hover { background: #FCE5D7; border-color: var(--accent); color: var(--accent-dark); }
+  .icon-btn.minus:hover { background: #FEE2E2; border-color: var(--red); color: var(--red); }
+
+  /* SVG LINE CHART */
+  .line-chart-wrap { padding: 20px; }
+  .line-chart-svg { width: 100%; height: 260px; display: block; }
+  .line-chart-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 12px 4px 0; font-size: 12px; color: var(--g700); }
+  .line-chart-legend .lg-item { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; padding: 4px 8px; border-radius: 6px; transition: background 0.15s; }
+  .line-chart-legend .lg-item:hover { background: var(--g100); }
+  .line-chart-legend .lg-item.off { opacity: 0.4; }
+  .line-chart-legend .lg-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  .line-chart-tooltip { position: absolute; background: var(--g900); color: white; padding: 6px 10px; border-radius: 6px; font-size: 11px; pointer-events: none; opacity: 0; transition: opacity 0.15s; white-space: nowrap; z-index: 10; }
+
+  /* INLINE STAT SPLIT (xx/yy + pct) */
+  .stat-card .value .denom { font-size: 16px; color: var(--g500); font-weight: 600; }
+  .stat-card .pct-pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: #FCE5D7; color: var(--accent-dark); margin-left: 6px; vertical-align: middle; }
+
+  /* MINI LINE CHART (SVG) */
+  .sparkline { width: 80px; height: 24px; }
+
+  .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- ROLE SWITCHER -->
+<div class="role-switcher">
+  <div class="brand">HackHer.ai <span class="label" style="margin-left:10px;text-transform:none;letter-spacing:0;font-weight:500;">Affiliate Dashboard — Interactive Mockup</span></div>
+  <div class="role-btns">
+    <button class="role-btn" onclick="switchRole('sa')">Super Admin</button>
+    <button class="role-btn active" onclick="switchRole('admin')">Super Admin Manager</button>
+    <button class="role-btn" onclick="switchRole('manager')">Manager</button>
+    <button class="role-btn" onclick="switchRole('affiliate')">Affiliate</button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- ========== SUPER ADMIN ========== -->
+  <div id="role-admin" class="panel active" style="display:flex;flex:1;">
+    <div class="sidebar">
+      <div class="sidebar-logo">HackHer SAM</div>
+      <div class="sidebar-section">Overview</div>
+      <div class="sidebar-item active" onclick="showAdminPage('dashboard',this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-section">People</div>
+      <div class="sidebar-item sa-only" id="sa-sams-nav" style="display:none;" onclick="showAdminPage('sams',this)"><span class="icon">👑</span> My SAMs</div>
+      <div class="sidebar-item" onclick="showAdminPage('managers',this)"><span class="icon">👥</span> Managers</div>
+      <div class="sidebar-item" onclick="showAdminPage('affiliates',this)"><span class="icon">📣</span> All Affiliates</div>
+      <div class="sidebar-section">Marketing</div>
+      <div class="sidebar-item" onclick="showAdminPage('promo',this)"><span class="icon">🎟️</span> Promo Codes</div>
+      <div class="sidebar-item" onclick="showAdminPage('campaigns',this)"><span class="icon">📈</span> Campaigns</div>
+      <div class="sidebar-section">Finance</div>
+      <div class="sidebar-item" onclick="showAdminPage('commissions',this)"><span class="icon">💰</span> Commissions</div>
+      <div class="sidebar-item" onclick="showAdminPage('payouts',this)"><span class="icon">💳</span> Payouts</div>
+      <div class="sidebar-item sam-only" id="sam-earnings-nav" onclick="showAdminPage('earnings',this)"><span class="icon">🏦</span> My Earnings</div>
+      <div class="sidebar-section">Activity</div>
+      <div class="sidebar-item" onclick="showAdminPage('changelog',this)"><span class="icon">📋</span> Change Logs</div>
+    </div>
+    <div class="main">
+      <!-- ADMIN DASHBOARD -->
+      <div id="admin-dashboard" class="panel active">
+        <div class="page-title">Super Admin Manager Dashboard</div>
+        <div class="page-sub">Monitor the affiliate tree, commissions, and manager performance.</div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Total Revenue</div><div class="value" style="color:var(--green);">$14,280</div><div class="change up">+23% vs last month</div></div>
+          <div class="stat-card"><div class="label">Active Affiliates</div><div class="value">12</div><div class="change up">+3 this month</div></div>
+          <div class="stat-card"><div class="label">Subscribers via Affiliates</div><div class="value">168<span class="denom">/892</span><span class="pct-pill">19%</span></div><div class="change up">+41 this month</div></div>
+          <div class="stat-card"><div class="label">Total Commissions Owed</div><div class="value" style="color:var(--primary);">$2,142</div><div class="change">Payout due Aug 15</div></div>
+          <div class="stat-card"><div class="label">Trial Users (Pending)</div><div class="value" style="color:var(--accent);">87<span class="denom">/205</span><span class="pct-pill">42%</span></div><div class="change">conversion rate</div></div>
+          <div class="stat-card"><div class="label">Net Revenue</div><div class="value" style="color:var(--green);">$12,138</div><div class="change up">After all commissions</div></div>
+          <div class="stat-card"><div class="label">Total Subscribers</div><div class="value">892</div><div class="change">All-time active</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Revenue Breakdown — Full Waterfall</h3>
+            <div class="chart-tabs">
+              <span class="chart-tab active">Weekly</span>
+              <span class="chart-tab">Monthly</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="chart" id="admin-revenue-chart"></div>
+            <div class="chart-labels" id="admin-revenue-labels"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3>Top Performing Affiliates</h3><button class="btn btn-outline btn-sm">View All</button></div>
+          <div class="filter-bar" id="sam-top-filter">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" data-filter="search" placeholder="Search affiliates...">
+            </div>
+            <select data-filter-col="1"><option value="">All managers</option><option>Lauren S.</option><option>Andre D.</option></select>
+            <select data-filter-col="2"><option value="">All campaigns</option><option>TikTok Launch</option><option>IG Moms</option><option>Podcast Q4</option><option>Cosmo Feature</option><option>IG Couples</option></select>
+            <select data-filter-col="6"><option value="">Any status</option><option>Active</option><option>Review</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset filters</a>
+          </div>
+          <div class="card-body">
+            <table data-table="sam-top">
+              <thead><tr><th>Affiliate</th><th>Manager</th><th>Campaign</th><th>Subscribers</th><th>Revenue</th><th>Commission</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:var(--primary);">KM</div>Kevin M.</div></td><td>Lauren S.</td><td><span class="badge badge-blue">TikTok Launch</span></td><td>48</td><td>$4,075</td><td>$407.50</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:#3B82F6;">LM</div>Lizzie M.</div></td><td>Lauren S.</td><td><span class="badge badge-purple">IG Moms</span></td><td>35</td><td>$2,972</td><td>$297.20</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:var(--accent);">BS</div>Betty S.</div></td><td>Lauren S.</td><td><span class="badge badge-amber">Podcast Q4</span></td><td>28</td><td>$2,378</td><td>$237.80</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:#EF4444;">JA</div>Julie A.</div></td><td>Andre D.</td><td><span class="badge badge-blue">Cosmo Feature</span></td><td>22</td><td>$1,868</td><td>$186.80</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:#10B981;">DP</div>Derek P.</div></td><td>Andre D.</td><td><span class="badge badge-purple">IG Couples</span></td><td>15</td><td>$1,274</td><td>$127.40</td><td><span class="badge badge-amber">Review</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN PROMO CODES -->
+      <div id="admin-promo" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><div class="page-title">Promo Codes</div><div class="page-sub">Manage all coupon codes across affiliates</div></div>
+          <button class="btn btn-primary" onclick="openModal('promo-modal')">+ Add Promo Code</button>
+        </div>
+        <div class="card">
+          <div class="filter-bar" id="sam-promo-filter">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" data-filter="search" placeholder="Search codes, affiliates, campaigns...">
+            </div>
+            <select data-filter-col="1"><option value="">All affiliates</option><option>Kevin M.</option><option>Lizzie M.</option><option>Betty S.</option><option>Julie A.</option><option>Derek P.</option></select>
+            <select data-filter-col="2"><option value="">All campaigns</option><option>TikTok Launch</option><option>IG Moms</option><option>Podcast Q4</option><option>Cosmo Feature</option><option>IG Couples</option></select>
+            <select data-filter-col="7"><option value="">Any status</option><option>Active</option><option>Expiring</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset filters</a>
+          </div>
+          <div class="card-body">
+            <table data-table="sam-promo">
+              <thead><tr><th>Code</th><th>Affiliate</th><th>Campaign</th><th>Discount</th><th>Start Date</th><th>End Date</th><th>Uses</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td style="font-weight:700;font-family:monospace;">KEVIN-HACK-TT</td><td>Kevin M.</td><td><span class="badge badge-blue">TikTok Launch</span></td><td>15%</td><td>Aug 1, 2025</td><td>Sep 30, 2025</td><td>48</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+                <tr><td style="font-weight:700;font-family:monospace;">LIZZIE-MOM-IG</td><td>Lizzie M.</td><td><span class="badge badge-purple">IG Moms</span></td><td>15%</td><td>Aug 3, 2025</td><td>Oct 15, 2025</td><td>35</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+                <tr><td style="font-weight:700;font-family:monospace;">BETTY-POD-Q4</td><td>Betty S.</td><td><span class="badge badge-amber">Podcast Q4</span></td><td>10%</td><td>Aug 10, 2025</td><td>Dec 31, 2025</td><td>28</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+                <tr><td style="font-weight:700;font-family:monospace;">SPECIAL-20</td><td>Julie A.</td><td><span class="badge badge-blue">Cosmo Feature</span></td><td>20%</td><td>Jul 15, 2025</td><td>Aug 31, 2025</td><td>22</td><td><span class="badge badge-amber">Expiring</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+                <tr><td style="font-weight:700;font-family:monospace;">HACKHER-LOVE</td><td>Derek P.</td><td><span class="badge badge-purple">IG Couples</span></td><td>15%</td><td>Aug 5, 2025</td><td>Nov 30, 2025</td><td>15</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN COMMISSIONS -->
+      <div id="admin-commissions" class="panel">
+        <div class="page-title">Commission Breakdown</div>
+        <div class="page-sub">Revenue waterfall — manager and affiliate commissions visible to Super Admin Manager</div>
+        <div class="card">
+          <div class="card-header"><h3>Per-Subscriber Revenue Breakdown</h3><button class="btn btn-outline btn-sm">Export CSV</button></div>
+          <div class="filter-bar" id="sam-comm-filter">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" data-filter="search" placeholder="Search subscriber, plan, amount...">
+            </div>
+            <select data-filter-col="1"><option value="">All plans</option><option>Premium</option><option>Founders</option></select>
+            <select><option>Month: July 2025</option><option>Month: August 2025</option><option>Month: September 2025</option></select>
+            <select><option>Year: 2025</option><option>Year: 2024</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset filters</a>
+          </div>
+          <div class="card-body">
+            <table data-table="sam-comm">
+              <thead><tr><th>Subscriber</th><th>Plan</th><th>Full Price</th><th>Discount</th><th>Paid</th><th>Affiliate (10%)</th><th>Manager (4%)</th><th>Super Mgr (1%)</th><th>Net</th></tr></thead>
+              <tbody>
+                <tr><td>Sarah J.</td><td>Premium</td><td>$9.99</td><td>15%</td><td>$8.49</td><td style="color:var(--primary);">$0.85</td><td style="color:var(--blue);">$0.34</td><td>$0.08</td><td style="color:var(--green);font-weight:700;">$7.22</td></tr>
+                <tr><td>Mike R.</td><td>Premium</td><td>$9.99</td><td>15%</td><td>$8.49</td><td style="color:var(--primary);">$0.85</td><td style="color:var(--blue);">$0.34</td><td>$0.08</td><td style="color:var(--green);font-weight:700;">$7.22</td></tr>
+                <tr><td>Tanya W.</td><td>Premium</td><td>$9.99</td><td>10%</td><td>$8.99</td><td style="color:var(--primary);">$0.90</td><td style="color:var(--blue);">$0.36</td><td>$0.09</td><td style="color:var(--green);font-weight:700;">$7.64</td></tr>
+                <tr><td>James L.</td><td>Premium</td><td>$9.99</td><td>20%</td><td>$7.99</td><td style="color:var(--primary);">$0.80</td><td style="color:var(--blue);">$0.32</td><td>$0.08</td><td style="color:var(--green);font-weight:700;">$6.79</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN PAYOUTS -->
+      <div id="admin-payouts" class="panel">
+        <div class="page-title">Payout Management</div>
+        <div class="page-sub">Net 60 cycle: 30-day hold + end of following month. Mark paid status is visible to managers and affiliates.</div>
+        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card"><div class="label">Pending Payouts</div><div class="value" style="color:var(--accent);">$2,142</div></div>
+          <div class="stat-card"><div class="label">Paid This Month</div><div class="value" style="color:var(--green);">$1,890</div></div>
+          <div class="stat-card"><div class="label">30-Day Hold</div><div class="value" style="color:var(--blue);">$648.20</div><div class="change">18 subscribers in hold period</div></div>
+          <div class="stat-card"><div class="label">Next Payout Date</div><div class="value" style="font-size:20px;">Aug 15</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Payout Queue</h3><button class="btn btn-outline btn-sm">Export CSV</button></div>
+          <div class="card-body">
+            <div class="filter-bar" id="sam-payouts-filter">
+              <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search recipient..."></div>
+              <select data-filter-col="1"><option value="">All roles</option><option>Affiliate</option><option>Manager</option><option>Super Mgr</option></select>
+              <select data-filter-col="3"><option value="">All periods</option><option>Jul 2025</option><option>Aug 2025</option><option>Sep 2025</option></select>
+              <select data-filter-col="4"><option value="">All statuses</option><option>Paid</option><option>Pending</option></select>
+              <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+            </div>
+            <table data-table="sam-payouts">
+              <thead><tr><th class="sortable">Recipient</th><th class="sortable">Role</th><th class="sortable">Amount Due</th><th class="sortable">Period</th><th class="sortable">Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Kevin M.</td><td><span class="badge badge-purple">Affiliate</span></td><td style="font-weight:700;">$407.50</td><td>Jul 2025</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn btn-outline btn-sm" onclick="alert('Marked as Unpaid (demo)')">Mark Unpaid</button></td></tr>
+                <tr><td>Lizzie M.</td><td><span class="badge badge-purple">Affiliate</span></td><td style="font-weight:700;">$297.20</td><td>Jul 2025</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn btn-outline btn-sm" onclick="alert('Marked as Unpaid (demo)')">Mark Unpaid</button></td></tr>
+                <tr><td>Lauren S.</td><td><span class="badge badge-blue">Manager</span></td><td style="font-weight:700;">$376.80</td><td>Jul 2025</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary btn-sm">Mark Paid</button></td></tr>
+                <tr><td>Andre D.</td><td><span class="badge badge-blue">Manager</span></td><td style="font-weight:700;">$125.68</td><td>Jul 2025</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary btn-sm">Mark Paid</button></td></tr>
+                <tr><td>Jessica T.</td><td><span class="badge badge-amber">Super Mgr</span></td><td style="font-weight:700;">$142.80</td><td>Jul 2025</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary btn-sm">Mark Paid</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-earnings" class="panel">
+        <div class="page-title">My Earnings</div>
+        <div class="page-sub">Your commission at 1% of discounted subscription price (Super Admin Manager tier)</div>
+        <div style="padding:16px;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065F46;margin-bottom:16px;"><strong>Payout Terms (Net 60):</strong> Payouts are on a Net 60 cycle. New subscribers enter a 30-day hold period, then are paid at the end of the following month.</div>
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card"><div class="label">Total Earned</div><div class="value" style="color:var(--green);">$125.62</div></div>
+          <div class="stat-card"><div class="label">Paid Out</div><div class="value">$0.00</div></div>
+          <div class="stat-card"><div class="label">Pending</div><div class="value" style="color:var(--accent);">$125.62</div></div>
+          <div class="stat-card"><div class="label">30-Day Hold</div><div class="value" style="color:var(--blue);">$42.30</div><div class="change">18 subscribers</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Payout Status</h3></div>
+          <div class="card-body" style="padding:20px;">
+            <table style="width:100%;font-size:13px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--g200);">
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Period</th>
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Amount</th>
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--g100);">
+                  <td style="padding:12px 0;">Jul 2025</td>
+                  <td style="padding:12px 0;font-weight:600;color:var(--primary);">$125.62</td>
+                  <td style="padding:12px 0;"><span class="badge badge-blue">Cleared</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0;">Aug 2025</td>
+                  <td style="padding:12px 0;font-weight:600;color:var(--accent);">$87.40</td>
+                  <td style="padding:12px 0;"><span class="badge badge-amber">Pending</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SA-only: SAM Management -->
+      <div id="admin-sams" class="panel">
+        <div class="page-title">My Super Admin Managers</div>
+        <div class="page-sub">Set commission rates for your SAMs. Total commission across all tiers must not exceed 30%.</div>
+        <div class="card">
+          <div class="card-header"><h3>SAM Commission Rates</h3><button class="btn btn-primary btn-sm" onclick="openModal('sa-add-sam-modal')">+ Add SAM</button></div>
+          <div class="card-body">
+            <table data-table="sa-sams">
+              <thead><tr><th class="sortable">Name</th><th class="sortable">Commission %</th><th class="sortable">Managers</th><th class="sortable">Total Affiliates</th><th class="sortable">Total Subscribers</th><th class="sortable">Total Earned</th><th class="sortable">Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:var(--accent);">JT</div>Jessica T.</div></td><td><strong>1%</strong></td><td>2</td><td>12</td><td>168</td><td>$125.62</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('sa-edit-sam-modal')">Edit</button></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:var(--primary);">MR</div>Maria R.</div></td><td><strong>1.5%</strong></td><td>1</td><td>6</td><td>72</td><td>$91.80</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('sa-edit-sam-modal')">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="padding:16px;background:#E0E6F2;border:1px solid #B8C5DC;border-radius:8px;font-size:13px;color:var(--primary-dark);margin-top:16px;"><strong>Commission Cap:</strong> The total commission across all tiers (SAM + Manager + Affiliate) cannot exceed 30% of the discounted price. When setting SAM commission, this affects the maximum available for Managers and Affiliates down the chain.</div>
+      </div>
+
+      <!-- People pages -->
+      <div id="admin-managers" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><div class="page-title">My Managers</div><div class="page-sub">Managers linked to you — each manages a group of affiliates</div></div>
+          <button class="btn btn-primary" onclick="openModal('sam-add-manager-modal')">+ Add Manager</button>
+        </div>
+        <div class="card"><div class="card-body">
+          <div class="filter-bar" id="sam-managers-filter">
+            <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search manager..."></div>
+            <select data-filter-col="8"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select>
+            <select><option>Year: 2025</option><option>Year: 2024</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="sam-managers"><thead><tr><th class="sortable">Name</th><th class="sortable">Affiliates</th><th class="sortable">Total Subscribers</th><th class="sortable">Pending Commission</th><th class="sortable">Total Paid to Date</th><th class="sortable">Their Commission (4%)</th><th class="sortable">Your Commission (1%)</th><th class="sortable">Status</th><th>Actions</th></tr></thead><tbody>
+          <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:var(--primary);">LS</div>Lauren S.</div></td><td>8</td><td>126</td><td>$94.20</td><td>$282.60</td><td>$376.80</td><td style="color:var(--green);font-weight:600;">$94.20</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('sam-edit-manager-modal')">Edit</button></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:8px;"><div class="avatar" style="background:var(--blue);">AD</div>Andre D.</div></td><td>4</td><td>42</td><td>$31.42</td><td>$94.26</td><td>$125.68</td><td style="color:var(--green);font-weight:600;">$31.42</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('sam-edit-manager-modal')">Edit</button></td></tr>
+        </tbody></table></div></div>
+      </div>
+      <div id="admin-affiliates" class="panel">
+        <div class="page-title">All Affiliates</div><div class="page-sub">Complete list across all your managers — you can reassign affiliates between managers</div>
+        <div class="card"><div class="card-header"><h3>Affiliates</h3><button class="btn btn-primary btn-sm" onclick="openModal('affiliate-modal')">+ Add Affiliate</button></div><div class="card-body">
+          <div class="filter-bar" id="sam-affs-filter">
+            <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search affiliate..."></div>
+            <select data-filter-col="1"><option value="">All managers</option><option>Lauren S.</option><option>Andre D.</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="sam-affs"><thead><tr><th class="sortable">Name</th><th class="sortable">Manager</th><th class="sortable">Promo Codes</th><th class="sortable">Subscribers</th><th class="sortable">Total Trial Users</th><th class="sortable">Contract Expiration</th><th class="sortable">Commission</th><th>Actions</th></tr></thead><tbody>
+          <tr><td>Kevin M.</td><td>Lauren S.</td><td>2</td><td>48</td><td>12</td><td>Aug 15, 2026</td><td>$407.50</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+          <tr><td>Lizzie M.</td><td>Lauren S.</td><td>1</td><td>35</td><td>8</td><td>Sep 20, 2026</td><td>$297.20</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+          <tr><td>Betty S.</td><td>Lauren S.</td><td>1</td><td>28</td><td>6</td><td>Oct 10, 2026</td><td>$237.80</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+          <tr><td>Julie A.</td><td>Andre D.</td><td>1</td><td>22</td><td>5</td><td>Jul 30, 2026</td><td>$186.80</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+          <tr><td>Derek P.</td><td>Andre D.</td><td>1</td><td>15</td><td>4</td><td>Sep 5, 2026</td><td>$127.40</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+        </tbody></table></div></div>
+      </div>
+      <div id="admin-campaigns" class="panel">
+        <div class="page-title">Campaigns</div><div class="page-sub">Track performance across platforms</div>
+        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card"><div class="label">TikTok Launch</div><div class="value">48</div><div class="change up">subscribers</div></div>
+          <div class="stat-card"><div class="label">IG Moms</div><div class="value">35</div><div class="change up">subscribers</div></div>
+          <div class="stat-card"><div class="label">Podcast Q4</div><div class="value">28</div><div class="change up">subscribers</div></div>
+          <div class="stat-card"><div class="label">Cosmo Feature</div><div class="value">22</div><div class="change">subscribers</div></div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header"><h3>Campaign Performance Over Time</h3></div>
+          <div class="card-body">
+            <div class="line-chart-wrap" id="sam-campaigns-chart"></div>
+            <div class="line-chart-legend" id="sam-campaigns-legend"></div>
+          </div>
+        </div>
+        <div style="padding:16px;background:#E0E6F2;border:1px solid #B8C5DC;border-radius:8px;font-size:13px;color:var(--primary-dark);margin-top:24px;"><strong>Future Enhancement:</strong> Geographic subscriber data (countries/cities) will be available to view campaign performance by location.</div>
+      </div>
+
+      <!-- ADMIN CHANGE LOGS -->
+      <div id="admin-changelog" class="panel">
+        <div class="page-title">Change Logs</div>
+        <div class="page-sub">Audit trail of promo code and commission changes.</div>
+        <div class="card"><div class="card-body">
+          <div class="filter-bar" id="sam-changelog-filter">
+            <input type="text" data-filter-search placeholder="Search..." style="flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--g200);border-radius:6px;font-size:13px;">
+            <select data-filter-col="1"><option value="">All Types</option><option>Promo Code</option><option>Commission</option></select>
+            <select data-filter-col="3" class="sa-changelog-role-filter" style="display:none;"><option value="">All Roles</option><option>SAM</option><option>Manager</option><option>Affiliate</option></select>
+            <select data-filter-col="3" class="sam-changelog-role-filter"><option value="">All Roles</option><option>Manager</option><option>Affiliate</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="sam-changelog">
+            <thead><tr>
+              <th class="sortable">Date</th>
+              <th class="sortable">Type</th>
+              <th class="sortable">Change</th>
+              <th class="sortable">Role</th>
+              <th class="sortable">Name</th>
+              <th class="sortable">Changed By</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Apr 10, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Created code <strong>SPRING20</strong> — 20% off</td><td>Affiliate</td><td>Kevin M.</td><td>Lauren S.</td></tr>
+              <tr><td>Apr 8, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>Affiliate commission changed <strong>10% → 12%</strong></td><td>Affiliate</td><td>Lizzie M.</td><td>Lauren S.</td></tr>
+              <tr><td>Apr 5, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Edited code <strong>VIP15</strong> — discount 15% → 18%</td><td>Affiliate</td><td>Betty S.</td><td>Andre D.</td></tr>
+              <tr><td>Apr 3, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>Manager commission changed <strong>4% → 5%</strong></td><td>Manager</td><td>Lauren S.</td><td>Jessica T.</td></tr>
+              <tr><td>Apr 1, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Deactivated code <strong>LAUNCH10</strong></td><td>Affiliate</td><td>Derek P.</td><td>Andre D.</td></tr>
+              <tr><td>Mar 28, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>Affiliate commission changed <strong>10% → 8%</strong></td><td>Affiliate</td><td>Julie A.</td><td>Andre D.</td></tr>
+              <tr class="sa-changelog-row" style="display:none;"><td>Mar 25, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>SAM commission changed <strong>1% → 1.5%</strong></td><td>SAM</td><td>Maria R.</td><td>Super Admin</td></tr>
+              <tr class="sa-changelog-row" style="display:none;"><td>Mar 20, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>SAM commission changed <strong>1% → 1.2%</strong></td><td>SAM</td><td>Jessica T.</td><td>Super Admin</td></tr>
+              <tr><td>Mar 15, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Created code <strong>EARLYBIRD</strong> — 10% off</td><td>Affiliate</td><td>Kevin M.</td><td>Lauren S.</td></tr>
+              <tr><td>Mar 10, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>Manager commission changed <strong>3% → 4%</strong></td><td>Manager</td><td>Andre D.</td><td>Jessica T.</td></tr>
+            </tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MANAGER ========== -->
+  <div id="role-manager" class="panel" style="display:flex;flex:1;">
+    <div class="sidebar">
+      <div class="sidebar-logo">HackHer Manager</div>
+      <div class="sidebar-section">Overview</div>
+      <div class="sidebar-item active" onclick="showMgrPage('dashboard',this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-section">My Affiliates</div>
+      <div class="sidebar-item" onclick="showMgrPage('affiliates',this)"><span class="icon">📣</span> Affiliates</div>
+      <div class="sidebar-item" onclick="showMgrPage('promomgr',this)"><span class="icon">🎟️</span> Promo Codes</div>
+      <div class="sidebar-section">Analytics</div>
+      <div class="sidebar-item" onclick="showMgrPage('analytics',this)"><span class="icon">📈</span> Campaign Analytics</div>
+      <div class="sidebar-section">Finance</div>
+      <div class="sidebar-item" onclick="showMgrPage('earnings',this)"><span class="icon">💰</span> My Earnings</div>
+      <div class="sidebar-item" onclick="showMgrPage('payouts',this)"><span class="icon">💳</span> Payouts</div>
+      <div class="sidebar-item" onclick="showMgrPage('reports',this)"><span class="icon">📄</span> Reports</div>
+      <div class="sidebar-section">Activity</div>
+      <div class="sidebar-item" onclick="showMgrPage('changelog',this)"><span class="icon">📋</span> Change Logs</div>
+    </div>
+    <div class="main">
+      <div id="mgr-dashboard" class="panel active">
+        <div class="page-title">Manager Dashboard</div>
+        <div class="page-sub">Lauren S. — Managing 8 affiliates</div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">My Affiliates</div><div class="value">8</div></div>
+          <div class="stat-card"><div class="label">Total Subscribers</div><div class="value">126</div><div class="change up">+28 this month</div></div>
+          <div class="stat-card"><div class="label">My Commission (4%)</div><div class="value" style="color:var(--primary);">$376.80</div></div>
+          <div class="stat-card"><div class="label">Affiliate Commissions</div><div class="value" style="color:var(--primary-light);">$942.00</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Affiliates Performance</h3></div>
+          <div class="card-body">
+            <div class="filter-bar" id="mgr-dash-filter">
+              <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search affiliate..."></div>
+              <select data-filter-col="1"><option value="">All campaigns</option><option>TikTok Launch</option><option>IG Moms</option><option>Podcast Q4</option></select>
+              <select data-filter-col="7"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select>
+              <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+            </div>
+            <table data-table="mgr-dash">
+              <thead><tr><th class="sortable">Affiliate</th><th class="sortable">Campaign</th><th class="sortable">Comm. %</th><th class="sortable">Subscribers</th><th class="sortable">Contract Expiration</th><th class="sortable">Their Commission</th><th class="sortable">My Commission</th><th class="sortable">Status</th></tr></thead>
+              <tbody>
+                <tr><td>Betty S.</td><td><span class="badge badge-amber">Podcast Q4</span></td><td>10%</td><td>28</td><td>Oct 10, 2026</td><td>$237.80</td><td style="color:var(--primary);font-weight:600;">$95.12</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td>Kevin M.</td><td><span class="badge badge-blue">TikTok Launch</span></td><td>10%</td><td>48</td><td>Aug 15, 2026</td><td>$407.50</td><td style="color:var(--primary);font-weight:600;">$163.00</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td>Lizzie M.</td><td><span class="badge badge-purple">IG Moms</span></td><td>10%</td><td>35</td><td>Sep 20, 2026</td><td>$297.20</td><td style="color:var(--primary);font-weight:600;">$118.88</td><td><span class="badge badge-green">Active</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="padding:16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:13px;color:#92400E;"><strong>Note:</strong> You can only view your own affiliates. Other managers' affiliates are not accessible.</div>
+      </div>
+      <div id="mgr-affiliates" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><div class="page-title">My Affiliates</div><div class="page-sub">Add, edit, or deactivate your affiliates. You cannot reassign them to other managers.</div></div>
+          <button class="btn btn-primary" onclick="openModal('mgr-add-affiliate-modal')">+ Add Affiliate</button>
+        </div>
+        <div class="card"><div class="card-body">
+          <div class="filter-bar" id="mgr-affs-filter">
+            <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search affiliate..."></div>
+            <select data-filter-col="6"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="mgr-affs"><thead><tr><th class="sortable">Name</th><th class="sortable">Commission %</th><th class="sortable">Promo Codes</th><th class="sortable">Subscribers</th><th class="sortable">Total Commission</th><th class="sortable">Contract Expires</th><th class="sortable">Status</th><th>Actions</th></tr></thead><tbody>
+          <tr><td>Kevin M.</td><td><strong>10%</strong></td><td>2</td><td>48</td><td>$407.50</td><td>Aug 15, 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-affiliate-modal')">Edit</button> <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:#FCA5A5;" onclick="alert('Affiliate deactivated (demo)')">Deactivate</button></td></tr>
+          <tr><td>Lizzie M.</td><td><strong>10%</strong></td><td>1</td><td>35</td><td>$297.20</td><td>Sep 20, 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-affiliate-modal')">Edit</button> <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:#FCA5A5;" onclick="alert('Affiliate deactivated (demo)')">Deactivate</button></td></tr>
+          <tr><td>Betty S.</td><td><strong>10%</strong></td><td>1</td><td>28</td><td>$237.80</td><td>Oct 10, 2026</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-affiliate-modal')">Edit</button> <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:#FCA5A5;" onclick="alert('Affiliate deactivated (demo)')">Deactivate</button></td></tr>
+        </tbody></table></div></div>
+        <div style="padding:16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;font-size:13px;color:#92400E;"><strong>Note:</strong> You can add, edit, and deactivate your own affiliates. Reassigning affiliates to other managers requires the Super Admin Manager.</div>
+      </div>
+      <div id="mgr-promomgr" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="page-title">Promo Codes</div><div class="page-sub">Generate and manage codes for your affiliates</div></div><button class="btn btn-primary" onclick="openModal('promo-modal')">+ Create Code</button></div>
+        <div class="card"><div class="card-body">
+          <div class="filter-bar" id="mgr-promo-filter">
+            <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search code..."></div>
+            <select data-filter-col="1"><option value="">All affiliates</option><option>Kevin M.</option><option>Lizzie M.</option></select>
+            <select data-filter-col="2"><option value="">All campaigns</option><option>TikTok Launch</option><option>IG Launch</option><option>IG Moms</option></select>
+            <select data-filter-col="7"><option value="">All statuses</option><option>Active</option><option>Expired</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="mgr-promo"><thead><tr><th class="sortable">Code</th><th class="sortable">Affiliate</th><th class="sortable">Campaign</th><th class="sortable">Discount</th><th class="sortable">Start Date</th><th class="sortable">End Date</th><th class="sortable">Uses</th><th class="sortable">Status</th><th>Action</th></tr></thead><tbody>
+          <tr><td style="font-family:monospace;font-weight:700;">KEVIN-HACK-TT</td><td>Kevin M.</td><td>TikTok Launch</td><td>15%</td><td>Aug 1, 2025</td><td>Sep 30, 2025</td><td>48</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+          <tr><td style="font-family:monospace;font-weight:700;">KEVIN-HACK-IG</td><td>Kevin M.</td><td>IG Launch</td><td>15%</td><td>Aug 1, 2025</td><td>Sep 30, 2025</td><td>12</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+          <tr><td style="font-family:monospace;font-weight:700;">LIZZIE-MOM-IG</td><td>Lizzie M.</td><td>IG Moms</td><td>15%</td><td>Aug 3, 2025</td><td>Oct 15, 2025</td><td>35</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+        </tbody></table></div></div>
+        <div style="padding:16px;background:#E0E6F2;border:1px solid #B8C5DC;border-radius:8px;font-size:13px;color:var(--primary-dark);margin-top:16px;"><strong>Note:</strong> These dates match your affiliate contracts. Contact Super Admin Manager to adjust dates or add new codes.</div>
+      </div>
+      <div id="mgr-analytics" class="panel">
+        <div class="page-title">Campaign Analytics</div><div class="page-sub">All your affiliates' active campaigns — click any label in the legend to toggle that campaign on or off.</div>
+        <div class="card">
+          <div class="card-header"><h3>Subscribers by Campaign (Weekly)</h3><div class="chart-tabs"><span class="chart-tab">Daily</span><span class="chart-tab active">Weekly</span><span class="chart-tab">Monthly</span></div></div>
+          <div class="card-body">
+            <div class="line-chart-wrap" id="mgr-campaign-chart"></div>
+            <div class="line-chart-legend" id="mgr-campaign-legend"></div>
+          </div>
+        </div>
+      </div>
+      <div id="mgr-earnings" class="panel">
+        <div class="page-title">My Earnings</div>
+        <div class="page-sub">Commission at 4% of discounted subscription price</div>
+        <div style="padding:16px;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065F46;margin-bottom:16px;"><strong>Payout Terms (Net 60):</strong> Payouts are on a Net 60 cycle. New subscribers enter a 30-day hold period, then are paid at the end of the following month.</div>
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card"><div class="label">Total Earned</div><div class="value" style="color:var(--green);">$376.80</div></div>
+          <div class="stat-card"><div class="label">Paid Out</div><div class="value">$0.00</div></div>
+          <div class="stat-card"><div class="label">Pending</div><div class="value" style="color:var(--accent);">$376.80</div></div>
+          <div class="stat-card"><div class="label">30-Day Hold</div><div class="value" style="color:var(--blue);">$94.20</div><div class="change">28 subscribers</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Payout Status</h3></div>
+          <div class="card-body" style="padding:20px;">
+            <table style="width:100%;font-size:13px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--g200);">
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Period</th>
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Amount</th>
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--g100);">
+                  <td style="padding:12px 0;">Jul 2025</td>
+                  <td style="padding:12px 0;font-weight:600;color:var(--primary);">$376.80</td>
+                  <td style="padding:12px 0;"><span class="badge badge-blue">Cleared</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0;">Aug 2025</td>
+                  <td style="padding:12px 0;font-weight:600;color:var(--accent);">$187.40</td>
+                  <td style="padding:12px 0;"><span class="badge badge-amber">Pending</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="mgr-payouts" class="panel">
+        <div class="page-title">Payouts</div>
+        <div class="page-sub">Net 60 cycle: 30-day hold + end of following month. Manage payout status for your affiliates.</div>
+        <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card"><div class="label">Pending Payouts</div><div class="value" style="color:var(--accent);">$942.50</div></div>
+          <div class="stat-card"><div class="label">Paid This Month</div><div class="value" style="color:var(--green);">$0.00</div></div>
+          <div class="stat-card"><div class="label">30-Day Hold</div><div class="value" style="color:var(--blue);">$318.40</div><div class="change">28 subscribers in hold period</div></div>
+          <div class="stat-card"><div class="label">Next Payout Date</div><div class="value" style="font-size:20px;">Aug 15</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Affiliate Payout Queue</h3><button class="btn btn-outline btn-sm">Export CSV</button></div>
+          <div class="card-body">
+            <div class="filter-bar" id="mgr-payouts-filter">
+              <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search affiliate..."></div>
+              <select data-filter-col="2"><option value="">All periods</option><option>Jul 2025</option><option>Aug 2025</option><option>Sep 2025</option></select>
+              <select data-filter-col="3"><option value="">All statuses</option><option>Paid</option><option>Pending</option></select>
+              <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+            </div>
+            <table data-table="mgr-payouts">
+              <thead><tr><th class="sortable">Affiliate</th><th class="sortable">Amount Due</th><th class="sortable">Period</th><th class="sortable">Status</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Kevin M.</td><td style="font-weight:700;">$407.50</td><td>Jul 2025</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary btn-sm">Mark Paid</button></td></tr>
+                <tr><td>Lizzie M.</td><td style="font-weight:700;">$297.20</td><td>Jul 2025</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary btn-sm">Mark Paid</button></td></tr>
+                <tr><td>Betty S.</td><td style="font-weight:700;">$237.80</td><td>Jul 2025</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary btn-sm">Mark Paid</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="mgr-reports" class="panel">
+        <div class="page-title">Downloadable Reports</div><div class="page-sub">Export data for accounting and payout tracking</div>
+        <div class="card" style="max-width:500px;"><div class="card-body" style="padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--g100);"><span>Commission Report — Jul 2025</span><button class="btn btn-outline btn-sm">Download CSV</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--g100);"><span>Subscriber Report — Jul 2025</span><button class="btn btn-outline btn-sm">Download CSV</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;"><span>Campaign Performance — Jul 2025</span><button class="btn btn-outline btn-sm">Download CSV</button></div>
+        </div></div>
+      </div>
+
+      <!-- MANAGER CHANGE LOGS -->
+      <div id="mgr-changelog" class="panel">
+        <div class="page-title">Change Logs</div>
+        <div class="page-sub">Audit trail of promo code and commission changes.</div>
+        <div class="card"><div class="card-body">
+          <div class="filter-bar" id="mgr-changelog-filter">
+            <input type="text" data-filter-search placeholder="Search..." style="flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--g200);border-radius:6px;font-size:13px;">
+            <select data-filter-col="1"><option value="">All Types</option><option>Promo Code</option><option>Commission</option></select>
+            <select data-filter-col="3"><option value="">All Roles</option><option>Affiliate</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="mgr-changelog">
+            <thead><tr>
+              <th class="sortable">Date</th>
+              <th class="sortable">Type</th>
+              <th class="sortable">Change</th>
+              <th class="sortable">Role</th>
+              <th class="sortable">Name</th>
+              <th class="sortable">Changed By</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Apr 10, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Created code <strong>SPRING20</strong> — 20% off</td><td>Affiliate</td><td>Kevin M.</td><td>Lauren S.</td></tr>
+              <tr><td>Apr 8, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>Affiliate commission changed <strong>10% → 12%</strong></td><td>Affiliate</td><td>Lizzie M.</td><td>Lauren S.</td></tr>
+              <tr><td>Apr 5, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Edited code <strong>VIP15</strong> — discount 15% → 18%</td><td>Affiliate</td><td>Betty S.</td><td>Lauren S.</td></tr>
+              <tr><td>Apr 1, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Deactivated code <strong>LAUNCH10</strong></td><td>Affiliate</td><td>Derek P.</td><td>Lauren S.</td></tr>
+              <tr><td>Mar 15, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Created code <strong>EARLYBIRD</strong> — 10% off</td><td>Affiliate</td><td>Kevin M.</td><td>Lauren S.</td></tr>
+              <tr><td>Mar 5, 2026</td><td><span class="badge badge-amber">Commission</span></td><td>Affiliate commission changed <strong>8% → 10%</strong></td><td>Affiliate</td><td>Betty S.</td><td>Lauren S.</td></tr>
+              <tr><td>Feb 20, 2026</td><td><span class="badge badge-blue">Promo Code</span></td><td>Created code <strong>WINTER15</strong> — 15% off</td><td>Affiliate</td><td>Lizzie M.</td><td>Lauren S.</td></tr>
+            </tbody>
+          </table>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== AFFILIATE ========== -->
+  <div id="role-affiliate" class="panel" style="display:flex;flex:1;">
+    <div class="sidebar">
+      <div class="sidebar-logo">HackHer</div>
+      <div class="sidebar-section">My Dashboard</div>
+      <div class="sidebar-item active" onclick="showAffPage('dashboard',this)"><span class="icon">📊</span> Overview</div>
+      <div class="sidebar-item" onclick="showAffPage('codes',this)"><span class="icon">🎟️</span> My Promo Codes</div>
+      <div class="sidebar-item" onclick="showAffPage('subscribers',this)"><span class="icon">👥</span> Subscribers</div>
+      <div class="sidebar-item" onclick="showAffPage('graph',this)"><span class="icon">📈</span> Performance Graph</div>
+      <div class="sidebar-item" onclick="showAffPage('payouts',this)"><span class="icon">💰</span> My Earnings</div>
+    </div>
+    <div class="main">
+      <div id="aff-dashboard" class="panel active">
+        <div class="page-title">Welcome, Kevin!</div>
+        <div class="page-sub">Here's how your promo codes are performing</div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Total Subscribers</div><div class="value">48</div><div class="change up">+12 this week</div></div>
+          <div class="stat-card"><div class="label">My Commission</div><div class="value" style="color:var(--green);">$407.50</div></div>
+          <div class="stat-card"><div class="label">Active Promo Codes</div><div class="value">2</div></div>
+          <div class="stat-card"><div class="label">Pending Payout</div><div class="value" style="color:var(--accent);">$407.50</div><div class="change">Next payout: Aug 15</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Subscriber Breakdown</h3></div>
+          <div class="card-body" style="padding:20px;">
+            <table style="width:100%;">
+              <tr style="border-bottom:1px solid var(--g200);">
+                <td style="padding:12px 0;"><strong>Founders Access ($99)</strong></td>
+                <td style="padding:12px 0;text-align:right;font-weight:600;color:var(--primary);">32 subscribers</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 0;"><strong>3-Month Plan ($49)</strong></td>
+                <td style="padding:12px 0;text-align:right;font-weight:600;color:var(--primary);">16 subscribers</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Promo Code Performance</h3></div>
+          <div class="card-body">
+            <table>
+              <thead><tr><th>Promo Code</th><th>Campaign</th><th>Subscribers</th><th>Commission</th><th>Valid Until</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td style="font-family:monospace;font-weight:700;">KEVIN-HACK-TT</td><td><span class="badge badge-blue">TikTok Launch</span></td><td>36</td><td>$305.50</td><td>Sep 30, 2025</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td style="font-family:monospace;font-weight:700;">KEVIN-HACK-IG</td><td><span class="badge badge-purple">IG Launch</span></td><td>12</td><td>$102.00</td><td>Sep 30, 2025</td><td><span class="badge badge-green">Active</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="aff-codes" class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div><div class="page-title">My Promo Codes</div><div class="page-sub">Create and manage your promotional codes</div></div><button class="btn btn-primary" onclick="openModal('promo-modal')">+ Create Code</button></div>
+        <div class="card"><div class="card-header"><h3>Promo Codes</h3></div><div class="card-body">
+          <div class="filter-bar" id="aff-codes-filter">
+            <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search code..."></div>
+            <select data-filter-col="1"><option value="">All campaigns</option><option>TikTok Launch</option><option>IG Launch</option></select>
+            <select data-filter-col="8"><option value="">All statuses</option><option>Active</option><option>Expired</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="aff-codes"><thead><tr><th class="sortable">Code</th><th class="sortable">Campaign</th><th class="sortable">Discount</th><th class="sortable">Commission %</th><th class="sortable">Quarterly ($49)</th><th class="sortable">Annual ($99)</th><th class="sortable">Start Date</th><th class="sortable">End Date</th><th class="sortable">Status</th><th>Action</th></tr></thead><tbody>
+          <tr><td style="font-family:monospace;font-weight:700;">KEVIN-HACK-TT</td><td>TikTok Launch</td><td>15%</td><td>10%</td><td>12</td><td>24</td><td>Aug 1, 2025</td><td>Sep 30, 2025</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+          <tr><td style="font-family:monospace;font-weight:700;">KEVIN-HACK-IG</td><td>IG Launch</td><td>15%</td><td>10%</td><td>4</td><td>8</td><td>Aug 1, 2025</td><td>Sep 30, 2025</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('mgr-edit-promo-modal')">Edit</button></td></tr>
+        </tbody></table></div></div>
+      </div>
+      <div id="aff-subscribers" class="panel">
+        <div class="page-title">My Subscribers</div><div class="page-sub">Users who signed up using your promo codes</div>
+        <div class="card"><div class="card-header"><h3>Subscriber List</h3><button class="btn btn-outline btn-sm">Download Report</button></div><div class="card-body">
+          <div class="filter-bar" id="aff-subs-filter">
+            <div class="search-wrap"><input type="text" data-filter="search" placeholder="Search..."></div>
+            <select data-filter-col="2"><option value="">All plans</option><option>Premium</option></select>
+            <a href="#" class="reset-btn" data-filter-reset>↺ Reset</a>
+          </div>
+          <table data-table="aff-subs"><thead><tr><th class="sortable">Subscriber</th><th class="sortable">Promo Code Used</th><th class="sortable">Plan</th><th class="sortable">Subscribed</th><th class="sortable">Expires</th><th class="sortable">Commission</th></tr></thead><tbody>
+          <tr><td>Sarah J.</td><td style="font-family:monospace;">KEVIN-HACK-TT</td><td>Premium</td><td>Aug 16, 2025</td><td>Sep 16, 2025</td><td style="color:var(--green);">$0.85</td></tr>
+          <tr><td>Mike R.</td><td style="font-family:monospace;">KEVIN-HACK-TT</td><td>Premium</td><td>Aug 17, 2025</td><td>Sep 17, 2025</td><td style="color:var(--green);">$0.85</td></tr>
+          <tr><td>Aisha D.</td><td style="font-family:monospace;">KEVIN-HACK-IG</td><td>Premium</td><td>Aug 18, 2025</td><td>Sep 18, 2025</td><td style="color:var(--green);">$0.85</td></tr>
+          <tr><td>Carlos T.</td><td style="font-family:monospace;">KEVIN-HACK-TT</td><td>Premium</td><td>Aug 19, 2025</td><td>Sep 19, 2025</td><td style="color:var(--green);">$0.85</td></tr>
+        </tbody></table></div></div>
+      </div>
+      <div id="aff-graph" class="panel">
+        <div class="page-title">Performance Graph</div><div class="page-sub">See how your promo codes are performing over time — click any label in the legend to toggle that code.</div>
+        <div class="card">
+          <div class="card-header"><h3>Subscribers by Promo Code (Weekly)</h3><div class="chart-tabs" id="aff-chart-tabs"><span class="chart-tab">Daily</span><span class="chart-tab active">Weekly</span><span class="chart-tab">Monthly</span></div></div>
+          <div class="card-body">
+            <div class="line-chart-wrap" id="aff-perf-chart"></div>
+            <div class="line-chart-legend" id="aff-perf-legend"></div>
+          </div>
+        </div>
+      </div>
+      <div id="aff-payouts" class="panel">
+        <div class="page-title">My Earnings</div><div class="page-sub">Track your earnings and payments</div>
+        <div style="padding:16px;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065F46;margin-bottom:16px;"><strong>Payout Terms (Net 60):</strong> Payouts are on a Net 60 cycle. New subscribers enter a 30-day hold period, then are paid at the end of the following month.</div>
+        <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);"><div class="stat-card"><div class="label">Total Earned</div><div class="value" style="color:var(--green);">$407.50</div></div><div class="stat-card"><div class="label">Paid Out</div><div class="value">$0.00</div></div><div class="stat-card"><div class="label">Pending</div><div class="value" style="color:var(--accent);">$407.50</div></div><div class="stat-card"><div class="label">30-Day Hold</div><div class="value" style="color:var(--blue);">$101.88</div><div class="change">12 subscribers</div></div></div>
+        <div class="card">
+          <div class="card-header"><h3>Payout Status</h3></div>
+          <div class="card-body" style="padding:20px;">
+            <table style="width:100%;font-size:13px;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--g200);">
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Period</th>
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Amount</th>
+                  <th style="padding:12px 0;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--g500);font-weight:700;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid var(--g100);">
+                  <td style="padding:12px 0;">Jul 2025</td>
+                  <td style="padding:12px 0;font-weight:600;color:var(--primary);">$407.50</td>
+                  <td style="padding:12px 0;"><span class="badge badge-blue">Cleared</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 0;">Aug 2025</td>
+                  <td style="padding:12px 0;font-weight:600;color:var(--accent);">$287.30</td>
+                  <td style="padding:12px 0;"><span class="badge badge-amber">Pending</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add SAM (SA view) -->
+<div class="modal-overlay" id="sa-add-sam-modal">
+  <div class="modal" style="width:520px;">
+    <h2>Add Super Admin Manager</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" placeholder="First name"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" placeholder="Last name"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="sam@example.com"></div>
+    <div class="form-group"><label>Cell Phone Number</label><input type="tel" placeholder="(555) 123-4567"></div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="1" min="0" max="30" step="0.5"><div style="font-size:11px;color:var(--g500);margin-top:4px;">SAM commission on discounted price. Max: 30%.</div></div>
+    <div style="padding:12px;background:#E0E6F2;border-radius:8px;font-size:12px;color:var(--primary-dark);margin-top:8px;"><strong>Reminder:</strong> This commission is deducted from revenue before Manager and Affiliate commissions. Total across all tiers cannot exceed 30%.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('sa-add-sam-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('sa-add-sam-modal')">Create SAM</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit SAM (SA view) -->
+<div class="modal-overlay" id="sa-edit-sam-modal">
+  <div class="modal" style="width:520px;">
+    <h2>Edit Super Admin Manager</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" value="Jessica"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" value="T."></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" value="jessica@example.com"></div>
+    <div class="form-group"><label>Cell Phone Number</label><input type="tel" value="(555) 987-6543"></div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="1" min="0" max="30" step="0.5"><div style="font-size:11px;color:var(--g500);margin-top:4px;">SAM commission on discounted price. Max: 30%.</div></div>
+    <div class="form-group"><label>Status</label><select><option selected>Active</option><option>Inactive</option></select></div>
+    <div style="padding:12px;background:#FFFBEB;border-radius:8px;font-size:12px;color:#92400E;margin-top:8px;"><strong>Impact:</strong> Changing the commission rate affects future payouts only. Existing cleared payouts are not recalculated.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('sa-edit-sam-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('sa-edit-sam-modal')">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Manager (SAM/SA view) -->
+<div class="modal-overlay" id="sam-add-manager-modal">
+  <div class="modal" style="width:520px;">
+    <h2>Add Manager</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" placeholder="First name"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" placeholder="Last name"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="manager@example.com"></div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="4" min="0" max="29" step="0.5"><div style="font-size:11px;color:var(--g500);margin-top:4px;">Manager commission on discounted price. Max: 29% (30% cap − 1% SAM).</div></div>
+    <div class="form-group"><label>Status</label><select><option selected>Active</option><option>Inactive</option></select></div>
+    <div style="padding:12px;background:#E0E6F2;border-radius:8px;font-size:12px;color:var(--primary-dark);margin-top:8px;"><strong>Note:</strong> This manager will be assigned to you. Their affiliates' commissions plus this manager's commission plus your SAM commission cannot exceed 30%.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('sam-add-manager-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('sam-add-manager-modal')">Create Manager</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Manager (SAM/SA view) -->
+<div class="modal-overlay" id="sam-edit-manager-modal">
+  <div class="modal" style="width:520px;">
+    <h2>Edit Manager</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" value="Lauren"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" value="S."></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" value="lauren@example.com"></div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="4" min="0" max="29" step="0.5"><div style="font-size:11px;color:var(--g500);margin-top:4px;">Manager commission on discounted price. Max: 29% (30% cap − 1% SAM).</div></div>
+    <div class="form-group"><label>Status</label><select><option selected>Active</option><option>Inactive</option></select></div>
+    <div style="padding:12px;background:#FFFBEB;border-radius:8px;font-size:12px;color:#92400E;margin-top:8px;"><strong>Impact:</strong> Changing the commission rate affects future payouts only. Existing cleared payouts are not recalculated.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('sam-edit-manager-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('sam-edit-manager-modal')">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Promo Code -->
+<div class="modal-overlay" id="promo-modal">
+  <div class="modal">
+    <h2>Create Promo Code</h2>
+    <div class="form-group"><label>Promo Code</label><input type="text" placeholder="e.g. SPECIAL-20" style="text-transform:uppercase;font-family:monospace;"></div>
+    <div class="form-group"><label>Campaign</label><input type="text" placeholder="e.g. TikTok Launch"><div style="font-size:11px;color:var(--g500);margin-top:4px;">Enter the campaign this code belongs to</div></div>
+    <div class="form-row">
+      <div class="form-group"><label>Start Date</label><input type="date" value="2025-08-01"></div>
+      <div class="form-group"><label>End Date</label><input type="date" value="2025-09-30"></div>
+    </div>
+    <div class="form-group"><label>Discount %</label><input id="promo-discount" type="number" value="15"></div>
+    <div class="form-group promo-sa-only" id="promo-sam-select" style="display:none;"><label>Select SAM</label><select><option>Jessica T.</option><option>Maria R.</option></select></div>
+    <div class="form-group promo-sa-only" id="promo-sam-comm" style="display:none;"><label>SAM Commission %</label><input type="number" value="1" readonly style="background:#f3f4f6;cursor:not-allowed;"></div>
+    <div class="form-group promo-sa-sam-only" id="promo-manager-select" style="display:none;"><label>Select Manager</label><select><option>Lauren S.</option><option>Andre D.</option></select></div>
+    <div class="form-group promo-sa-sam-only" id="promo-mgr-comm" style="display:none;"><label>Manager Commission %</label><input type="number" value="4" readonly style="background:#f3f4f6;cursor:not-allowed;"></div>
+    <div class="form-group" id="promo-assign-affiliate"><label>Assign to Affiliate</label><select><option>Kevin M.</option><option>Lizzie M.</option><option>Betty S.</option><option>Julie A.</option><option>Derek P.</option></select></div>
+    <div class="form-group"><label>Affiliate Commission %</label><input id="promo-aff-comm" type="number" value="10"></div>
+    <div id="promo-modal-max-note" style="padding:12px;background:#E0E6F2;border:1px solid #B8C5DC;border-radius:8px;font-size:12px;color:var(--primary-dark);margin-top:8px;"></div>
+    <div id="promo-modal-green-note" style="padding:12px;background:#F0FDF4;border-radius:8px;font-size:12px;color:#065F46;margin-top:8px;"><strong>Note:</strong> Commission is calculated on the <strong>discounted amount</strong>, not the full price. Code is case-insensitive.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('promo-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('promo-modal')">Create Promo Code</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Promo Code (Manager view) -->
+<div class="modal-overlay" id="mgr-edit-promo-modal">
+  <div class="modal">
+    <h2>Edit Promo Code</h2>
+    <div class="form-group"><label>Promo Code</label><input type="text" value="KEVIN-HACK-TT" style="text-transform:uppercase;font-family:monospace;"></div>
+    <div class="form-group"><label>Campaign</label><input type="text" value="TikTok Launch"><div style="font-size:11px;color:var(--g500);margin-top:4px;">The campaign this code belongs to</div></div>
+    <div class="form-row">
+      <div class="form-group"><label>Start Date</label><input type="date" value="2025-08-01"></div>
+      <div class="form-group"><label>End Date</label><input type="date" value="2025-09-30"></div>
+    </div>
+    <div class="form-group"><label>Discount %</label><input id="edit-promo-discount" type="number" value="15"></div>
+    <div class="form-group" id="edit-promo-assign"><label>Assigned Affiliate</label><select><option selected>Kevin M.</option><option>Lizzie M.</option><option>Betty S.</option></select></div>
+    <div class="form-group"><label>Affiliate Commission %</label><input id="edit-promo-aff-comm" type="number" value="10" readonly style="background:#f3f4f6;cursor:not-allowed;"></div>
+    <div class="form-group"><label>Status</label><select><option selected>Active</option><option>Inactive</option></select><div style="font-size:11px;color:var(--g500);margin-top:4px;">Set to Inactive to disable this promo code</div></div>
+    <div id="edit-promo-max-note" style="padding:12px;background:#E0E6F2;border:1px solid #B8C5DC;border-radius:8px;font-size:12px;color:var(--primary-dark);margin-top:8px;"><strong>Max discount (subscriber + affiliate):</strong> 25%</div>
+    <div id="edit-promo-green-note" style="padding:12px;background:#F0FDF4;border-radius:8px;font-size:12px;color:#065F46;margin-top:8px;"><strong>Note:</strong> Commission is calculated on the <strong>discounted amount</strong>, not the full price. Code is case-insensitive.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('mgr-edit-promo-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('mgr-edit-promo-modal')">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Affiliate (SAM view — can assign to manager) -->
+<div class="modal-overlay" id="affiliate-modal">
+  <div class="modal" style="width:620px;">
+    <h2>Add Affiliate</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" placeholder="First name"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" placeholder="Last name"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="affiliate@example.com"></div>
+    <div class="form-group"><label>Cell Phone Number</label><input type="tel" placeholder="(555) 123-4567"></div>
+    <div class="form-group"><label>Assign to Manager</label><select><option>Lauren S.</option><option>Andre D.</option></select></div>
+    <div class="form-group">
+      <label>Social Handles</label>
+      <div class="social-list">
+        <div class="social-row"><input type="url" placeholder="https://instagram.com/handle"><button type="button" class="icon-btn" onclick="addSocialRow(this)">+</button><button type="button" class="icon-btn" onclick="removeSocialRow(this)">−</button></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contract Start Date</label><input type="date" value="2025-08-01"></div>
+      <div class="form-group"><label>Contract Expiration Date</label><input type="date" value="2026-08-01"></div>
+    </div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="10" min="0" max="100"><div style="font-size:11px;color:var(--g500);margin-top:4px;">Percentage of discounted price paid to this affiliate</div></div>
+    <div class="form-group"><label>Preferred Payment Method</label><textarea placeholder="e.g. Direct deposit, Zelle, Wire - include relevant details&#10;Account: XXXXXX&#10;Routing: XXXXXX" style="padding:10px 12px;border:1px solid var(--g300);border-radius:8px;font-size:14px;font-family:inherit;min-height:80px;"></textarea></div>
+    <div style="padding:12px;background:#FFFBEB;border-radius:8px;font-size:12px;color:#92400E;margin-top:8px;"><strong>Note:</strong> Affiliates do not sign up themselves. You create their account and share login credentials.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('affiliate-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('affiliate-modal')">Create Affiliate</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Affiliate (Manager view — no manager assignment) -->
+<div class="modal-overlay" id="mgr-add-affiliate-modal">
+  <div class="modal" style="width:620px;">
+    <h2>Add Affiliate</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" placeholder="First name"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" placeholder="Last name"></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="affiliate@example.com"></div>
+    <div class="form-group"><label>Cell Phone Number</label><input type="tel" placeholder="(555) 123-4567"></div>
+    <div class="form-group">
+      <label>Social Handles</label>
+      <div class="social-list">
+        <div class="social-row"><input type="url" placeholder="https://instagram.com/handle"><button type="button" class="icon-btn" onclick="addSocialRow(this)">+</button><button type="button" class="icon-btn" onclick="removeSocialRow(this)">−</button></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contract Start Date</label><input type="date" value="2025-08-01"></div>
+      <div class="form-group"><label>Contract Expiration Date</label><input type="date" value="2026-08-01"></div>
+    </div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="10" min="0" max="100"><div style="font-size:11px;color:var(--g500);margin-top:4px;">Percentage of discounted price paid to this affiliate</div></div>
+    <div class="form-group"><label>Preferred Payment Method</label><textarea placeholder="e.g. Direct deposit, Zelle, Wire - include relevant details&#10;Account: XXXXXX&#10;Routing: XXXXXX" style="padding:10px 12px;border:1px solid var(--g300);border-radius:8px;font-size:14px;font-family:inherit;min-height:80px;"></textarea></div>
+    <div style="padding:12px;background:#FFFBEB;border-radius:8px;font-size:12px;color:#92400E;margin-top:8px;"><strong>Note:</strong> Affiliates do not sign up themselves. You create their account and share login credentials. This affiliate will be assigned to you.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('mgr-add-affiliate-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('mgr-add-affiliate-modal')">Create Affiliate</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Create Promo Link (Affiliate view) -->
+<div class="modal-overlay" id="aff-create-link-modal">
+  <div class="modal">
+    <h2>Create Promo Link</h2>
+    <div style="padding:12px;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:8px;font-size:12px;color:#065F46;margin-bottom:16px;"><strong>Note:</strong> Your manager has set your campaign dates and commission rates</div>
+    <div class="form-group"><label>Link Name</label><input type="text" placeholder="e.g. My TikTok Promo"></div>
+    <div class="form-group"><label>Campaign</label><input type="text" value="TikTok Launch" disabled style="background:var(--g50);color:var(--g500);cursor:not-allowed;"></div>
+    <div class="form-group"><label>Start Date</label><input type="date" value="2025-08-01" disabled style="background:var(--g50);color:var(--g500);cursor:not-allowed;"></div>
+    <div class="form-group"><label>End Date</label><input type="date" value="2025-09-30" disabled style="background:var(--g50);color:var(--g500);cursor:not-allowed;"></div>
+    <div class="form-group"><label>Discount %</label><input type="text" value="15%" disabled style="background:var(--g50);color:var(--g500);cursor:not-allowed;"></div>
+    <div class="form-group"><label>Commission %</label><input type="text" value="10%" disabled style="background:var(--g50);color:var(--g500);cursor:not-allowed;"></div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('aff-create-link-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('aff-create-link-modal')">Create Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Affiliate (Manager view) -->
+<div class="modal-overlay" id="mgr-edit-affiliate-modal">
+  <div class="modal" style="width:620px;">
+    <h2>Edit Affiliate</h2>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" value="Kevin"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" value="M."></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" value="kevin@example.com"></div>
+    <div class="form-group"><label>Cell Phone Number</label><input type="tel" value="(555) 123-4567"></div>
+    <div class="form-group">
+      <label>Social Handles</label>
+      <div class="social-list">
+        <div class="social-row"><input type="url" value="https://twitter.com/kevin"><button type="button" class="icon-btn" onclick="addSocialRow(this)">+</button><button type="button" class="icon-btn" onclick="removeSocialRow(this)">−</button></div>
+        <div class="social-row"><input type="url" value="https://instagram.com/kevin"><button type="button" class="icon-btn" onclick="addSocialRow(this)">+</button><button type="button" class="icon-btn" onclick="removeSocialRow(this)">−</button></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contract Start Date</label><input type="date" value="2025-08-01"></div>
+      <div class="form-group"><label>Contract Expiration Date</label><input type="date" value="2026-08-15"></div>
+    </div>
+    <div class="form-group"><label>Commission %</label><input type="number" value="10" min="0" max="100"><div style="font-size:11px;color:var(--g500);margin-top:4px;">Adjust this affiliate's commission rate</div></div>
+    <div class="form-group"><label>Preferred Payment Method</label><textarea style="padding:10px 12px;border:1px solid var(--g300);border-radius:8px;font-size:14px;font-family:inherit;min-height:80px;">Direct deposit
+Account: XXXXXX1234
+Routing: 123456789</textarea></div>
+    <div class="form-group"><label>Status</label><select><option selected>Active</option><option>Inactive</option></select><div style="font-size:11px;color:var(--g500);margin-top:4px;">Set to Inactive to deactivate this affiliate</div></div>
+    <div style="padding:12px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E;margin-top:8px;"><strong>Reminder:</strong> To reassign this affiliate to another manager, contact the Super Admin Manager.</div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('mgr-edit-affiliate-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('mgr-edit-affiliate-modal')">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Role switching
+function switchRole(role) {
+  // SA shares the admin panels, so map 'sa' → 'admin' for the container
+  const targetRole = (role === 'sa') ? 'admin' : role;
+  document.querySelectorAll('.panel[id^="role-"]').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  const el = document.getElementById('role-' + targetRole);
+  el.classList.add('active');
+  el.style.display = 'flex';
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  // Toggle SA-only / SAM-only elements
+  const saNav = document.getElementById('sa-sams-nav');
+  const samEarningsNav = document.getElementById('sam-earnings-nav');
+  const sidebarLogo = document.querySelector('#role-admin .sidebar-logo');
+  // Toggle SA-only changelog rows and role filters
+  const saRows = document.querySelectorAll('.sa-changelog-row');
+  const saRoleFilter = document.querySelector('.sa-changelog-role-filter');
+  const samRoleFilter = document.querySelector('.sam-changelog-role-filter');
+  if (role === 'sa') {
+    saNav.style.display = '';
+    samEarningsNav.style.display = 'none';
+    sidebarLogo.textContent = 'HackHer SA';
+    document.querySelector('#role-admin .page-title').textContent = 'Super Admin Dashboard';
+    saRows.forEach(r => r.style.display = '');
+    saRoleFilter.style.display = '';
+    samRoleFilter.style.display = 'none';
+  } else if (targetRole === 'admin') {
+    saNav.style.display = 'none';
+    samEarningsNav.style.display = '';
+    sidebarLogo.textContent = 'HackHer SAM';
+    document.querySelector('#role-admin .page-title').textContent = 'Super Admin Manager Dashboard';
+    saRows.forEach(r => r.style.display = 'none');
+    saRoleFilter.style.display = 'none';
+    samRoleFilter.style.display = '';
+  }
+}
+
+// Page navigation
+function showAdminPage(page, el) {
+  document.querySelectorAll('#role-admin .main > .panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('admin-' + page).classList.add('active');
+  document.querySelectorAll('#role-admin .sidebar-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function showMgrPage(page, el) {
+  document.querySelectorAll('#role-manager .main > .panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('mgr-' + page).classList.add('active');
+  document.querySelectorAll('#role-manager .sidebar-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (page === 'analytics') {
+    renderLineChartWithLegend('mgr-campaign-chart','mgr-campaign-legend', mgrCampaignSeries, 'mgr-campaign');
+  }
+}
+function showAffPage(page, el) {
+  document.querySelectorAll('#role-affiliate .main > .panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('aff-' + page).classList.add('active');
+  document.querySelectorAll('#role-affiliate .sidebar-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (page === 'graph') {
+    renderLineChartWithLegend('aff-perf-chart','aff-perf-legend', affPerfSeries, 'aff-perf');
+  }
+}
+
+// Modals
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+  // Set max commission note + show/hide role-specific fields on promo-modal
+  if (id === 'promo-modal') {
+    const noteEl = document.getElementById('promo-modal-max-note');
+    const samSelect = document.getElementById('promo-sam-select');
+    const samComm = document.getElementById('promo-sam-comm');
+    const mgrSelect = document.getElementById('promo-manager-select');
+    const mgrComm = document.getElementById('promo-mgr-comm');
+    const affComm = document.getElementById('promo-aff-comm');
+    const discount = document.getElementById('promo-discount');
+    const assignAff = document.getElementById('promo-assign-affiliate');
+    const greenNote = document.getElementById('promo-modal-green-note');
+    const activeBtn = document.querySelector('.role-btn.active');
+    const role = activeBtn ? activeBtn.textContent.trim() : '';
+    samSelect.style.display = 'none';
+    samComm.style.display = 'none';
+    mgrSelect.style.display = 'none';
+    mgrComm.style.display = 'none';
+    assignAff.style.display = '';
+    greenNote.style.display = '';
+    noteEl.style.display = '';
+    discount.readOnly = false;
+    discount.style.background = '';
+    discount.style.cursor = '';
+    affComm.readOnly = false;
+    affComm.style.background = '';
+    affComm.style.cursor = '';
+    if (role === 'Super Admin') {
+      samSelect.style.display = '';
+      samComm.style.display = '';
+      mgrSelect.style.display = '';
+      mgrComm.style.display = '';
+      affComm.readOnly = true;
+      affComm.style.background = '#f3f4f6';
+      affComm.style.cursor = 'not-allowed';
+      noteEl.innerHTML = '<strong>Max discount (subscriber + affiliate + SAM):</strong> 30%';
+    } else if (role === 'Super Admin Manager') {
+      mgrSelect.style.display = '';
+      mgrComm.style.display = '';
+      affComm.readOnly = true;
+      affComm.style.background = '#f3f4f6';
+      affComm.style.cursor = 'not-allowed';
+      noteEl.innerHTML = '<strong>Max discount (subscriber + affiliate + SAM):</strong> 29%';
+    } else if (role === 'Manager') {
+      affComm.readOnly = true;
+      affComm.style.background = '#f3f4f6';
+      affComm.style.cursor = 'not-allowed';
+      noteEl.innerHTML = '<strong>Max discount (subscriber + affiliate):</strong> 25%';
+    } else {
+      // Affiliate
+      discount.readOnly = true;
+      discount.style.background = '#f3f4f6';
+      discount.style.cursor = 'not-allowed';
+      affComm.readOnly = true;
+      affComm.style.background = '#f3f4f6';
+      affComm.style.cursor = 'not-allowed';
+      assignAff.style.display = 'none';
+      noteEl.style.display = 'none';
+      greenNote.style.display = 'none';
+    }
+  }
+  // Role-specific fields on edit-promo modal
+  if (id === 'mgr-edit-promo-modal') {
+    const eDis = document.getElementById('edit-promo-discount');
+    const eAssign = document.getElementById('edit-promo-assign');
+    const eAffComm = document.getElementById('edit-promo-aff-comm');
+    const eMaxNote = document.getElementById('edit-promo-max-note');
+    const eGreenNote = document.getElementById('edit-promo-green-note');
+    const activeBtn = document.querySelector('.role-btn.active');
+    const role = activeBtn ? activeBtn.textContent.trim() : '';
+    // Reset defaults
+    eDis.readOnly = false; eDis.style.background = ''; eDis.style.cursor = '';
+    eAssign.style.display = '';
+    eMaxNote.style.display = '';
+    eGreenNote.style.display = '';
+    if (role === 'Affiliate') {
+      eDis.readOnly = true; eDis.style.background = '#f3f4f6'; eDis.style.cursor = 'not-allowed';
+      eAssign.style.display = 'none';
+      eMaxNote.style.display = 'none';
+      eGreenNote.style.display = 'none';
+    }
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); });
+});
+
+// ============================================================
+// GENERIC TABLE UTILITIES — sortable headers, filter bar, reset
+// ============================================================
+
+// Mark all TH cells as sortable except those with class "no-sort"
+// and attach click-to-sort behavior. Sort order alternates asc/desc.
+function makeSortable(tableSelector) {
+  const tables = document.querySelectorAll(tableSelector);
+  tables.forEach(table => {
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((th, idx) => {
+      const label = th.textContent.trim().toLowerCase();
+      if (label === 'actions' || label === 'action' || th.classList.contains('no-sort')) return;
+      th.classList.add('sortable');
+      th.addEventListener('click', () => sortTableByColumn(table, idx, th));
+    });
+  });
+}
+
+function sortTableByColumn(table, colIdx, thEl) {
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('empty-row'));
+  const currentDir = thEl.classList.contains('sort-asc') ? 'desc' : 'asc';
+  // clear all directions on sibling headers
+  table.querySelectorAll('thead th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+  thEl.classList.add('sort-' + currentDir);
+  rows.sort((a, b) => {
+    const av = (a.children[colIdx] ? a.children[colIdx].innerText : '').trim();
+    const bv = (b.children[colIdx] ? b.children[colIdx].innerText : '').trim();
+    // Try numeric (strip $, %, commas)
+    const an = parseFloat(av.replace(/[$,%\s]/g, ''));
+    const bn = parseFloat(bv.replace(/[$,%\s]/g, ''));
+    const isNum = !isNaN(an) && !isNaN(bn) && /[\d]/.test(av) && /[\d]/.test(bv);
+    // Try date-ish
+    const ad = Date.parse(av), bd = Date.parse(bv);
+    const isDate = !isNaN(ad) && !isNaN(bd) && /\d{4}/.test(av) && /\d{4}/.test(bv) && !isNum;
+    let cmp;
+    if (isNum) cmp = an - bn;
+    else if (isDate) cmp = ad - bd;
+    else cmp = av.localeCompare(bv);
+    return currentDir === 'asc' ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// Attach generic filter bar behavior. Expects a .filter-bar parent with:
+//   - input[data-filter="search"]         -> searches across all columns (or specified cols)
+//   - select[data-filter-col="<idx>"]     -> exact match filter on column idx (value "" = all)
+//   - a[data-filter-reset], button[data-filter-reset] -> reset
+// And a tableSelector for the target table.
+function initFilterBar(barSelector, tableSelector) {
+  const bar = document.querySelector(barSelector);
+  const table = document.querySelector(tableSelector);
+  if (!bar || !table) return;
+  const tbody = table.querySelector('tbody');
+  const allRows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('empty-row'));
+
+  function applyFilters() {
+    const search = (bar.querySelector('[data-filter="search"]') || {}).value || '';
+    const q = search.trim().toLowerCase();
+    const selects = bar.querySelectorAll('select[data-filter-col]');
+    let visible = 0;
+    allRows.forEach(row => {
+      let show = true;
+      if (q && !row.innerText.toLowerCase().includes(q)) show = false;
+      selects.forEach(sel => {
+        const colIdx = parseInt(sel.getAttribute('data-filter-col'), 10);
+        const val = sel.value;
+        if (show && val) {
+          const cellText = (row.children[colIdx] ? row.children[colIdx].innerText : '').trim().toLowerCase();
+          if (!cellText.includes(val.toLowerCase())) show = false;
+        }
+      });
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    // empty state
+    let emptyRow = tbody.querySelector('tr.empty-row');
+    if (visible === 0) {
+      if (!emptyRow) {
+        emptyRow = document.createElement('tr');
+        emptyRow.className = 'empty-row';
+        const td = document.createElement('td');
+        td.colSpan = table.querySelectorAll('thead th').length;
+        td.textContent = 'No matching results. Try clearing filters.';
+        emptyRow.appendChild(td);
+        tbody.appendChild(emptyRow);
+      }
+      emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  bar.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', applyFilters);
+    el.addEventListener('change', applyFilters);
+  });
+  const resetBtn = bar.querySelector('[data-filter-reset]');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      bar.querySelectorAll('input').forEach(i => i.value = '');
+      bar.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+      applyFilters();
+    });
+  }
+}
+
+// ============================================================
+// SOCIAL HANDLES +/- WIDGET
+// ============================================================
+function addSocialRow(btn, value) {
+  const list = btn.closest('.social-list');
+  const row = document.createElement('div');
+  row.className = 'social-row';
+  row.innerHTML = `
+    <input type="text" placeholder="https://instagram.com/handle" value="${value || ''}">
+    <button type="button" class="icon-btn minus" onclick="removeSocialRow(this)" title="Remove">−</button>
+    <button type="button" class="icon-btn plus" onclick="addSocialRow(this)" title="Add">+</button>
+  `;
+  list.appendChild(row);
+  // keep only the last row's + visible, hide + on others; simpler: leave both, it still works
+}
+function removeSocialRow(btn) {
+  const list = btn.closest('.social-list');
+  const rows = list.querySelectorAll('.social-row');
+  if (rows.length <= 1) {
+    // just clear the input
+    btn.closest('.social-row').querySelector('input').value = '';
+    return;
+  }
+  btn.closest('.social-row').remove();
+}
+
+// ============================================================
+// SVG LINE CHART — multi-series with toggle-able legend
+// ============================================================
+// series: [{ name, color, data:[{label, value}] }]
+function renderLineChart(containerId, series, options) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  options = options || {};
+  const W = container.clientWidth || 800;
+  const H = 260;
+  const padL = 44, padR = 16, padT = 16, padB = 36;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  // x labels — use labels from first active series
+  const activeSeries = series.filter(s => !s.hidden);
+  if (activeSeries.length === 0) {
+    container.innerHTML = '<div class="line-chart-svg" style="display:flex;align-items:center;justify-content:center;color:var(--g500);font-size:13px;">No active campaigns to display</div>';
+    return;
+  }
+  const labels = activeSeries[0].data.map(d => d.label);
+  const maxVal = Math.max(1, ...activeSeries.flatMap(s => s.data.map(d => d.value)));
+  const xStep = labels.length > 1 ? innerW / (labels.length - 1) : innerW;
+
+  function xPos(i) { return padL + i * xStep; }
+  function yPos(v) { return padT + innerH - (v / maxVal) * innerH; }
+
+  // y-axis ticks (5)
+  const ticks = [];
+  for (let i = 0; i <= 4; i++) {
+    const v = Math.round((maxVal / 4) * i);
+    ticks.push({ y: yPos(v), v: v });
+  }
+
+  let svg = `<svg class="line-chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">`;
+  // grid lines
+  ticks.forEach(t => {
+    svg += `<line x1="${padL}" y1="${t.y}" x2="${W - padR}" y2="${t.y}" stroke="#E5E7EB" stroke-width="1"/>`;
+    svg += `<text x="${padL - 8}" y="${t.y + 4}" text-anchor="end" font-size="10" fill="#6B7280">${t.v}</text>`;
+  });
+  // x-axis labels
+  labels.forEach((lab, i) => {
+    svg += `<text x="${xPos(i)}" y="${H - padB + 16}" text-anchor="middle" font-size="10" fill="#6B7280">${lab}</text>`;
+  });
+
+  // draw each series
+  series.forEach(s => {
+    if (s.hidden) return;
+    const color = s.color || 'var(--primary)';
+    const path = s.data.map((d, i) => (i === 0 ? 'M' : 'L') + xPos(i) + ',' + yPos(d.value)).join(' ');
+    svg += `<path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    s.data.forEach((d, i) => {
+      svg += `<circle cx="${xPos(i)}" cy="${yPos(d.value)}" r="3.5" fill="white" stroke="${color}" stroke-width="2">`;
+      svg += `<title>${s.name}: ${d.label} — ${d.value}</title></circle>`;
+    });
+  });
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+function renderLineChartWithLegend(containerId, legendId, seriesData, storeKey) {
+  // Reuse hidden-state via a data-attribute on the legend container
+  const legendEl = document.getElementById(legendId);
+  // Read state
+  let state = legendEl && legendEl._seriesState;
+  if (!state) {
+    state = seriesData.map(() => false);
+    if (legendEl) legendEl._seriesState = state;
+  }
+  // Normalize: accept either {data:[{label,value}]} or {labels:[], values:[]}
+  const series = seriesData.map((s, i) => {
+    let data = s.data;
+    if (!data && s.labels && s.values) {
+      data = s.labels.map((lab, j) => ({ label: lab, value: s.values[j] }));
+    }
+    return { name: s.name, color: s.color, data: data, hidden: state[i] };
+  });
+  renderLineChart(containerId, series);
+  if (legendEl) {
+    legendEl.innerHTML = seriesData.map((s, i) =>
+      `<span class="lg-item ${state[i] ? 'off' : ''}" data-idx="${i}">
+         <span class="lg-swatch" style="background:${s.color};"></span>${s.name}
+       </span>`
+    ).join('');
+    legendEl.querySelectorAll('.lg-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const i = parseInt(el.getAttribute('data-idx'), 10);
+        state[i] = !state[i];
+        renderLineChartWithLegend(containerId, legendId, seriesData, storeKey);
+      });
+    });
+  }
+}
+
+// Charts
+function renderChart(containerId, labelId, data, colors) {
+  const container = document.getElementById(containerId);
+  const labelsEl = document.getElementById(labelId);
+  if (!container) return;
+  const max = Math.max(...data.map(d => d.value));
+  container.innerHTML = data.map((d, i) => {
+    const h = max > 0 ? (d.value / max * 200) : 0;
+    const color = colors ? colors[i % colors.length] : 'var(--primary)';
+    return `<div class="chart-bar" style="height:${Math.max(h, 4)}px;background:${color};"><div class="tooltip">${d.label}: ${d.value}</div></div>`;
+  }).join('');
+  if (labelsEl) labelsEl.innerHTML = data.map(d => `<span>${d.label}</span>`).join('');
+}
+
+// Admin revenue chart (bar chart — remains)
+const adminWeekly = [
+  {label:'Wk 1',value:1200},{label:'Wk 2',value:1850},{label:'Wk 3',value:2100},
+  {label:'Wk 4',value:2400},{label:'Wk 5',value:1900},{label:'Wk 6',value:2600},{label:'Wk 7',value:2230}
+];
+renderChart('admin-revenue-chart','admin-revenue-labels', adminWeekly, ['#10B981']);
+
+// SAM Campaigns multi-line chart
+const samCampaignLabels = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7'];
+const samCampaignSeries = [
+  { name: 'TikTok Launch',  color: '#E86E3C', labels: samCampaignLabels, values: [4, 9, 14, 20, 28, 38, 48] },
+  { name: 'IG Moms',        color: '#18294F', labels: samCampaignLabels, values: [3, 7, 12, 18, 24, 30, 35] },
+  { name: 'Podcast Q4',     color: '#2E4473', labels: samCampaignLabels, values: [2, 5, 9, 14, 20, 24, 28] },
+  { name: 'Cosmo Feature',  color: '#F29470', labels: samCampaignLabels, values: [1, 3, 6, 10, 14, 18, 22] }
+];
+renderLineChartWithLegend('sam-campaigns-chart','sam-campaigns-legend', samCampaignSeries, 'sam-campaigns');
+
+// Manager Campaign Analytics multi-line chart
+const mgrCampaignLabels = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7'];
+const mgrCampaignSeries = [
+  { name: 'Kevin — TikTok Launch',   color: '#E86E3C', labels: mgrCampaignLabels, values: [4, 8, 14, 20, 28, 38, 48] },
+  { name: 'Lizzie — IG Moms',        color: '#18294F', labels: mgrCampaignLabels, values: [3, 6, 11, 16, 22, 28, 35] },
+  { name: 'Betty — Podcast Q4',      color: '#2E4473', labels: mgrCampaignLabels, values: [2, 4, 8, 13, 18, 23, 28] }
+];
+renderLineChartWithLegend('mgr-campaign-chart','mgr-campaign-legend', mgrCampaignSeries, 'mgr-campaign');
+
+// Affiliate performance multi-line chart
+const affPerfLabels = ['Wk 1','Wk 2','Wk 3','Wk 4','Wk 5','Wk 6','Wk 7'];
+const affPerfSeries = [
+  { name: 'KEVIN-HACK-TT', color: '#E86E3C', labels: affPerfLabels, values: [5, 8, 12, 18, 24, 30, 36] },
+  { name: 'KEVIN-HACK-IG', color: '#18294F', labels: affPerfLabels, values: [2, 3, 4, 6, 8, 10, 12] }
+];
+renderLineChartWithLegend('aff-perf-chart','aff-perf-legend', affPerfSeries, 'aff-perf');
+
+// Initialize sortable tables + filter bars
+makeSortable('table[data-table]');
+initFilterBar('#sam-top-filter',      'table[data-table="sam-top"]');
+initFilterBar('#sam-promo-filter',    'table[data-table="sam-promo"]');
+initFilterBar('#sam-comm-filter',     'table[data-table="sam-comm"]');
+initFilterBar('#sam-payouts-filter',  'table[data-table="sam-payouts"]');
+initFilterBar('#sam-managers-filter', 'table[data-table="sam-managers"]');
+initFilterBar('#sam-affs-filter',     'table[data-table="sam-affs"]');
+initFilterBar('#mgr-dash-filter',     'table[data-table="mgr-dash"]');
+initFilterBar('#mgr-affs-filter',     'table[data-table="mgr-affs"]');
+initFilterBar('#mgr-promo-filter',    'table[data-table="mgr-promo"]');
+initFilterBar('#mgr-payouts-filter',  'table[data-table="mgr-payouts"]');
+initFilterBar('#aff-codes-filter',    'table[data-table="aff-codes"]');
+initFilterBar('#aff-subs-filter',     'table[data-table="aff-subs"]');
+initFilterBar('#sam-changelog-filter','table[data-table="sam-changelog"]');
+initFilterBar('#mgr-changelog-filter','table[data-table="mgr-changelog"]');
+</script>
+</body>
+</html>

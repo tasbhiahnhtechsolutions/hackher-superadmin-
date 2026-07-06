@@ -9,10 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const MAX_TOTAL = 0.3;
-const COMM_AFFILIATE = 0.1;
-const COMM_MANAGER = 0.04;
-const COMM_SAM = 0.01;
-const MAX_DISCOUNT_PCT = Math.round((MAX_TOTAL - (COMM_AFFILIATE + COMM_MANAGER + COMM_SAM)) * 100); // 15
+const MAX_DISCOUNT_PCT = 30;
 
 const CreateSchema = z.object({
   code: z.string().regex(/^[A-Za-z0-9]{3,30}$/, "3-30 alphanumeric chars"),
@@ -110,7 +107,7 @@ async function syncToStripe(promoId: string) {
       restrictions,
       active: promo.status === "active",
       metadata: { promo_id: promo.id },
-    });
+    } as any);
     stripePromoId = sp.id;
 
     await supabaseAdmin
@@ -131,15 +128,19 @@ export const createPromoCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const role = await callerRole(userId);
-    if (!role || role === "customer" || role === "affiliate") {
+    if (!role || role === "customer") {
       throw new Error("You don't have permission to create promo codes");
     }
 
-    const affiliateId = data.affiliateId ?? null;
-    if (!affiliateId) throw new Error("Promo codes must be assigned to an affiliate");
-    if (role === "sam" || role === "manager") {
-      const ok = await isAncestorOf(userId, affiliateId);
-      if (!ok) throw new Error("That affiliate is not in your hierarchy");
+    let affiliateId = data.affiliateId ?? null;
+    if (role === "affiliate") {
+      affiliateId = userId; // force to themselves
+    } else {
+      if (!affiliateId) throw new Error("Promo codes must be assigned to an affiliate");
+      if (role === "sam" || role === "manager") {
+        const ok = await isAncestorOf(userId, affiliateId);
+        if (!ok) throw new Error("That affiliate is not in your hierarchy");
+      }
     }
     // super_admin: any affiliate
 
@@ -170,6 +171,15 @@ export const createPromoCode = createServerFn({ method: "POST" })
     if (error || !created) throw new Error(error?.message ?? "Failed to create");
 
     await syncToStripe(created.id);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "create_promo_code",
+      entity_type: "promo_code",
+      entity_id: created.id,
+      new_values: { code: upperCode, discount_percent: data.discountPercent, affiliate_id: affiliateId },
+    });
+
     return { id: created.id, code: upperCode };
   });
 
@@ -188,8 +198,10 @@ export const updatePromoCode = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!promo) throw new Error("Not found");
 
-    if (role === "affiliate" || role === "customer") throw new Error("Forbidden");
-    if (role === "sam" || role === "manager") {
+    if (role === "customer") throw new Error("Forbidden");
+    if (role === "affiliate") {
+      if (promo.affiliate_id !== userId) throw new Error("Forbidden");
+    } else if (role === "sam" || role === "manager") {
       if (!promo.affiliate_id || !(await isAncestorOf(userId, promo.affiliate_id)))
         throw new Error("Forbidden");
     }
@@ -227,5 +239,15 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     await syncToStripe(data.id);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "update_promo_code",
+      entity_type: "promo_code",
+      entity_id: data.id,
+      new_values: patch,
+      old_values: { code: promo.code, discount_percent: promo.discount_percent, status: promo.status },
+    });
+
     return { ok: true };
   });
