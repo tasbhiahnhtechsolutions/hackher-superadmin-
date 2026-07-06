@@ -688,7 +688,21 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                   // Find or auto-create local Plan stub
                   let planId = meta.plan_id;
                   const priceId = fullSub.items.data[0]?.price?.id;
-                  if (priceId) {
+
+                  // 1. Try finding by metadata plan_id first
+                  if (planId) {
+                    const { data: existingPlan } = await supabaseAdmin
+                      .from("plans")
+                      .select("id")
+                      .eq("id", planId)
+                      .maybeSingle();
+                    if (!existingPlan) {
+                      planId = undefined; // invalid or deleted plan_id in metadata
+                    }
+                  }
+
+                  // 2. Try finding by stripe_price_id if meta check failed
+                  if (!planId && priceId) {
                     const { data: existingPlan, error: pErr } = await supabaseAdmin
                       .from("plans")
                       .select("id")
@@ -697,26 +711,27 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                     if (pErr) throw pErr;
                     if (existingPlan) {
                       planId = existingPlan.id;
-                    } else {
-                      console.log(
-                        `Plan not found for price_id ${priceId}. Auto-creating plan stub...`,
-                      );
-                      const { data: newPlan, error: newPErr } = await supabaseAdmin
-                        .from("plans")
-                        .insert({
-                          name: meta.package_name || "Django Plan",
-                          stripe_price_id: priceId,
-                          price_cents: inv.amount_paid || 0,
-                          currency: inv.currency || "usd",
-                          interval: "month",
-                          features: [],
-                          is_active: true,
-                        } as never)
-                        .select("id")
-                        .single();
-                      if (newPErr) throw newPErr;
-                      if (newPlan) planId = newPlan.id;
                     }
+                  }
+
+                  // 3. Fallback auto-create only if still not found
+                  if (!planId && priceId) {
+                    console.log(`Plan not found for price_id ${priceId}. Auto-creating plan stub...`);
+                    const { data: newPlan, error: newPErr } = await supabaseAdmin
+                      .from("plans")
+                      .insert({
+                        name: meta.package_name || "Django Plan",
+                        stripe_price_id: priceId,
+                        price_cents: inv.amount_paid || 0,
+                        currency: inv.currency || "usd",
+                        interval: "month",
+                        features: [],
+                        is_active: true,
+                      } as never)
+                      .select("id")
+                      .single();
+                    if (newPErr) throw newPErr;
+                    if (newPlan) planId = newPlan.id;
                   }
 
                   if (customerId && planId) {
@@ -922,6 +937,9 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
             case "customer.subscription.deleted": {
               const sub = event.data.object as Stripe.Subscription;
               const meta = sub.metadata ?? {};
+
+              console.log("[Stripe Webhook] Received customer.subscription.deleted event:");
+              console.log(JSON.stringify(sub, null, 2));
 
               await supabaseAdmin
                 .from("subscriptions")

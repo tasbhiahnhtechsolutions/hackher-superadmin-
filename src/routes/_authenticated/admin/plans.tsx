@@ -398,16 +398,6 @@ function PlansPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(p.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        title="Delete plan"
-                        disabled={deletePlan.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

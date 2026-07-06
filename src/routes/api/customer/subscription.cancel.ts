@@ -37,16 +37,22 @@ export const Route = createFileRoute("/api/customer/subscription/cancel")({
 
         const stripe = new Stripe(key, { apiVersion: "2025-03-31.basil" as never });
         if (parsed.data.immediate) {
-          await stripe.subscriptions.cancel(sub.stripe_subscription_id);
+          console.log(`[Stripe Cancel] Canceling subscription immediately: ${sub.stripe_subscription_id}`);
+          const stripeRes = await stripe.subscriptions.cancel(sub.stripe_subscription_id);
+          console.log("[Stripe Cancel] Stripe immediate cancellation response:", JSON.stringify(stripeRes, null, 2));
+
           await supabaseAdmin
             .from("subscriptions")
             .update({ status: "canceled" } as never)
             .eq("id", sub.id);
           return jsonOk({ canceled: true, cancel_at_period_end: false });
         } else {
-          await stripe.subscriptions.update(sub.stripe_subscription_id, {
+          console.log(`[Stripe Cancel] Setting cancel_at_period_end = true for: ${sub.stripe_subscription_id}`);
+          const stripeRes = await stripe.subscriptions.update(sub.stripe_subscription_id, {
             cancel_at_period_end: true,
           });
+          console.log("[Stripe Cancel] Stripe update cancellation response:", JSON.stringify(stripeRes, null, 2));
+
           return jsonOk({ canceled: false, cancel_at_period_end: true });
         }
       },

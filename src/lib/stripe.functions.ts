@@ -227,7 +227,10 @@ export const deletePlanServerFn = createServerFn({ method: "POST" })
     const { error: delErr } = await supabaseAdmin.from("plans").delete().eq("id", data.planId);
 
     if (delErr) {
-      throw delErr;
+      if (delErr.code === "23503") {
+        throw new Error("Cannot delete plan: it has active subscriptions. Please edit it and set 'Active' to false instead.");
+      }
+      throw new Error(delErr.message);
     }
 
     // 3. Archive in Stripe

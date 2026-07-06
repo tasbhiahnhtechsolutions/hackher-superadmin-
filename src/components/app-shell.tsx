@@ -53,6 +53,7 @@ const NAV_BY_ROLE: Record<AppRole, NavItem[]> = {
     { to: "/admin/promo-codes", label: "Promo Codes", icon: Tag },
     { to: "/admin/campaigns", label: "Campaigns", icon: LineChart },
     { label: "Finance", isSection: true },
+    { to: "/admin/plans", label: "Subscription Plans", icon: CreditCard },
     { to: "/admin/commissions", label: "Commissions", icon: DollarSign },
     { to: "/admin/payouts", label: "Payouts", icon: CreditCard },
     { to: "/admin/reports", label: "Reports", icon: FileBarChart },
