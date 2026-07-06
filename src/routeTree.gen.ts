@@ -51,6 +51,7 @@ import { Route as AuthenticatedAffiliateAnalyticsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminSystemRouteImport } from './routes/_authenticated/admin/system'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminSamsRouteImport } from './routes/_authenticated/admin/sams'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
 import { Route as AuthenticatedAdminPromoCodesRouteImport } from './routes/_authenticated/admin/promo-codes'
 import { Route as AuthenticatedAdminPlansRouteImport } from './routes/_authenticated/admin/plans'
 import { Route as AuthenticatedAdminPayoutsRouteImport } from './routes/_authenticated/admin/payouts'
@@ -307,6 +308,12 @@ const AuthenticatedAdminSamsRoute = AuthenticatedAdminSamsRouteImport.update({
   path: '/sams',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPromoCodesRoute =
   AuthenticatedAdminPromoCodesRouteImport.update({
     id: '/promo-codes',
@@ -452,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/sams': typeof AuthenticatedAdminSamsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -512,6 +520,7 @@ export interface FileRoutesByTo {
   '/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/sams': typeof AuthenticatedAdminSamsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -578,6 +587,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/payouts': typeof AuthenticatedAdminPayoutsRoute
   '/_authenticated/admin/plans': typeof AuthenticatedAdminPlansRoute
   '/_authenticated/admin/promo-codes': typeof AuthenticatedAdminPromoCodesRoute
+  '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/sams': typeof AuthenticatedAdminSamsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/system': typeof AuthenticatedAdminSystemRoute
@@ -644,6 +654,7 @@ export interface FileRouteTypes {
     | '/admin/payouts'
     | '/admin/plans'
     | '/admin/promo-codes'
+    | '/admin/reports'
     | '/admin/sams'
     | '/admin/settings'
     | '/admin/system'
@@ -704,6 +715,7 @@ export interface FileRouteTypes {
     | '/admin/payouts'
     | '/admin/plans'
     | '/admin/promo-codes'
+    | '/admin/reports'
     | '/admin/sams'
     | '/admin/settings'
     | '/admin/system'
@@ -769,6 +781,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/payouts'
     | '/_authenticated/admin/plans'
     | '/_authenticated/admin/promo-codes'
+    | '/_authenticated/admin/reports'
     | '/_authenticated/admin/sams'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/system'
@@ -1130,6 +1143,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSamsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/promo-codes': {
       id: '/_authenticated/admin/promo-codes'
       path: '/promo-codes'
@@ -1291,6 +1311,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPayoutsRoute: typeof AuthenticatedAdminPayoutsRoute
   AuthenticatedAdminPlansRoute: typeof AuthenticatedAdminPlansRoute
   AuthenticatedAdminPromoCodesRoute: typeof AuthenticatedAdminPromoCodesRoute
+  AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminSamsRoute: typeof AuthenticatedAdminSamsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSystemRoute: typeof AuthenticatedAdminSystemRoute
@@ -1308,6 +1329,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPayoutsRoute: AuthenticatedAdminPayoutsRoute,
   AuthenticatedAdminPlansRoute: AuthenticatedAdminPlansRoute,
   AuthenticatedAdminPromoCodesRoute: AuthenticatedAdminPromoCodesRoute,
+  AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminSamsRoute: AuthenticatedAdminSamsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSystemRoute: AuthenticatedAdminSystemRoute,

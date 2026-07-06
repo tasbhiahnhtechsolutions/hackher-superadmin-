@@ -78,9 +78,9 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
   // Parse and format each log entry
   const formattedLogs = rawLogs.map((log) => {
     const actor = profiles.find(p => p.id === log.actor_id);
-    const changedBy = actor ? actor.full_name : "System";
+    const changedBy = actor ? actor.full_name || actor.email : "System";
 
-    let type: "Promo Code" | "Commission" = "Commission";
+    let type: "Promo Code" | "Commission" | "Member" | "Payout" = "Commission";
     let changeDesc = "";
     let targetRole = "";
     let targetName = "";
@@ -89,7 +89,27 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
     const newValues = (log.new_values as any) || {};
     const oldValues = (log.old_values as any) || {};
 
-    if (log.entity_type === "promo_code" || log.action.includes("promo")) {
+    if (log.action === "create_subordinate") {
+      type = "Member";
+      targetUserId = log.entity_id || "";
+      const targetProfile = profiles.find(p => p.id === log.entity_id);
+      targetName = targetProfile?.full_name || newValues.email || "New Member";
+      const rawRole = targetProfile?.role || newValues.role || "affiliate";
+      targetRole = rawRole === "sam" ? "SAM" : rawRole === "manager" ? "Manager" : "Affiliate";
+      changeDesc = `Created new subordinate <strong>${targetName}</strong> (${targetRole})`;
+    } 
+    else if (log.action === "update_commission_rate") {
+      type = "Commission";
+      targetUserId = log.entity_id || "";
+      const targetProfile = profiles.find(p => p.id === log.entity_id);
+      targetName = targetProfile?.full_name || targetProfile?.email || "User";
+      const rawRole = targetProfile?.role || "affiliate";
+      targetRole = rawRole === "sam" ? "SAM" : rawRole === "manager" ? "Manager" : "Affiliate";
+      
+      const newRate = newValues.commission_rate !== undefined ? `${(newValues.commission_rate * 100).toFixed(1)}%` : "";
+      changeDesc = `Updated commission rate for ${targetRole} <strong>${targetName}</strong> to <strong>${newRate}</strong>`;
+    } 
+    else if (log.entity_type === "promo_code" || log.action.includes("promo")) {
       type = "Promo Code";
       const promoObj = promoCodes.find(p => p.id === log.entity_id) || promoCodes.find(p => p.code === newValues.code);
       const affiliateId = promoObj?.affiliate_id || newValues.affiliate_id;
@@ -97,25 +117,41 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
       
       targetUserId = affiliateId || "";
       targetRole = "Affiliate";
-      targetName = affiliate ? affiliate.full_name : "Unknown Affiliate";
+      targetName = affiliate ? affiliate.full_name || affiliate.email : "Affiliate";
 
       if (log.action === "create_promo_code" || log.action === "create") {
-        changeDesc = `Created code <strong>${newValues.code || ""}</strong> — ${newValues.discount_percent || 0}% off`;
+        changeDesc = `Created code <strong>${newValues.code || ""}</strong> (${newValues.discount_percent || 0}% off)`;
       } else if (newValues.status === "inactive") {
         changeDesc = `Deactivated code <strong>${newValues.code || oldValues.code || promoObj?.code || ""}</strong>`;
       } else if (newValues.status === "active") {
         changeDesc = `Activated code <strong>${newValues.code || oldValues.code || promoObj?.code || ""}</strong>`;
       } else if (newValues.discount_percent !== undefined && oldValues.discount_percent !== undefined) {
-        changeDesc = `Edited code <strong>${newValues.code || oldValues.code || promoObj?.code || ""}</strong> — discount ${oldValues.discount_percent}% → ${newValues.discount_percent}%`;
+        changeDesc = `Edited code <strong>${newValues.code || oldValues.code || promoObj?.code || ""}</strong>: ${oldValues.discount_percent}% → ${newValues.discount_percent}%`;
       } else {
         changeDesc = `Updated code <strong>${newValues.code || oldValues.code || promoObj?.code || ""}</strong>`;
       }
-    } else {
+    } 
+    else if (log.entity_type === "payout" || log.action.includes("payout")) {
+      type = "Payout";
+      targetUserId = log.entity_id || "";
+      
+      if (log.action === "generate_payouts") {
+        targetRole = "System";
+        targetName = "All Eligible Users";
+        changeDesc = `Generated payouts for period starting ${newValues.period_start || ""} to ${newValues.period_end || ""}`;
+      } else if (log.action === "mark_payout_paid") {
+        targetRole = "Member";
+        targetName = "Payout Recipient";
+        changeDesc = `Marked payout status as Paid`;
+      } else {
+        changeDesc = `Updated payout settings`;
+      }
+    } 
+    else {
       type = "Commission";
       const targetProfile = profiles.find(p => p.id === log.entity_id);
       targetUserId = log.entity_id || "";
-      targetName = targetProfile ? targetProfile.full_name : "Unknown User";
-      
+      targetName = targetProfile ? targetProfile.full_name || targetProfile.email : "Unknown User";
       const rawRole = targetProfile?.role || "affiliate";
       targetRole = rawRole === "sam" ? "SAM" : rawRole === "manager" ? "Manager" : "Affiliate";
 
@@ -127,13 +163,14 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
       } else if (newRate) {
         changeDesc = `${targetRole} commission changed to <strong>${newRate}</strong>`;
       } else {
-        changeDesc = `Updated commission settings`;
+        changeDesc = `Performed general update`;
       }
     }
 
     return {
       id: log.id,
       created_at: log.created_at,
+      actor_id: log.actor_id,
       type,
       changeDesc,
       role: targetRole,
@@ -147,19 +184,15 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
   const filteredLogs = formattedLogs.filter((log) => {
     // 1. Role-based visibility
     if (role === "manager") {
-      // Only shows Affiliate-level changes under this manager
+      // Only shows Affiliate-level changes under this manager's tree
       if (log.role !== "Affiliate") return false;
-      // Must be in this manager's hierarchy
-      if (user?.id && log.targetUserId !== user.id && !isDescendantOf(log.targetUserId, user.id)) {
-        return false;
-      }
-    } else if (role === "sam") {
-      // Hide SAM level changes
+      if (!isDescendantOf(log.targetUserId, user?.id || "")) return false;
+    } 
+    else if (role === "sam") {
+      // Does NOT show SAM-level changes
       if (log.role === "SAM") return false;
-      // Must be in this SAM's hierarchy
-      if (user?.id && log.targetUserId !== user.id && !isDescendantOf(log.targetUserId, user.id)) {
-        return false;
-      }
+      // Only show entities within their tree (Managers & Affiliates under this SAM)
+      if (!isDescendantOf(log.targetUserId, user?.id || "")) return false;
     }
 
     // 2. Search filter (Search across description, target name, and changed by)
@@ -194,7 +227,6 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
 
       <Card>
         <CardContent className="p-0">
-          {/* Mockup matching filter bar */}
           <div className="flex gap-2.5 flex-wrap p-3 border-b border-[#E5E7EB] bg-[#F9FAFB] items-center">
             <Input
               placeholder="Search..."
@@ -211,6 +243,8 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Promo Code">Promo Code</SelectItem>
                 <SelectItem value="Commission">Commission</SelectItem>
+                <SelectItem value="Member">Member</SelectItem>
+                <SelectItem value="Payout">Payout</SelectItem>
               </SelectContent>
             </Select>
 
@@ -242,13 +276,12 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
             )}
 
             {role === "manager" && (
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <Select value={roleFilter} onValueChange={setRoleFilter} disabled>
                 <SelectTrigger className="w-[150px] bg-white border-[#D1D5DB]">
                   <SelectValue placeholder="Affiliate" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="affiliate">Affiliate</SelectItem>
+                  <SelectItem value="all">Affiliate</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -289,7 +322,11 @@ export function ChangeLogsView({ role }: ChangeLogsViewProps) {
                       {formatDate(log.created_at)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={log.type === "Promo Code" ? "blue" : "amber"}>
+                      <Badge variant={
+                        log.type === "Promo Code" ? "blue" : 
+                        log.type === "Commission" ? "amber" :
+                        log.type === "Member" ? "green" : "purple"
+                      }>
                         {log.type}
                       </Badge>
                     </TableCell>

@@ -1,13 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CampaignAnalytics } from "@/components/campaign-analytics";
+import { ReportsView } from "@/components/reports-view";
 
 export const Route = createFileRoute("/_authenticated/sam/reports")({
-  component: () => (
-    <div className="p-6 md:p-8">
-      <CampaignAnalytics
-        title="SAM · Campaign reports"
-        subtitle="Top campaigns, conversion and revenue trends across your managers and affiliates."
-      />
-    </div>
-  ),
+  component: () => <ReportsView role="sam" />,
 });

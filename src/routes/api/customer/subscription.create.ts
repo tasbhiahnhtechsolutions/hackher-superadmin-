@@ -310,13 +310,13 @@ export const Route = createFileRoute("/api/customer/subscription/create")({
 
           console.log("Stripe customer id:", stripeCustomerId);
 
-          // Retrieve plan details to check if it has a free trial
+          // Retrieve plan details to check if it has a free trial (check both stripe_price_id and id)
           let trialPeriodDays: number | undefined = undefined;
-          if (packageId) {
+          if (stripePriceId || packageId) {
             const { data: plan } = await supabaseAdmin
               .from("plans")
               .select("trial_days")
-              .eq("id", packageId)
+              .or(`stripe_price_id.eq.${stripePriceId},id.eq.${packageId}`)
               .maybeSingle();
             if (plan && plan.trial_days > 0) {
               trialPeriodDays = plan.trial_days;

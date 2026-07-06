@@ -87,6 +87,39 @@ function SamCommissionsRoute() {
         return Array.from(set) as string[];
     }, [allocations]);
 
+    const handleExportCSV = () => {
+        const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const headers = ["Subscriber", "Affiliate", "Plan", "Subscribed On", "Affiliate Comm.", "Manager Comm.", "SAM Comm.", "Status"];
+        
+        const lines = [headers.join(",")];
+        for (const item of filtered) {
+            const affiliateComm = item.commissions?.find((c: any) => c.beneficiary_role === "affiliate");
+            const managerComm = item.commissions?.find((c: any) => c.beneficiary_role === "manager");
+            const samComm = item.commissions?.find((c: any) => c.beneficiary_role === "sam");
+            const overallStatus = samComm?.status || managerComm?.status || affiliateComm?.status || "Pending";
+            
+            const row = [
+                item.customers?.email || "Unknown",
+                item.customers?.profiles?.full_name || "Unassigned",
+                `${item.plans?.name || "Unknown"} ($${((item.plans?.price_cents || 0) / 100).toFixed(0)})`,
+                new Date(item.created_at).toLocaleDateString(),
+                affiliateComm ? `$${(affiliateComm.amount_cents / 100).toFixed(2)}` : "—",
+                managerComm ? `$${(managerComm.amount_cents / 100).toFixed(2)}` : "—",
+                samComm ? `$${(samComm.amount_cents / 100).toFixed(2)}` : "—",
+                overallStatus
+            ];
+            lines.push(row.map(escape).join(","));
+        }
+        
+        const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `commissions_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="space-y-6 max-w-[1100px] mx-auto p-2">
             <div>
@@ -97,7 +130,7 @@ function SamCommissionsRoute() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Per-Subscriber Revenue Breakdown</CardTitle>
-                    <Button variant="outline" size="sm">Export CSV</Button>
+                    <Button variant="outline" size="sm" onClick={handleExportCSV}>Export CSV</Button>
                 </CardHeader>
                 <div className="flex flex-wrap px-6 pb-2 pt-2 items-center gap-2 border-b">
                     <div className="relative flex-1 min-w-[180px] max-w-[280px]">

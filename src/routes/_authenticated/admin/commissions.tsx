@@ -45,6 +45,36 @@ function AdminCommissionsRoute() {
         });
     }, [allocations, search]);
 
+    const handleExportCSV = () => {
+        const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const headers = ["Subscriber", "Affiliate", "Plan", "Subscribed On", "Affiliate Comm.", "SAM Comm.", "Status"];
+        
+        const lines = [headers.join(",")];
+        for (const item of filtered) {
+            const affiliateComm = item.commissions?.find((c: any) => c.beneficiary_role === "affiliate");
+            const samComm = item.commissions?.find((c: any) => c.beneficiary_role === "sam");
+            
+            const row = [
+                item.customers?.email || "Unknown",
+                item.customers?.profiles?.full_name || "Unassigned",
+                `${item.plans?.name || "Unknown"} ($${((item.plans?.price_cents || 0) / 100).toFixed(0)})`,
+                new Date(item.created_at).toLocaleDateString(),
+                affiliateComm ? `$${(affiliateComm.amount_cents / 100).toFixed(2)}` : "—",
+                samComm ? `$${(samComm.amount_cents / 100).toFixed(2)}` : "—",
+                affiliateComm?.status || samComm?.status || "Pending"
+            ];
+            lines.push(row.map(escape).join(","));
+        }
+        
+        const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `commissions_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="space-y-6 max-w-[1100px] mx-auto p-2">
             <div>
@@ -55,7 +85,7 @@ function AdminCommissionsRoute() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Per-Subscriber Revenue Breakdown</CardTitle>
-                    <Button variant="outline" size="sm">Export CSV</Button>
+                    <Button variant="outline" size="sm" onClick={handleExportCSV}>Export CSV</Button>
                 </CardHeader>
                 <div className="flex px-6 pb-2 items-center gap-2 border-b">
                     <Input
