@@ -108,30 +108,41 @@ export function AppShell({ children }: { children?: ReactNode }) {
   const items = role ? NAV_BY_ROLE[role] : [];
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const logoLabel = (() => {
+    if (role === "super_admin") return "HackHer SA";
+    if (role === "sam") return "HackHer SAM";
+    if (role === "manager") return "HackHer Manager";
+    if (role === "affiliate") return "HackHer";
+    return "HackHer";
+  })();
+
   const navList = (
-    <nav className="flex-1 flex flex-col py-6">
+    <nav className="flex-1 flex flex-col pt-0 pb-6">
       {items.map((item, i) => {
         if (item.isSection) {
           return (
-            <div key={`sec-${i}`} className="px-6 text-[11px] font-bold uppercase tracking-wide text-[#4B6396] mt-6 mb-2">
+            <div key={`sec-${i}`} className={`px-5 text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mb-1 ${i === 0 ? "mt-2" : "mt-5"}`}>
               {item.label}
             </div>
           );
         }
 
-        const active = pathname === item.to || pathname.startsWith(item.to + "/");
+        const isDashboard = item.to === "/admin" || item.to === "/sam" || item.to === "/manager" || item.to === "/affiliate";
+        const active = isDashboard
+          ? (pathname === item.to || pathname === item.to + "/")
+          : (pathname === item.to || pathname.startsWith(item.to + "/"));
         return (
           <Link
             key={item.to}
             to={item.to || "#"}
             onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-6 py-2.5 text-sm font-medium transition-all ${active
-              ? "bg-gradient-to-r from-accent/15 to-transparent text-white border-l-4 border-accent"
-              : "text-[#A0B3D6] hover:bg-white/5 hover:text-white border-l-4 border-transparent"
+            className={`flex items-center gap-3 px-5 py-2.5 text-[13px] font-medium transition-all border-l-3 ${active
+              ? "bg-[#FCE5D7] text-[#C4541E] border-[#E86E3C] font-semibold"
+              : "text-[#374151] hover:bg-[#F9FAFB] hover:text-[#18294F] border-transparent"
               }`}
           >
-            {item.icon && <item.icon className="h-[18px] w-[18px]" />}
-            {item.label}
+            {item.icon && <item.icon className="h-[18px] w-[18px] shrink-0" />}
+            <span>{item.label}</span>
           </Link>
         );
       })}
@@ -151,31 +162,30 @@ export function AppShell({ children }: { children?: ReactNode }) {
     .toUpperCase();
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-[#F3F4F6]">
       {/* Sidebar */}
-      <aside className="hidden w-[260px] flex-col bg-[#0F1A33] md:flex shrink-0">
-        <div className="flex px-6 pt-6 pb-2 items-center gap-2">
-          <div className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-            HackHer <span className="font-normal text-sm text-[#A0B3D6] tracking-normal uppercase ml-1">Affiliate</span>
-          </div>
+      <aside className="hidden w-[240px] flex-col bg-white border-r border-[#E5E7EB] md:flex shrink-0">
+        <div className="flex px-5 pt-6 pb-4 items-center gap-2.5 text-[18px] font-extrabold text-[#0F1A33] border-b border-[#E5E7EB] mb-3 tracking-tight">
+          <div className="w-2 h-6 rounded-[2px] bg-gradient-to-b from-[#E86E3C] to-[#18294F] shrink-0" />
+          <span>{logoLabel}</span>
         </div>
         {navList}
-        <div className="p-4 mt-auto border-t border-white/10">
+        <div className="p-4 mt-auto border-t border-[#E5E7EB]">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left bg-white/5 hover:bg-white/10 transition">
+              <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left bg-[#F9FAFB] border border-[#E5E7EB] hover:bg-[#F3F4F6] transition cursor-pointer">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white">
                   {initials}
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <div className="truncate text-sm font-medium text-white">
+                  <div className="truncate text-sm font-semibold text-[#111827]">
                     {profile?.full_name ?? profile?.email}
                   </div>
-                  <div className="truncate text-xs text-[#A0B3D6]">
+                  <div className="truncate text-xs text-[#6B7280]">
                     {role ? ROLE_LABELS[role] : ""}
                   </div>
                 </div>
-                <ChevronDown className="h-4 w-4 text-[#A0B3D6]" />
+                <ChevronDown className="h-4 w-4 text-[#6B7280]" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -191,7 +201,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex h-16 items-center justify-between border-b border-border/60 bg-background/80 px-4 md:px-6 backdrop-blur">
+        <header className="flex h-16 items-center justify-between border-b border-[#E5E7EB] bg-white/80 px-4 md:px-6 backdrop-blur">
           <div className="flex items-center gap-2 md:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
@@ -199,11 +209,11 @@ export function AppShell({ children }: { children?: ReactNode }) {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64 bg-sidebar">
-                <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-5">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-brand" />
+              <SheetContent side="left" className="p-0 w-64 bg-white border-r border-[#E5E7EB]">
+                <div className="flex h-16 items-center gap-2.5 border-b border-[#E5E7EB] px-5">
+                  <div className="w-2 h-6 rounded-[2px] bg-gradient-to-b from-[#E86E3C] to-[#18294F] shrink-0" />
                   <span className="text-sm font-semibold">
-                    HackHer<span className="text-primary">.ai</span>
+                    {logoLabel}
                   </span>
                 </div>
                 {navList}
@@ -219,7 +229,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
             </Button>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-7 lg:p-8 max-w-[1100px]">
+        <main className="flex-1 overflow-auto p-7 lg:p-8 max-w-[1100px] bg-[#F3F4F6]">
           {children ?? <Outlet />}
         </main>
       </div>

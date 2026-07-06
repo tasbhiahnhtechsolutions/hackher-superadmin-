@@ -171,6 +171,15 @@ export const createPromoCode = createServerFn({ method: "POST" })
     if (error || !created) throw new Error(error?.message ?? "Failed to create");
 
     await syncToStripe(created.id);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "create_promo_code",
+      entity_type: "promo_code",
+      entity_id: created.id,
+      new_values: { code: upperCode, discount_percent: data.discountPercent, affiliate_id: affiliateId },
+    });
+
     return { id: created.id, code: upperCode };
   });
 
@@ -230,5 +239,15 @@ export const updatePromoCode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     await syncToStripe(data.id);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      actor_id: userId,
+      action: "update_promo_code",
+      entity_type: "promo_code",
+      entity_id: data.id,
+      new_values: patch,
+      old_values: { code: promo.code, discount_percent: promo.discount_percent, status: promo.status },
+    });
+
     return { ok: true };
   });

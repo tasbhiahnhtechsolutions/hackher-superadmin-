@@ -524,8 +524,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 } as never)
                 .eq("stripe_subscription_id", sub.id);
 
-              // Trigger S2S sync to Django on status / period updates
-              if (meta.user_id) {
+              // Trigger S2S sync to Django on status / period updates (skip if status is canceled)
+              if (meta.user_id && sub.status !== "canceled") {
                 const startDate = rawPeriodStart
                   ? new Date(rawPeriodStart * 1000).toISOString()
                   : null;
@@ -956,26 +956,8 @@ export const Route = createFileRoute("/api/public/webhooks/stripe")({
                 }
               }
 
-              // Trigger S2S sync to Django immediately on cancellation
-              if (meta.user_id) {
-                const startDate = sub.start_date
-                  ? new Date(sub.start_date * 1000).toISOString()
-                  : null;
-                const cancelAtPeriodEnd = sub.cancel_at_period_end || false;
-                await syncSubscriptionToDjango({
-                  djangoUserId: meta.user_id,
-                  email: meta.email,
-                  role: meta.role,
-                  packageId: meta.package_id || null,
-                  packageName: meta.package_name,
-                  stripeSubscriptionId: sub.id,
-                  status: "canceled",
-                  startDate,
-                  endDate: null,
-                  cancelAtPeriodEnd,
-                  stripeRaw: sub,
-                });
-              }
+              // Trigger S2S sync to Django immediately on cancellation is disabled to prevent circular loop
+              // because cancel/reactivate is managed from Django directly.
               break;
             }
           }

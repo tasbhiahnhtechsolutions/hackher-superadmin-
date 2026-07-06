@@ -8,12 +8,18 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+        default: "border-transparent bg-[#D1FAE5] text-[#065F46] hover:bg-[#D1FAE5] rounded-full font-semibold",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-transparent bg-[#FEF3C7] text-[#92400E] hover:bg-[#FEF3C7] rounded-full font-semibold",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
+          "border-transparent bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2] rounded-full font-semibold",
+        outline: "border-[#E5E7EB] text-[#374151] rounded-full font-semibold",
+        green: "border-transparent bg-[#D1FAE5] text-[#065F46] rounded-full font-semibold",
+        amber: "border-transparent bg-[#FEF3C7] text-[#92400E] rounded-full font-semibold",
+        red: "border-transparent bg-[#FEE2E2] text-[#991B1B] rounded-full font-semibold",
+        purple: "border-transparent bg-[#E0E6F2] text-[#0F1A33] rounded-full font-semibold",
+        orange: "border-transparent bg-[#FCE5D7] text-[#C4541E] rounded-full font-semibold",
+        blue: "border-transparent bg-[#DBEAFE] text-[#1E40AF] rounded-full font-semibold",
       },
     },
     defaultVariants: {

@@ -30,7 +30,8 @@ function AdminCommissionsRoute() {
                 `)
                 .order("created_at", { ascending: false });
 
-            return data ?? [];
+            // Filter out subscriptions that don't have an affiliate assigned
+            return (data ?? []).filter((item: any) => item.customers?.profiles);
         },
     });
 
